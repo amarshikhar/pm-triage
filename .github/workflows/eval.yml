@@ -39,6 +39,23 @@ jobs:
         env:
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
         run: python -m app.eval --data replay --mode ${{ inputs.mode }} --out eval-report-real.json
+      - name: Sync static copies into the frontend
+        # The Evaluation page falls back to these bundled copies when the
+        # backend is asleep/stale, so they must track the freshly measured
+        # reports. trials_detail is stripped (as the API does) to stay light.
+        run: |
+          cd "$GITHUB_WORKSPACE"
+          mkdir -p frontend/app/eval/reports
+          python - <<'PY'
+          import json
+          for src, dst in (("backend/eval-report.json", "frontend/app/eval/reports/synthetic.json"),
+                           ("backend/eval-report-real.json", "frontend/app/eval/reports/real.json")):
+              d = json.load(open(src))
+              for r in d.get("reports", {}).values():
+                  if r:
+                      r.pop("trials_detail", None)
+              json.dump(d, open(dst, "w"), indent=2)
+          PY
       - uses: actions/upload-artifact@v4
         with:
           name: eval-reports
@@ -49,6 +66,7 @@ jobs:
           cd "$GITHUB_WORKSPACE"
           git config user.name "amarshikhar"
           git config user.email "amar.shikhar007@gmail.com"
-          git add backend/eval-report.json backend/eval-report-real.json
+          git add backend/eval-report.json backend/eval-report-real.json \
+                  frontend/app/eval/reports/synthetic.json frontend/app/eval/reports/real.json
           git commit -m "chore(eval): refresh reports from CI run (${{ inputs.mode }}, ${{ inputs.trials }} trials)" || echo "no changes"
           git push

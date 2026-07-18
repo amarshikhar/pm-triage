@@ -1,6 +1,7 @@
 __pycache__/
 *.pyc
 .env
+.venv/
 backend/pm_triage.db
 frontend/node_modules/
 frontend/.next/

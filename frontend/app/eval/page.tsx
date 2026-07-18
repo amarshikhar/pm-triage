@@ -1,16 +1,38 @@
 "use client";
 import { useEffect, useState } from "react";
 import { EvalBundle, EvalModeReport, EvalReport, getEvalReport } from "@/lib/api";
+import syntheticStatic from "./reports/synthetic.json";
+import realStatic from "./reports/real.json";
+
+// The committed CI-measured reports, bundled at build time. They are the same
+// artifacts the backend serves at /api/eval-report, so the Evaluation page can
+// render the benchmark even when the (free-tier) backend is asleep, stale, or
+// hasn't yet picked up a fresh report. A live API response overrides them.
+const STATIC_BUNDLE: EvalBundle = {
+  synthetic: syntheticStatic as unknown as EvalReport,
+  real: realStatic as unknown as EvalReport,
+};
+
+/** A report "has data" only if at least one mode actually produced results. */
+function hasReports(r?: EvalReport): boolean {
+  return !!(r?.reports && (r.reports.mock || r.reports.live));
+}
 
 export default function EvalPage() {
-  const [bundle, setBundle] = useState<EvalBundle | null>(null);
-  const [error, setError] = useState("");
+  const [bundle, setBundle] = useState<EvalBundle>(STATIC_BUNDLE);
   const [which, setWhich] = useState<"synthetic" | "real">("synthetic");
 
-  useEffect(() => { getEvalReport().then(setBundle).catch((e) => setError(e.message)); }, []);
-
-  if (error) return <main className="page narrow"><div className="empty">No eval report available — {error}</div></main>;
-  if (!bundle) return <main className="page narrow"><div className="empty">Loading evaluation…</div></main>;
+  useEffect(() => {
+    // Prefer the live backend, but only where it actually returned data; fall
+    // back to the bundled static copy per-key so one missing side never blanks
+    // the whole page.
+    getEvalReport()
+      .then((live) => setBundle((prev) => ({
+        synthetic: hasReports(live.synthetic) ? live.synthetic : prev.synthetic,
+        real: hasReports(live.real) ? live.real : prev.real,
+      })))
+      .catch(() => { /* keep the static bundle */ });
+  }, []);
 
   const report: EvalReport | undefined = bundle[which];
   const mock = report?.reports?.mock;
@@ -31,10 +53,31 @@ export default function EvalPage() {
           Synthetic faults
         </button>
         <button className={`tab ${which === "real" ? "active" : ""}`} onClick={() => setWhich("real")}
-                disabled={!bundle.real}>
+                disabled={!hasReports(bundle.real)}>
           Real SKAB data
         </button>
       </div>
+
+      {which === "real" && (
+        <div className="eval-note">
+          <b>Why does the agent score lower here than on synthetic faults?</b> Not because the maths
+          stops working — the same detector statistics (drift, mean, volatility, range) are computed
+          on this real pump exactly as on the simulated fleet, and the signal charts prove they read
+          cleanly. It scores lower because this is a <i>harder problem</i>, not a broken one:
+          <ul>
+            <li><b>The faults genuinely overlap.</b> The synthetic classes are engineered so each one
+              drives a different signal (wear→vibration, overheat→temperature, leak→pressure), which
+              makes them easy to tell apart. The four SKAB faults are all flow/pressure disturbances on
+              the <i>same</i> pump loop — suction vs discharge restriction look alike over a short
+              window even to an expert, and the confusion matrix below shows exactly that mix-up.</li>
+            <li><b>The precedent it leans on barely exists.</b> The agent&rsquo;s edge comes from
+              retrieving a close past work order; the simulated fleet has 15 of them, the real pump has
+              4 — one per fault. Less to cite means less to be right with.</li>
+          </ul>
+          A model doesn&rsquo;t automatically do <i>better</i> on real data — it does as well as the
+          data is separable. Surfacing that honest drop, rather than hiding it, is the point of this page.
+        </div>
+      )}
 
       {!primary ? (
         <div className="empty">This report hasn’t been generated yet. Run the eval workflow.</div>

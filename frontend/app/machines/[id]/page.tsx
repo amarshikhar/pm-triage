@@ -84,27 +84,29 @@ export default function MachinePage() {
           {resolved.map((c) => <CaseRow key={c.id} c={c} />)}
         </div>
 
-        <div className="card block">
-          <h4>Work orders <Link className="panel-link" href={`/cmms?machine=${id}`}>open in CMMS →</Link></h4>
-          {workOrders.length === 0 && <div className="empty small">No work orders raised.</div>}
-          {workOrders.map((w) => (
-            <div className="evidence-wo" key={w.order_id} style={{ borderLeftColor: "var(--p4)" }}>
-              <span className="wo-id">{w.order_id}</span> · priority {w.priority_code} · {w.system_status}
-              <div style={{ color: "var(--text-muted)" }}>{w.damage_text} ({w.damage_code}) — {w.short_text}</div>
-            </div>
-          ))}
-        </div>
+        <div className="panel-col">
+          <div className="card block">
+            <h4>Work orders <Link className="panel-link" href={`/cmms?machine=${id}`}>open in CMMS →</Link></h4>
+            {workOrders.length === 0 && <div className="empty small">No work orders raised.</div>}
+            {workOrders.map((w) => (
+              <div className="evidence-wo" key={w.order_id} style={{ borderLeftColor: "var(--p4)" }}>
+                <span className="wo-id">{w.order_id}</span> · priority {w.priority_code} · {w.system_status}
+                <div style={{ color: "var(--text-muted)" }}>{w.damage_text} ({w.damage_code}) — {w.short_text}</div>
+              </div>
+            ))}
+          </div>
 
-        <div className="card block">
-          <h4>Audit for this machine <Link className="panel-link" href={`/audit?machine=${id}`}>full trail →</Link></h4>
-          {audit.length === 0 && <div className="empty small">No events yet.</div>}
-          {audit.slice(0, 12).map((a) => (
-            <div className="audit-row compact" key={a.id}>
-              <span className="ts">{new Date(a.ts).toLocaleTimeString()}</span>
-              <span className={`actor ${a.actor.startsWith("human") ? "human" : ""}`}>{a.actor}</span>
-              <span>{a.event_type.replaceAll("_", " ")}</span>
-            </div>
-          ))}
+          <div className="card block">
+            <h4>Audit for this machine <Link className="panel-link" href={`/audit?machine=${id}`}>full trail →</Link></h4>
+            {audit.length === 0 && <div className="empty small">No events yet.</div>}
+            {audit.slice(0, 12).map((a) => (
+              <div className="audit-row compact" key={a.id}>
+                <span className="ts">{new Date(a.ts).toLocaleTimeString()}</span>
+                <span className={`actor ${a.actor.startsWith("human") ? "human" : ""}`}>{a.actor}</span>
+                <span>{a.event_type.replaceAll("_", " ")}</span>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </main>

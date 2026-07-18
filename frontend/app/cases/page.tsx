@@ -77,22 +77,34 @@ function CasesInner() {
       <div className="case-cards">
         {filtered.map((c) => {
           const pb = c.priority_breakdown || {};
+          const conf = Math.round(c.confidence * 100);
           return (
             <Link key={c.id} href={`/cases/${c.id}`} className={`case-card prio-${c.priority}`}>
-              <div className="cc-top">
+              <div className="cc-head">
                 <span className={`badge ${c.priority}`}>{c.priority}</span>
                 <span className="cc-machine">{c.machine_id}</span>
                 <span style={{ flex: 1 }} />
-                <span className={`cc-status s-${c.status}`}>{c.status.replaceAll("_", " ")}</span>
+                <span className={`cc-status s-${c.status}`}>
+                  <span className="cc-dot" />{c.status.replaceAll("_", " ")}
+                </span>
               </div>
+
               <div className="cc-cause">{c.root_cause}</div>
-              <div className="cc-meta">
-                <span>#{c.id}</span>
-                <span>conf {(c.confidence * 100).toFixed(0)}%</span>
-                <span>{c.llm_mode === "live" ? "live LLM" : "mock"}</span>
-                {pb.est_cost_exposure != null && <span className="cc-exposure">{usd(pb.est_cost_exposure)} exposure</span>}
+
+              <div className="cc-conf-row">
+                <div className="cc-conf-bar"><span style={{ width: `${conf}%` }} /></div>
+                <span className="cc-conf-val">{conf}%</span>
+                <span className="cc-conf-label">confidence · {c.llm_mode === "live" ? "live LLM" : "mock"}</span>
+              </div>
+
+              <div className="cc-foot">
+                <span className="cc-id">#{c.id}</span>
+                {pb.est_cost_exposure != null && (
+                  <span className="cc-exposure">{usd(pb.est_cost_exposure)}<span className="cc-exposure-l"> exposure</span></span>
+                )}
+                <span className="cc-spacer" />
                 {c.cmms_work_order_id && <span className="cc-wo">WO {c.cmms_work_order_id}</span>}
-                {c.reviewer && <span>· {c.reviewer}</span>}
+                {c.reviewer && <span className="cc-reviewer">{c.reviewer}</span>}
               </div>
             </Link>
           );

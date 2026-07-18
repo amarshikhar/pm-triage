@@ -1,0 +1,203 @@
+{
+  "generated_at": "2026-07-18T17:19:59.394024+00:00",
+  "seed": 7,
+  "trials_requested": 24,
+  "reports": {
+    "mock": {
+      "n_trials": 24,
+      "n_scored": 24,
+      "n_detector_missed": 0,
+      "n_agent_errors": 0,
+      "llm_mode": "mock",
+      "llm_model": "deterministic-mock",
+      "detection_rate_pct": 100.0,
+      "accuracy": {
+        "top1_text_pct": 58.3,
+        "top1_citation_pct": 58.3,
+        "hit_any_pct": 62.5,
+        "hedged_pct": 0.0,
+        "unclassifiable_pct": 0.0
+      },
+      "scorer_agreement_pct": 100.0,
+      "scorer_agreement_n": 24,
+      "per_class": {
+        "bearing_wear": {
+          "n": 6,
+          "top1_text_pct": 33.3,
+          "hit_any_pct": 50.0,
+          "mean_confidence": 0.75,
+          "mean_ticks_to_detect": 9.8
+        },
+        "overheat": {
+          "n": 6,
+          "top1_text_pct": 66.7,
+          "hit_any_pct": 66.7,
+          "mean_confidence": 0.72,
+          "mean_ticks_to_detect": 13.0
+        },
+        "pressure_loss": {
+          "n": 6,
+          "top1_text_pct": 83.3,
+          "hit_any_pct": 83.3,
+          "mean_confidence": 0.75,
+          "mean_ticks_to_detect": 9.0
+        },
+        "cavitation": {
+          "n": 6,
+          "top1_text_pct": 50.0,
+          "hit_any_pct": 50.0,
+          "mean_confidence": 0.75,
+          "mean_ticks_to_detect": 6.8
+        }
+      },
+      "confusion": {
+        "bearing_wear": {
+          "overheat": 2,
+          "bearing_wear": 2,
+          "cavitation": 1,
+          "pressure_loss": 1
+        },
+        "overheat": {
+          "pressure_loss": 1,
+          "overheat": 4,
+          "bearing_wear": 1
+        },
+        "pressure_loss": {
+          "pressure_loss": 5,
+          "bearing_wear": 1
+        },
+        "cavitation": {
+          "bearing_wear": 3,
+          "cavitation": 3
+        }
+      },
+      "calibration": [
+        {
+          "bucket": "0.50-0.70",
+          "n": 1,
+          "mean_confidence_pct": 60.0,
+          "accuracy_pct": 100.0,
+          "gap_pct": 40.0
+        },
+        {
+          "bucket": "0.70-0.85",
+          "n": 23,
+          "mean_confidence_pct": 75.0,
+          "accuracy_pct": 56.5,
+          "gap_pct": -18.5
+        }
+      ],
+      "ece": 0.194,
+      "latency_s": {
+        "mean": 0.01,
+        "p50": 0.01,
+        "max": 0.04
+      }
+    },
+    "live": {
+      "n_trials": 24,
+      "n_scored": 24,
+      "n_detector_missed": 0,
+      "n_agent_errors": 0,
+      "llm_mode": "live",
+      "llm_model": "anthropic/claude-sonnet-4.5",
+      "detection_rate_pct": 100.0,
+      "accuracy": {
+        "top1_text_pct": 70.8,
+        "top1_citation_pct": 70.8,
+        "hit_any_pct": 83.3,
+        "hedged_pct": 4.2,
+        "unclassifiable_pct": 4.2
+      },
+      "scorer_agreement_pct": 87.0,
+      "scorer_agreement_n": 23,
+      "per_class": {
+        "bearing_wear": {
+          "n": 6,
+          "top1_text_pct": 66.7,
+          "hit_any_pct": 83.3,
+          "mean_confidence": 0.61,
+          "mean_ticks_to_detect": 9.8
+        },
+        "overheat": {
+          "n": 6,
+          "top1_text_pct": 66.7,
+          "hit_any_pct": 66.7,
+          "mean_confidence": 0.77,
+          "mean_ticks_to_detect": 13.0
+        },
+        "pressure_loss": {
+          "n": 6,
+          "top1_text_pct": 66.7,
+          "hit_any_pct": 100.0,
+          "mean_confidence": 0.78,
+          "mean_ticks_to_detect": 9.0
+        },
+        "cavitation": {
+          "n": 6,
+          "top1_text_pct": 83.3,
+          "hit_any_pct": 83.3,
+          "mean_confidence": 0.74,
+          "mean_ticks_to_detect": 6.8
+        }
+      },
+      "confusion": {
+        "bearing_wear": {
+          "bearing_wear": 4,
+          "pressure_loss": 1,
+          "unclassified": 1
+        },
+        "overheat": {
+          "overheat": 4,
+          "pressure_loss": 1,
+          "bearing_wear": 1
+        },
+        "pressure_loss": {
+          "cavitation": 1,
+          "pressure_loss": 4,
+          "suction_restriction": 1
+        },
+        "cavitation": {
+          "cavitation": 5,
+          "bearing_wear": 1
+        }
+      },
+      "calibration": [
+        {
+          "bucket": "0.00-0.50",
+          "n": 1,
+          "mean_confidence_pct": 10.0,
+          "accuracy_pct": 0.0,
+          "gap_pct": -10.0
+        },
+        {
+          "bucket": "0.50-0.70",
+          "n": 2,
+          "mean_confidence_pct": 65.0,
+          "accuracy_pct": 50.0,
+          "gap_pct": -15.0
+        },
+        {
+          "bucket": "0.70-0.85",
+          "n": 19,
+          "mean_confidence_pct": 75.4,
+          "accuracy_pct": 73.7,
+          "gap_pct": -1.7
+        },
+        {
+          "bucket": "0.85-1.00",
+          "n": 2,
+          "mean_confidence_pct": 85.0,
+          "accuracy_pct": 100.0,
+          "gap_pct": 15.0
+        }
+      ],
+      "ece": 0.043,
+      "latency_s": {
+        "mean": 25.99,
+        "p50": 25.81,
+        "max": 35.86
+      }
+    }
+  }
+}
