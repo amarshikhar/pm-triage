@@ -298,11 +298,48 @@ async def retry_cmms_sync(case_id: int, db: Session = Depends(get_db),
 
 
 @router.get("/audit")
-def list_audit(limit: int = 100, db: Session = Depends(get_db)):
-    rows = db.query(AuditEvent).order_by(AuditEvent.id.desc()).limit(min(limit, 500)).all()
+def list_audit(limit: int = 100, machine: str | None = None, db: Session = Depends(get_db)):
+    q = db.query(AuditEvent)
+    if machine:
+        # Scope to one asset: events on the machine itself, on its anomalies, or
+        # on cases raised from it. Resolve the id sets, then filter.
+        anomaly_ids = {str(a.id) for a in db.query(Anomaly.id).filter(Anomaly.machine_id == machine)}
+        case_ids = {str(c.id) for c in db.query(TriageCase.id).filter(TriageCase.machine_id == machine)}
+        rows = []
+        for r in q.order_by(AuditEvent.id.desc()).limit(1500).all():
+            hit = ((r.entity == "machine" and r.entity_id == machine)
+                   or (r.entity == "anomaly" and r.entity_id in anomaly_ids)
+                   or (r.entity == "case" and r.entity_id in case_ids))
+            if hit:
+                rows.append(r)
+            if len(rows) >= min(limit, 500):
+                break
+    else:
+        rows = q.order_by(AuditEvent.id.desc()).limit(min(limit, 500)).all()
     return [{"id": r.id, "ts": r.ts, "actor": r.actor, "event_type": r.event_type,
              "entity": r.entity, "entity_id": r.entity_id,
              "detail": json.loads(r.detail or "{}")} for r in rows]
+
+
+@router.get("/eval-report")
+def eval_report():
+    """Serve the committed evaluation reports so the app can render the harness
+    result (confusion matrix, calibration, accuracy) — the differentiator, made
+    visible. trials_detail is stripped to keep the payload light."""
+    import os
+
+    here = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # backend/
+    out: dict = {}
+    for key, fname in (("synthetic", "eval-report.json"), ("real", "eval-report-real.json")):
+        path = os.path.join(here, fname)
+        if not os.path.exists(path):
+            continue
+        with open(path) as fh:
+            data = json.load(fh)
+        for report in data.get("reports", {}).values():
+            report.pop("trials_detail", None)
+        out[key] = data
+    return out
 
 
 class Inject(BaseModel):
@@ -320,6 +357,8 @@ def inject_fault(body: Inject, db: Session = Depends(get_db),
     if not machine:
         raise HTTPException(404, "unknown machine")
     try:
+        from .detector import force_detect
+        force_detect(machine.id)  # a manual cue always surfaces a case (no dedup)
         if machine.source == "replay":
             episode = replayer.jump_to_fault(machine, body.fault)
             audit(db, f"human:{reviewer or 'demo'}", "episode_cued", "machine", machine.id,

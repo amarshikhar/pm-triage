@@ -11,6 +11,7 @@ const NAV = [
   { href: "/cases", label: "Cases" },
   { href: "/cmms", label: "CMMS" },
   { href: "/audit", label: "Audit" },
+  { href: "/eval", label: "Evaluation" },
 ];
 
 export default function Chrome() {

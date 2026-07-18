@@ -1,29 +1,70 @@
 "use client";
-import { useEffect, useState } from "react";
+import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useCallback, useEffect, useState } from "react";
 import { AuditEvent, getAudit } from "@/lib/api";
 
-export default function AuditPage() {
+function actorClass(a: string) {
+  if (a.startsWith("human")) return "human";
+  if (a === "agent") return "agent";
+  return "system";
+}
+
+function AuditInner() {
+  const params = useSearchParams();
+  const router = useRouter();
+  const machine = params.get("machine") || "";
   const [audit, setAudit] = useState<AuditEvent[]>([]);
+
+  const load = useCallback(() => getAudit(machine || undefined).then(setAudit).catch(() => {}), [machine]);
   useEffect(() => {
-    const load = () => getAudit().then(setAudit).catch(() => {});
     load();
     const t = setInterval(load, 6000);
     return () => clearInterval(t);
-  }, []);
+  }, [load]);
+
+  const linkFor = (a: AuditEvent) =>
+    a.entity === "case" ? `/cases/${a.entity_id}`
+      : a.entity === "machine" ? `/machines/${a.entity_id}` : null;
 
   return (
     <main className="page narrow">
-      <div className="section-title">Audit trail — system → agent → human → system, every step attributed</div>
-      <div className="card">
-        {audit.length === 0 && <div className="empty">No events yet</div>}
-        {audit.map((a) => (
-          <div className="audit-row" key={a.id}>
-            <span className="ts">{new Date(a.ts).toLocaleString()}</span>
-            <span className={`actor ${a.actor.startsWith("human") ? "human" : ""}`}>{a.actor}</span>
-            <span>{a.event_type} · {a.entity} #{a.entity_id}</span>
+      <div className="section-head">
+        <div className="section-title" style={{ margin: 0 }}>Audit trail</div>
+        {machine && (
+          <div className="cross-links" style={{ margin: 0 }}>
+            <b>{machine}</b> · <Link href={`/machines/${machine}`}>machine</Link> ·{" "}
+            <Link href={`/cases?machine=${machine}`}>cases</Link> ·{" "}
+            <button className="linkbtn" onClick={() => router.replace("/audit")}>clear</button>
           </div>
-        ))}
+        )}
+      </div>
+      <p className="hint" style={{ marginTop: 0 }}>system → agent → human → system, every step attributed.</p>
+
+      <div className="card">
+        {audit.length === 0 && <div className="empty small">No events{machine ? ` for ${machine}` : ""} yet.</div>}
+        {audit.map((a) => {
+          const href = linkFor(a);
+          const inner = (
+            <>
+              <span className="ts">{new Date(a.ts).toLocaleString()}</span>
+              <span className={`actor ${actorClass(a.actor)}`}>{a.actor}</span>
+              <span>{a.event_type.replaceAll("_", " ")} · {a.entity} #{a.entity_id}{href && <span className="chev"> ›</span>}</span>
+            </>
+          );
+          return href
+            ? <Link className="audit-row link" key={a.id} href={href}>{inner}</Link>
+            : <div className="audit-row" key={a.id}>{inner}</div>;
+        })}
       </div>
     </main>
+  );
+}
+
+export default function AuditPage() {
+  return (
+    <Suspense fallback={<main className="page narrow"><div className="empty">Loading…</div></main>}>
+      <AuditInner />
+    </Suspense>
   );
 }

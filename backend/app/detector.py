@@ -29,6 +29,15 @@ from .models import Anomaly, Machine, TelemetryReading, TriageCase, utcnow
 
 WINDOW = 30          # readings used for the rolling baseline
 COOLDOWN_MIN = 10    # no duplicate anomaly for same machine+metric within this
+
+# Machines whose next detection bypasses the dedup/cooldown, so a *manually*
+# cued fault always surfaces a fresh case in a demo even if one is already open.
+# Cleared once a new anomaly is actually raised for that machine.
+FORCE_DETECT: set[str] = set()
+
+
+def force_detect(machine_id: str) -> None:
+    FORCE_DETECT.add(machine_id)
 Z_LIMIT = 4.0        # robust z magnitude that counts as an excursion
 Z_SUSTAIN = 3        # consecutive readings the excursion must persist
 MAD_SCALE = 1.4826   # MAD -> sigma-equivalent for a normal distribution
@@ -126,6 +135,8 @@ def _blocked_metrics(db: Session, machine_id: str) -> set[str]:
     """Metrics under cooldown or with an open case — two queries per machine
     per reading, instead of two per *signal* (which, against a remote Postgres,
     was the dominant cost of a detection tick)."""
+    if machine_id in FORCE_DETECT:
+        return set()  # manual cue: let the fault through even if a case is open
     cutoff = (datetime.now(timezone.utc) - timedelta(minutes=COOLDOWN_MIN)).isoformat()
     recent = {
         m for (m,) in db.query(Anomaly.metric)
@@ -229,4 +240,6 @@ def run_detection(db: Session, machine: Machine, reading: TelemetryReading,
                         f"{'above' if z > 0 else 'below'} its rolling baseline "
                         f"(median {med:.3g}, {Z_SUSTAIN} consecutive readings)",
                         ground_truth_fault, history, reading))
+    if created:
+        FORCE_DETECT.discard(machine.id)  # the cue produced its case; resume dedup
     return created

@@ -40,6 +40,15 @@ export default function CasePage() {
         <span className={`badge ${c.priority} big`}>{c.priority}</span>
       </div>
 
+      <div className="cross-links">
+        <Link href={`/machines/${c.machine_id}`}>{c.machine_id} machine</Link> ·
+        <Link href={`/cases?machine=${c.machine_id}`}> its cases</Link> ·
+        {c.cmms_work_order_id
+          ? <Link href={`/cmms?machine=${c.machine_id}`}> work order {c.cmms_work_order_id}</Link>
+          : <span className="muted"> no work order yet</span>} ·
+        <Link href={`/audit?machine=${c.machine_id}`}> audit</Link>
+      </div>
+
       <div className="case-grid">
         <section className="chat" aria-label="Agent investigation">
           <div className="section-title">Investigation — every step, verbatim</div>
@@ -103,8 +112,16 @@ export default function CasePage() {
 function TraceBubble({ t }: { t: any }) {
   if (t.step === "anomaly") {
     return (
-      <div className="bubble system">
+      <div className="bubble detector">
         <div className="who">detector</div>
+        <p>{t.detail}</p>
+      </div>
+    );
+  }
+  if (t.step === "llm_fallback") {
+    return (
+      <div className="bubble warn">
+        <div className="who">⚠ llm fallback</div>
         <p>{t.detail}</p>
       </div>
     );

@@ -11,6 +11,65 @@ record — and then I measured whether the AI part is actually trustworthy."*
 
 ---
 
+## 0. What changed since this pack was first written (READ FIRST)
+
+This pack below is still accurate on **architecture, the failure-handling, the
+integration story, and the method** — those are the same. But the system grew,
+and a few concrete facts in later sections are now stale. Where the text below
+says otherwise, this section wins:
+
+- **Real data now grounds it.** A ninth asset, `PMP-03`, replays **real recorded
+  telemetry from the SKAB pump testbed** (Skoltech Anomaly Benchmark, GPL-3.0) —
+  physically induced rotor imbalance, cavitation, and valve-restriction faults,
+  with the dataset authors' own labels used as eval ground truth. It runs its own
+  real signal set (vibration g, motor current, loop pressure, motor/fluid temp,
+  flow). So the fleet is **8 simulated + 1 real**, not 8 simulated.
+- **Real data forced a real design change** (this is a *strong* FDE story): the
+  testbed sits at a different operating point in every recording, so fixed
+  thresholds are blind there. Detection gained a second deterministic rule — a
+  **robust z-score (median/MAD), |z|>4 sustained over 3 readings**, measured
+  against the machine's *own* rolling baseline. Both rules are still non-AI and
+  quotable.
+- **Persistence is Postgres now** (Supabase), in its own `pm_triage` schema, so
+  approved cases and work orders **survive redeploys**. SQLite remains the
+  local/test default.
+- **Governance is real, not described:** an access gate (`APP_ACCESS_PASSWORD`)
+  on every state-changing action, with each reviewer's name signed into the audit
+  trail from their session token; a **live/mock LLM toggle in the header**
+  (audited) with a **hard daily spend cap** that degrades to the mock policy
+  rather than stalling; a live-model call failure falls back to mock mid-case and
+  says so in the trace.
+- **The CMMS corpus got harder on purpose:** 19 corrective records **plus 12
+  routine ones** (PMs, calibrations, inspections, false alarms) carrying a
+  `record_type` field (SAP order-type analogue), so retrieval must *rank against
+  realistic noise*, not just keyword-match.
+- **Test count is 74** (not 68). Live URLs: UI `pm-triage.vercel.app`, API
+  `pm-triage-backend.onrender.com`, both auto-deploying from
+  `github.com/amarshikhar/pm-triage`, backend kept warm and persistent.
+
+### The numbers, corrected and honest
+
+The **mock scripted baseline is current and measured** on this pipeline:
+
+| | mock baseline — synthetic faults | mock baseline — real SKAB episodes |
+|---|---|---|
+| detection rate | 100% | 100% (4/4 real fault classes) |
+| top-1 root-cause accuracy | 57.5% | 50.0% |
+| hit@any | 60.0% | 75.0% |
+
+The **live-model figures quoted later (77.5%, ECE 0.046, the cavitation
+25%→100% story, the calibration bands) were measured on the *earlier* pipeline**
+— before the noisy corpus and the real episodes. They demonstrate the *method*
+(measure → find the real cause → fix the system → re-measure), which is the
+point, but the specific accuracy has **not yet been re-measured on the current,
+harder pipeline** (the OpenRouter key is out of credit). **Do not present 77.5%
+as the current live number.** Say: *"the scripted baseline holds at ~57.5%
+synthetic / 50% on real data at 100% detection; the live-model delta was +20pp on
+the prior pipeline and I'm re-running it on the current one."* That honesty is
+itself the FDE signal.
+
+---
+
 ## 1. What the assignment is really testing
 
 They tell you the weighting, so believe it. The center of gravity is **not** the
@@ -305,13 +364,15 @@ agent tool loop) on a machine with a known fault, then scores the case that come
 out. It never reimplements production logic — if it did, it'd be measuring a copy
 of the system.
 
-**The headline numbers (40 trials/mode, seed 7, in `eval-report.json`):**
+**The headline numbers** — ⚠️ the *live* column below is from the **earlier
+pipeline** (see Section 0); the mock baseline is current, and the live re-run on
+the current pipeline is pending OpenRouter credit. Present it that way.
 
-| | mock (scripted keyword baseline) | live (Claude Sonnet 4.5) |
+| | mock (scripted keyword baseline) | live (Claude Sonnet 4.5) — *prior pipeline* |
 |---|---|---|
-| top-1 accuracy | 57.5% | **77.5%** |
-| hit@any | 60.0% | 85.0% |
-| ECE (calibration error) | 0.191 | **0.046** |
+| top-1 accuracy | 57.5% | 77.5% *(re-measure pending)* |
+| hit@any | 60.0% | 85.0% *(prior)* |
+| ECE (calibration error) | 0.191 | 0.046 *(prior)* |
 
 - **+20 points over a scripted baseline** is what the LLM *buys* — measured, not
   asserted.
@@ -625,7 +686,8 @@ name out loud if it surfaces.
 - **AI/LLM:** Claude Sonnet 4.5 via OpenRouter (OpenAI-compatible tool/function
   calling), model overridable via `OPENROUTER_MODEL`; a deterministic mock-LLM
   mode implementing the identical tool-calling protocol for offline/eval runs.
-- **Infrastructure & data:** SQLite via SQLAlchemy (swap-for-Postgres behind the
+- **Infrastructure & data (updated):** Postgres (Supabase) in production, own
+  `pm_triage` schema, SQLite for local/test — via SQLAlchemy (originally SQLite;
   ORM); an in-process simulated IoT telemetry feed; a mock CMMS exposed as a
   separate ASGI service with its own schema; Render (backend) + Vercel (frontend).
 - **Integration:** bidirectional CMMS — read (history search tool) and write

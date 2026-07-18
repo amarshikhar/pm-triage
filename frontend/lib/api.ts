@@ -78,6 +78,24 @@ export type AuditEvent = {
   id: number; ts: string; actor: string; event_type: string;
   entity: string; entity_id: string; detail: any;
 };
+/** The evaluation harness output — what the /eval page renders. */
+export type EvalModeReport = {
+  n_trials: number; n_scored: number; n_detector_missed: number; n_agent_errors: number;
+  llm_mode: string; llm_model: string; detection_rate_pct: number;
+  accuracy: { top1_text_pct: number; top1_citation_pct: number; hit_any_pct: number; hedged_pct: number; unclassifiable_pct: number };
+  scorer_agreement_pct: number; scorer_agreement_n: number;
+  per_class: Record<string, { n: number; top1_text_pct: number; hit_any_pct: number; mean_confidence: number; mean_ticks_to_detect: number }>;
+  confusion: Record<string, Record<string, number>>;
+  calibration: { bucket: string; n: number; mean_confidence_pct: number; accuracy_pct: number; gap_pct: number }[];
+  ece: number; latency_s: { mean: number; p50: number; max: number } | any;
+  replay?: { detection_rate_pct: number; in_labelled_window_pct: number };
+};
+export type EvalReport = {
+  generated_at: string; seed: number; trials_requested: number;
+  reports: { mock?: EvalModeReport; live?: EvalModeReport };
+};
+export type EvalBundle = { synthetic?: EvalReport; real?: EvalReport };
+
 export type LlmStatus = {
   mode: "live" | "mock"; model: string; runtime_override: string | null;
   key_configured: boolean;
@@ -91,7 +109,9 @@ export const getMachines = () => j<Machine[]>("/api/machines");
 export const getTelemetry = (id: string, n = 60) => j<Reading[]>(`/api/machines/${id}/telemetry?n=${n}`);
 export const getCases = (status?: string) => j<Case[]>(`/api/cases${status ? `?status=${status}` : ""}`);
 export const getCase = (id: number) => j<Case>(`/api/cases/${id}`);
-export const getAudit = () => j<AuditEvent[]>("/api/audit?limit=100");
+export const getAudit = (machine?: string) =>
+  j<AuditEvent[]>(`/api/audit?limit=150${machine ? `&machine=${machine}` : ""}`);
+export const getEvalReport = () => j<EvalBundle>("/api/eval-report");
 export const getFaults = () =>
   j<{ available: string[]; replay: Record<string, string[]>; active: Record<string, string> }>("/api/simulate/faults");
 export const injectFault = (machine_id: string, fault: string) =>

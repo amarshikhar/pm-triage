@@ -1,0 +1,329 @@
+<style>
+  :root{
+    --bg:#141a17; --panel:#1d2420; --panel-2:#212824; --ink:#e9edea;
+    --muted:#9aa69f; --line:#2e3833; --line-soft:#26302b;
+    --accent:#5fbf97; --accent-soft:#1e3529;
+    --real:#79b8d8; --real-soft:#16303a;          /* real-data (echoes the app badge) */
+    --warn:#d9a05a; --warn-soft:#352d1e;
+    --bad:#e08585; --bad-soft:#3a2424;
+    --code:#232b26;
+    color-scheme:dark;
+  }
+  *{box-sizing:border-box}
+  html,body{background:var(--bg) !important; min-height:100%}
+  body{
+    font-family: Georgia, "Times New Roman", serif;
+    color:var(--ink); line-height:1.65; margin:0; padding:0 20px 90px;
+    -webkit-font-smoothing:antialiased;
+  }
+  main{max-width:768px; margin:0 auto}
+  h1,h2,h3,.label,.box,.qa-q,td,th,.step-n,.toc,.mod b,.defend-tag,.pill,.chip,.stat-n{
+    font-family:-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+  h1{font-size:2.05rem; line-height:1.16; margin:52px 0 8px; text-wrap:balance; letter-spacing:-0.01em}
+  h2{font-size:1.4rem; margin:60px 0 12px; padding-top:22px; border-top:1px solid var(--line); text-wrap:balance}
+  h3{font-size:1.06rem; margin:30px 0 8px}
+  p{margin:12px 0}
+  .lede{font-size:1.12rem; color:var(--muted)}
+  .label{display:inline-block; font-size:.72rem; letter-spacing:.1em; text-transform:uppercase;
+         color:var(--accent); font-weight:700; margin-bottom:4px}
+  code{background:var(--code); padding:1px 6px; border-radius:4px; font-size:.86em;
+       font-family:ui-monospace,Menlo,Consolas,monospace; color:#cfe3d8}
+  a{color:var(--accent)}
+  :focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+
+  .meta-row{display:flex; flex-wrap:wrap; gap:8px; margin:18px 0 6px}
+  .chip{font-size:.74rem; padding:3px 11px; border-radius:20px; border:1px solid var(--line);
+        color:var(--muted); background:var(--panel)}
+  .chip.real{border-color:var(--real); color:var(--real)}
+  .chip.live{border-color:var(--accent); color:var(--accent)}
+
+  .toc{background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:16px 22px;
+       margin:26px 0; font-size:.92rem; columns:2; column-gap:34px}
+  .toc a{display:block; padding:3px 0; text-decoration:none}
+  @media (max-width:640px){ .toc{columns:1} }
+
+  .frame{background:var(--accent-soft); border-left:4px solid var(--accent);
+         padding:18px 22px; margin:28px 0; border-radius:0 10px 10px 0}
+  .frame p{margin:6px 0}
+  .frame .say{font-size:1.12rem; font-style:italic}
+  .frame.real{background:var(--real-soft); border-left-color:var(--real)}
+  .frame.warn{background:var(--warn-soft); border-left-color:var(--warn)}
+  .frame .label{color:inherit}
+
+  .flow{list-style:none; margin:24px 0; padding:0}
+  .flow-wrap{padding-left:44px}
+  @media (max-width:860px){ .flow-wrap{padding-left:0} }
+  .flow li{position:relative}
+  .box{background:var(--panel); border:1.5px solid var(--line); border-radius:11px; padding:14px 18px}
+  .box b{display:block; font-size:1rem}
+  .box span{color:var(--muted); font-size:.92rem}
+  .box.human{border-color:var(--warn); background:var(--warn-soft)}
+  .box.system{border-color:var(--accent)}
+  .box.realbox{border-color:var(--real)}
+  .arrow{text-align:center; color:var(--muted); font-size:.85rem; padding:5px 0}
+  .arrow::before{content:"↓ "; color:var(--accent); font-size:1.05rem}
+  .step-n{position:absolute; left:-44px; top:14px; width:28px; height:28px; border-radius:50%;
+          background:var(--accent); color:var(--bg); font-weight:700; font-size:.85rem;
+          display:flex; align-items:center; justify-content:center}
+  @media (max-width:860px){ .step-n{position:static; display:inline-flex; margin-bottom:6px} }
+  .side-note{color:var(--muted); font-size:.9rem; margin:20px 0 0}
+
+  table{border-collapse:collapse; width:100%; margin:16px 0; font-size:.92rem}
+  .tbl-wrap{overflow-x:auto}
+  th,td{border:1px solid var(--line); padding:9px 12px; text-align:left; vertical-align:top}
+  th{background:var(--code); font-size:.78rem; letter-spacing:.05em; text-transform:uppercase; color:var(--muted)}
+  td b{font-family:inherit}
+  td.num,.tnum{font-variant-numeric:tabular-nums}
+
+  .stats{display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; margin:22px 0}
+  .stat{background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:14px 16px}
+  .stat .stat-n{font-size:1.7rem; font-weight:750; font-variant-numeric:tabular-nums; letter-spacing:-0.01em}
+  .stat .stat-l{font-size:.82rem; color:var(--muted); margin-top:2px}
+  .stat.good .stat-n{color:var(--accent)}
+  .stat.real .stat-n{color:var(--real)}
+  .stat.warn .stat-n{color:var(--warn)}
+
+  .qa{border:1px solid var(--line); border-radius:11px; margin:14px 0; overflow:hidden}
+  .qa-q{background:var(--code); padding:11px 16px; font-weight:700; font-size:.95rem}
+  .qa-q .adv{color:var(--bad); font-size:.72rem; letter-spacing:.07em; text-transform:uppercase; margin-right:8px}
+  .qa-a{padding:11px 16px}
+  .qa-a p{margin:8px 0}
+
+  .mod{border:1px solid var(--line); border-radius:11px; padding:12px 18px; margin:12px 0; background:var(--panel)}
+  .mod b{display:block; margin-bottom:4px}
+  .mod p{margin:6px 0; font-size:.95rem}
+  .mod.new{border-color:var(--real)}
+  .defend-tag{display:inline-block; font-size:.68rem; letter-spacing:.09em; text-transform:uppercase;
+              color:var(--warn); font-weight:700; margin-right:6px}
+  .newtag{display:inline-block; font-size:.62rem; letter-spacing:.09em; text-transform:uppercase;
+          color:var(--bg); background:var(--real); font-weight:800; padding:1px 7px; border-radius:5px;
+          margin-left:8px; vertical-align:middle; font-family:-apple-system,sans-serif}
+
+  .pill{display:inline-block; border-radius:20px; padding:1px 12px; font-size:.78rem; font-weight:700}
+  .pill.warn{background:var(--warn-soft); color:var(--warn)}
+  .pill.bad{background:var(--bad-soft); color:var(--bad)}
+  .pill.good{background:var(--accent-soft); color:var(--accent)}
+
+  ul{padding-left:22px} li{margin:6px 0}
+  hr{border:none; border-top:1px solid var(--line); margin:40px 0}
+</style>
+<title>PM Triage — Defense Pack v2 (current system)</title>
+
+<main>
+<p class="label">PM Triage · FDE demo prep · v2</p>
+<h1>The whole project, in plain words — updated</h1>
+<p class="lede">The current system, written so it's easy to follow: what it does, why each choice was made, the honest numbers, and every judge question with an answer. Read top to bottom once; use the cheat sheet before you walk in.</p>
+
+<div class="meta-row">
+  <span class="chip real">● 1 real-data asset (SKAB)</span>
+  <span class="chip">8 simulated machines</span>
+  <span class="chip">Postgres · auth · audit</span>
+  <span class="chip live">live/mock LLM toggle</span>
+  <span class="chip">74 tests</span>
+</div>
+<p class="side-note">This is v2 — it supersedes the earlier "Simple Guide" pack (kept separately). Everything here reflects the deployed system at <code>pm-triage.vercel.app</code>.</p>
+
+<nav class="toc">
+  <a href="#framing">The one-sentence framing</a>
+  <a href="#scoring">What the judges score</a>
+  <a href="#what">What it does + vocabulary</a>
+  <a href="#real">The real-data story</a>
+  <a href="#faults">The faults, physically</a>
+  <a href="#flow">How it works, step by step</a>
+  <a href="#modules">Every module</a>
+  <a href="#gov">Governance &amp; controls</a>
+  <a href="#numbers">The numbers (honest)</a>
+  <a href="#weak">Weaknesses to say out loud</a>
+  <a href="#scope">Enterprise-grade vs stand-in</a>
+  <a href="#demo">Demo script + gotchas</a>
+  <a href="#qa">Judge Q&amp;A bank</a>
+  <a href="#cheat">90-second cheat sheet</a>
+</nav>
+
+<h2 id="framing">The one sentence to anchor on</h2>
+<div class="frame">
+  <p class="say">"I built the workflow a Forward Deployed Engineer actually ships — real machine telemetry into a triaged, evidence-backed recommendation, a mandatory human decision, and a write-back into the maintenance system of record — then I measured whether the AI part is trustworthy, on real data, and said out loud what the numbers don't prove."</p>
+</div>
+<div class="frame real">
+  <p class="label">If asked "is this enterprise-ready?"</p>
+  <p>"It's a <b>production-shaped prototype</b>. The architecture, the integration contract, the governance, and the evaluation discipline are the enterprise-grade parts. One asset runs on real recorded telemetry; the rest of the fleet is simulated for breadth. The datastore and the eval scale are deliberate stand-ins — each with a known, boring replacement I can name."</p>
+</div>
+
+<h2 id="scoring">What the judges are really scoring</h2>
+<p>The rubric weights tell you where the points are: <b>architecture 30%</b>, <b>engineering/SDLC 25%</b>, <b>enterprise integration 20%</b>, domain 15%, <b>agentic AI just 7%</b>, governance/observability 3%. The model itself is the small slice. Two hard gates — miss either and polish won't save you:</p>
+<ul>
+  <li><b>A meaningful system integration</b> — not a standalone script. → the bidirectional CMMS read + write-back through an anti-corruption layer.</li>
+  <li><b>Mandatory human accountability</b> — nothing fully automatic. → a case cannot leave <code>pending_review</code> without a named human decision.</li>
+</ul>
+
+<h2 id="what">What the app actually does</h2>
+<p>A factory has machines; machines break; before they break their sensors show warning signs. This app watches those signs, works out what's probably going wrong, helps a human planner decide, and files the repair ticket in the factory's official maintenance system — with every step logged.</p>
+<h3>Words a judge might use</h3>
+<ul>
+  <li><b>Predictive / condition-based maintenance:</b> fix a machine <i>before</i> it fails, based on its measured condition — cheaper than a breakdown, less wasteful than a fixed calendar.</li>
+  <li><b>Unplanned downtime:</b> the expensive event this whole thing exists to reduce — lost output, idle crews, rush parts.</li>
+  <li><b>Triage:</b> deciding what to look at first and how urgently. A plant makes far more alerts than technicians can chase, so triage quality <i>is</i> the product.</li>
+  <li><b>Root cause vs symptom:</b> the symptom is "vibration is high"; the root cause is "the suction line is starved."</li>
+  <li><b>Planner:</b> the human who owns the ticket queue — in this app, the person who approves/rejects each case, by name.</li>
+  <li><b>CMMS:</b> the plant's official maintenance software (real ones: SAP PM, IBM Maximo, Infor EAM). A mock one stands in here, reached only over HTTP.</li>
+</ul>
+
+<h2 id="real">The real-data story <span class="newtag">new in v2</span></h2>
+<p>The strongest single upgrade, and a genuine Forward-Deployed moment: one asset is <b>not simulated at all.</b></p>
+<div class="frame real">
+  <p><b><code>PMP-03</code> replays real recorded telemetry from the SKAB pump testbed</b> (Skoltech Anomaly Benchmark, GPL-3.0): physically induced <b>rotor imbalance</b>, <b>cavitation</b>, and inlet/outlet <b>valve-restriction</b> experiments, with the dataset authors' own per-row anomaly labels used as evaluation ground truth. It streams its real signal set — vibration acceleration (g), motor current (A), loop pressure (bar), motor &amp; fluid temperature (°C), flow (L/min) — through the exact same detector and agent as the rest of the fleet. The "Inject fault" lever on this machine <b>cues the actual recording</b> just before its labelled window; nothing is synthesized.</p>
+</div>
+<p><b>Why this is the FDE story, not a footnote:</b> real data broke a real assumption. The testbed runs at a <i>different operating point in every recording</i> (healthy flow is ~125 L/min in one run, ~32 in another), so a fixed threshold is blind there. That forced a second, still-deterministic detection rule — a <b>robust z-score</b> (median/MAD, |z|&gt;4 sustained across 3 readings) measured against the machine's <i>own</i> rolling baseline. "I hit real-world messiness and the system had to adapt" is exactly what the role is about.</p>
+<p class="side-note">Honest scope: SKAB is a <i>lab testbed</i>, not a running plant, and it's one asset of nine. Say that plainly — "one asset is real telemetry; the rest are simulated for breadth." Don't imply the fleet is real.</p>
+
+<h2 id="faults">The fault types — what's physically happening</h2>
+<p>Know the one-line story for each; judges love "what is cavitation?"</p>
+<div class="tbl-wrap"><table>
+  <tr><th>Fault</th><th>Physically</th><th>What the sensors show</th><th>Where</th></tr>
+  <tr><td><b>Bearing wear</b></td><td>The bearing a spinning shaft rides in is wearing out.</td><td>Vibration rises steadily; a little friction heat.</td><td>simulated fleet</td></tr>
+  <tr><td><b>Overheat</b></td><td>Cooling failing — blocked coolant, dead fan, low oil.</td><td>Temperature climbs past limit.</td><td>simulated fleet</td></tr>
+  <tr><td><b>Pressure loss</b></td><td>A leak or worn valve.</td><td>Pressure drifts below limit.</td><td>simulated fleet</td></tr>
+  <tr><td><b>Cavitation</b></td><td>Pump inlet starved of liquid → vapor bubbles form and collapse (sounds like gravel).</td><td>Vibration rises <b>and</b> pressure/flow swing erratically.</td><td>both (real on PMP-03)</td></tr>
+  <tr><td><b>Rotor imbalance</b> <span class="pill good">real</span></td><td>Mass imbalance on the rotor (e.g. fouling).</td><td>Vibration climbs; flow &amp; pressure steady.</td><td>SKAB PMP-03</td></tr>
+  <tr><td><b>Suction / discharge restriction</b> <span class="pill good">real</span></td><td>Inlet valve throttled (starves the pump) or outlet valve throttled (runs it back on its curve).</td><td>Flow sags or steps down; motor load eases.</td><td>SKAB PMP-03</td></tr>
+</table></div>
+<p><b>The cavitation trap</b> (still the best method story): on vibration alone, cavitation looks exactly like bearing wear — only the jumpy pressure/flow tells them apart. That's why the detector reports the shape of <i>every</i> signal, not just the one that breached (see the numbers section).</p>
+
+<h2 id="flow">How it works — one step at a time</h2>
+<p>Every box is real code. The orange box is the human; the blue-outlined box is the real-data machine.</p>
+<div class="flow-wrap"><ul class="flow">
+  <li><span class="step-n">1</span><div class="box realbox"><b>Machines stream telemetry</b>
+    <span>8 simulated machines on a tick, <i>plus</i> <code>PMP-03</code> replaying real SKAB recordings. Each machine carries its own signal roster with units — like a real historian, not four fixed columns. (Code: <code>simulator.py</code>, <code>replay.py</code>)</span></div>
+    <div class="arrow">every few seconds</div></li>
+  <li><span class="step-n">2</span><div class="box system"><b>A rule-based detector watches — no AI</b>
+    <span>Two deterministic rules: fixed engineering limits, <i>and</i> a robust z-score against the machine's own baseline (for assets whose normal shifts run to run). On a breach it summarizes how <i>every</i> signal is behaving — drift, volatility, range. Cheap, always explainable, checkable by hand. (Code: <code>detector.py</code>)</span></div>
+    <div class="arrow">opens a case for the AI</div></li>
+  <li><span class="step-n">3</span><div class="box system"><b>The AI agent investigates</b>
+    <span>It uses three read-only tools — machine details, recent trend, and a search over past repair records — then writes a conclusion: likely cause, confidence, cited precedents, actions. The history search must now rank against <i>routine</i> records (PMs, false alarms), not just match keywords. (Code: <code>agent/</code>)</span></div>
+    <div class="arrow">conclusion becomes a case</div></li>
+  <li><span class="step-n">4</span><div class="box system"><b>A formula — not the AI — sets priority</b>
+    <span>criticality + severity + recurrence + safety → P1–P4, shown openly. The AI may nudge ±1 with a written reason and can never downgrade a safety P1. The case also shows the dollar exposure (downtime × hourly cost) — informational, out of the score.</span></div>
+    <div class="arrow">case appears as "pending review"</div></li>
+  <li><span class="step-n">5</span><div class="box human"><b>A human planner decides — nothing happens without this</b>
+    <span>Approve / Reject / Edit, with their name (taken from their signed-in session, not a free text box). Decisions are final and fully audited. The safety gate. (Code: <code>routes.py</code>, <code>auth.py</code>)</span></div>
+    <div class="arrow">only if approved</div></li>
+  <li><span class="step-n">6</span><div class="box system"><b>The adapter files the work order in the CMMS</b>
+    <span>The anti-corruption layer translates the case into the CMMS's own language (priority code, ISO 14224 damage code, functional location) and sends it over HTTP — idempotent, retried with backoff. (Code: <code>agent/cmms_adapter.py</code>)</span></div>
+    <div class="arrow">result</div></li>
+  <li><span class="step-n">7</span><div class="box system"><b>The ticket sits in the system of record; every step is audited</b>
+    <span>The CMMS holds the official work order; the audit trail recorded system → agent → human → system, each attributed. Now persisted in Postgres, so it survives redeploys.</span></div></li>
+</ul></div>
+
+<h2 id="modules">Every module — and the one line to defend it</h2>
+<div class="mod"><b><code>detector.py</code> — rule-based detection, NOT the AI</b>
+<p>Two rules: fixed limits and the robust z-score; on a breach, the per-signal <b>signal context</b> (drift/volatility/range for every signal).</p>
+<p><span class="defend-tag">defend</span>"Detection is deterministic and quotable — 'vibration sustained 7.3 sigma above its own baseline for 3 readings.' I don't spend an AI call on arithmetic. And a breach names one signal, but the <i>pattern across all of them</i> names the fault."</p></div>
+<div class="mod new"><b><code>replay.py</code> — the real-data engine <span class="newtag">new</span></b>
+<p>Streams curated SKAB episodes through the live pipeline; the dataset's labels ride along as eval ground truth; a warmup guards the baseline across episode boundaries so a regime change isn't mistaken for a fault.</p>
+<p><span class="defend-tag">defend</span>"Same detector, same agent, real recorded physics. The 'inject' lever just cues the real recording — I never synthesize a real machine's fault."</p></div>
+<div class="mod new"><b><code>auth.py</code> — access gate + attribution <span class="newtag">new</span></b>
+<p>One crew password gates every state-changing route; each reviewer signs in with their name, carried in an HMAC session token and stamped onto their decisions. Reading stays open so a shared link shows without acting.</p>
+<p><span class="defend-tag">defend</span>"Accountability is only real if it's attributed and can't be spoofed — the decision is signed with the token's identity, not a name typed into a box."</p></div>
+<div class="mod new"><b><code>llm_budget.py</code> + the live/mock toggle <span class="newtag">new</span></b>
+<p>Deployed default is the free mock policy; a header toggle (audited) switches new triage runs to the live model, under a hard daily call cap counted from the database. At the cap — or on any live-call failure — it degrades to mock and says so in the case trace.</p>
+<p><span class="defend-tag">defend</span>"An always-on agent on a metered API is a cost-governance problem, so the cap is structural and the failure mode is graceful degradation, never a lost case."</p></div>
+<div class="mod"><b><code>agent/cmms_adapter.py</code> — the anti-corruption layer</b>
+<p>The only place the two vocabularies meet. Idempotent on the case id; retries 5xx with backoff; refuses to retry a 4xx (our bug) as a distinct terminal state.</p>
+<p><span class="defend-tag">defend · top integration point</span>"Their format never leaks into my domain. The day the CMMS becomes real SAP PM, only this file and a URL change — and a retry can never double-raise a ticket."</p></div>
+<div class="mod"><b><code>eval/</code> — the evaluation harness</b>
+<p>Drives the <i>real</i> pipeline against known answers — now including <code>--data replay</code> to score against the real SKAB labels. Two independent scorers cross-check the measuring tape.</p>
+<p><span class="defend-tag">defend · differentiator</span>"Most candidates show a demo. I measured whether the AI is trustworthy, on real labels, and I can tell you exactly what the number doesn't prove."</p></div>
+
+<h2 id="gov">Governance &amp; controls (the 3% that signals seniority) <span class="newtag">new in v2</span></h2>
+<div class="tbl-wrap"><table>
+  <tr><th>Control</th><th>What it does</th></tr>
+  <tr><td><b>Access gate</b></td><td>State-changing actions require the crew password; viewing is open. No shared link can approve, inject, or toggle the model without signing in.</td></tr>
+  <tr><td><b>Attribution</b></td><td>Every decision, fault injection, and model toggle is signed with the reviewer's session identity in the append-only audit trail.</td></tr>
+  <tr><td><b>Spend cap</b></td><td>Live-LLM runs are hard-capped per day, counted from the DB (survives restarts); past the cap it degrades to mock.</td></tr>
+  <tr><td><b>Graceful degradation</b></td><td>A live-model failure (bad key, outage, out of credit) falls back to the mock policy mid-case and records it in the trace — the case still reaches the planner.</td></tr>
+  <tr><td><b>Idempotent write-back</b></td><td>One work order per case; a retry or double-click never double-dispatches a crew.</td></tr>
+</table></div>
+
+<h2 id="numbers">The numbers — current and honest</h2>
+<p><b>The idea:</b> the simulator (and SKAB) already know which fault is present, so every alert is a free labelled test. The harness replays those through the real pipeline and scores the result.</p>
+<div class="stats">
+  <div class="stat good"><div class="stat-n">100%</div><div class="stat-l">detection rate — synthetic &amp; real</div></div>
+  <div class="stat"><div class="stat-n tnum">57.5%</div><div class="stat-l">mock top-1, synthetic (40 trials)</div></div>
+  <div class="stat real"><div class="stat-n tnum">50%</div><div class="stat-l">mock top-1, real SKAB episodes</div></div>
+  <div class="stat real"><div class="stat-n tnum">75%</div><div class="stat-l">hit@any on real episodes</div></div>
+</div>
+<p>The <b>mock scripted baseline is current and measured</b> on this pipeline. The <b>live-model figures — 77.5% top-1, ECE 0.046, the cavitation 25%→100% story — were measured on the <i>earlier</i> pipeline</b>, before the noisy corpus and real episodes.</p>
+<div class="frame warn">
+  <p class="label">Say this, don't hide it</p>
+  <p>"The scripted baseline holds at ~57.5% synthetic / 50% on real data, at 100% detection. The live model bought +20 points on the prior pipeline with calibrated confidence; I'm re-running that measurement on the current, harder pipeline — the API key is just out of credit right now." <b>That honesty is the FDE signal.</b> Never present 77.5% as the current live number.</p>
+</div>
+<div class="frame">
+  <p class="label">The method story — memorize it</p>
+  <p>Live cavitation first scored <b>25%</b> — every case called it bearing wear, yet the agent <i>cited the cavitation work order every time.</i> It had the precedent and no way to choose it: both faults show rising vibration and the detector only reported the breaching signal. <b>No prompt fixes an absent signal.</b> So I made the detector report drift/volatility/range for every signal — the shapes separate cleanly. <b>Cavitation went 25% → 100%.</b> Measure → find the real cause → fix the system → re-measure. That loop is the deliverable; the number is just its output.</p>
+</div>
+<p class="side-note">The measuring tape is itself cross-checked: two independent scorers (one reads the agent's free text, one reads its cited work-order ids) share no code, so their agreement rate audits the instrument — it caught two "agent mistakes" that were really harness bugs.</p>
+
+<h2 id="weak">Weaknesses to volunteer yourself</h2>
+<ul>
+  <li><b>The live number is stale until re-run.</b> The 77.5% is from the pre-real-data pipeline; the current live figure is unmeasured (out of API credit). I lead with the baseline and the method, not a number I can't currently reproduce.</li>
+  <li><b>"Real data" is one machine deep,</b> and SKAB is a lab testbed, not a plant. It proves the pipeline works on real physics; it doesn't prove plant-scale performance.</li>
+  <li><b>Small n</b> — 40 synthetic trials, fewer per real class. The mock's own score swung 50→57.5% between runs with identical code; that's the noise floor.</li>
+  <li><b>Ground truth is still friendly</b> — the fault is one the simulator/testbed seeded and the CMMS documents. "The harness is the deliverable; point it at real CMMS data and the loop is unchanged."</li>
+  <li><b>Keep-warm is best-effort</b> — the free-tier ping usually keeps the link live, but I warm the URL before a demo anyway.</li>
+</ul>
+
+<h2 id="scope">Enterprise-grade vs deliberate stand-in</h2>
+<div class="tbl-wrap"><table>
+  <tr><th>Real, enterprise-grade</th><th>Stand-in (with its boring upgrade)</th></tr>
+  <tr><td><b>Division of labor</b> — cheap math detects, AI only judges, a human decides everything, all audited.</td><td><b>Sensor data</b> — one asset real (SKAB), the rest simulated. Upgrade: an OSIsoft PI / Ignition historian feed; the detector interface survives.</td></tr>
+  <tr><td><b>Integration boundary</b> — all CMMS language in one translator file; repoint at SAP PM / Maximo and only that file + a URL change.</td><td><b>Eval scale</b> — 40 clean trials + a handful of real episodes. Upgrade: shadow-mode against real planners for weeks.</td></tr>
+  <tr><td><b>Persistence &amp; governance</b> — Postgres, own schema, access gate, attribution, spend cap, idempotency, honest error codes.</td><td><b>Auth</b> — one shared crew password. Upgrade: SSO/OIDC at the same chokepoint; the gate is already there.</td></tr>
+  <tr><td><b>Measurement discipline</b> — accuracy vs baseline, calibrated confidence, cross-checked scorers, docs that state limits.</td><td><b>Scale</b> — one site, 9 assets, in-process simulator. Upgrade: a job queue where the async hook already sits; detector sharding.</td></tr>
+</table></div>
+
+<h2 id="demo">Live demo script (5–7 min)</h2>
+<p><b>Before you present:</b> the backend is persistent now, but warm the URL anyway (hit <code>/api/health</code>, expect <code>"ok":true</code>). Sign in so you can act. Decide live vs mock: if the OpenRouter key is uncredited, stay on <b>mock</b> — the pill will read "LIVE unavailable — no key" otherwise, which is fine to show as honest governance but not what you want mid-flow.</p>
+<ol>
+  <li><b>Frame it (20s):</b> the one sentence above.</li>
+  <li><b>Fleet (20s):</b> the cards with live sparklines; point out <code>PMP-03</code>'s <b>● real data</b> badge and its real signal names.</li>
+  <li><b>Open the real machine (20s):</b> click <code>PMP-03</code> → full-size charts of the real telemetry, its case history. "This one isn't simulated."</li>
+  <li><b>Cue a fault (10s):</b> on <code>PMP-03</code>, "Cue real fault" → rotor imbalance; or on a simulated machine, inject overheat. "The lever cues the real recording; normally these arise on their own."</li>
+  <li><b>Open the case (~60s):</b> walk the investigation-as-a-conversation — detector line → the <b>signal-context table</b> ("same numbers the agent saw; one signal breached, the pattern names the fault") → the hypothesis + cited precedents (safety flags in red, routine records marked) → the <b>priority formula</b> → the <b>dollar exposure</b> → the tool trace.</li>
+  <li><b>Approve with your name.</b> Show the CMMS work order on the case, then the <b>CMMS tab</b> (translated fields), then the <b>audit trail</b> — system → agent → human → system, each attributed.</li>
+  <li><b>The trust question (mic-drop):</b> "How do I know the AI is good?" → the eval: "100% detection on real SKAB faults, a scripted baseline at 57.5% synthetic / 50% real, and the method that took cavitation 25→100. Here's the live delta from the prior pipeline, and here's what I'm still re-measuring." Volunteer a caveat.</li>
+  <li><b>If asked about resilience:</b> the mock pill (AI down → identical pipeline), the spend cap, CMMS-down → sync failed → Retry (decision never lost, retry can't duplicate).</li>
+</ol>
+<h3>Gotchas that look like bugs but are the design</h3>
+<ul>
+  <li><b>Re-cueing the same fault can do nothing new</b> — a cooldown dedups so one ongoing problem doesn't spam duplicate cases. If you cue a fault and no case appears, that's why; cue a different fault, or wait out the cooldown.</li>
+  <li><b>Cavitation only makes sense on pumps.</b> Don't cue it on a compressor.</li>
+  <li><b>Live-AI wording varies</b> — the eval scores meaning, not exact words.</li>
+</ul>
+
+<h2 id="qa">Judge Q&amp;A bank</h2>
+<div class="qa"><div class="qa-q"><span class="adv">⚔</span>Isn't this just a wrapper around an API call?</div>
+<div class="qa-a"><p>The model is 7% of the rubric and one step. The work is the seams: two deterministic detection rules (one of which real operating-point variance forced), the signal-context computation that makes the hard faults separable, a transparent priority formula, a structural human gate with real attribution, a bidirectional CMMS integration through an anti-corruption layer, cost governance on the model, and an eval harness proving the AI is calibrated — on real labels. The API call is the easy part.</p></div></div>
+<div class="qa"><div class="qa-q"><span class="adv">⚔</span>Is any of this real, or all simulated?</div>
+<div class="qa-a"><p>One asset, <code>PMP-03</code>, is real recorded telemetry from the SKAB pump testbed — real induced faults, the dataset authors' labels, real signals. It's what forced the second detection rule. The other eight are simulated for breadth. I'm explicit about that split; I don't dress the fleet up as real.</p></div></div>
+<div class="qa"><div class="qa-q">Why two detection rules?</div>
+<div class="qa-a"><p>Fixed limits work when "normal" is fixed. The real testbed sits at a different operating point every run, so a fixed threshold is blind to a fault there. The robust z-score (median/MAD, sustained) catches a departure from the machine's <i>own</i> recent baseline — and median/MAD so the excursion doesn't poison the baseline it's measured against. Both are deterministic and quotable.</p></div></div>
+<div class="qa"><div class="qa-q">Why is priority a formula, not the AI's call?</div>
+<div class="qa-a"><p>Priority decides who gets dispatched — governance. It has to be an auditable rule a planner can read and contest. The AI gets exactly one notch of discretion, in writing, and can never downgrade a safety P1.</p></div></div>
+<div class="qa"><div class="qa-q"><span class="adv">⚔</span>What happens when you're out of LLM credit — like right now?</div>
+<div class="qa-a"><p>Exactly what you'd want in production: the live call fails, the pipeline falls back to the deterministic mock policy mid-case, records the fallback in the trace, and the case still reaches the planner. Nothing is lost, nothing hangs. That's the graceful-degradation path, and you can see it working in any case filed while the key is uncredited.</p></div></div>
+<div class="qa"><div class="qa-q">How do you know it works?</div>
+<div class="qa-a"><p>74 automated tests, plus the eval harness driving the real pipeline against known answers — 100% detection on both synthetic and real SKAB faults, a scripted baseline to measure the AI's lift against, calibrated confidence, and two cross-checking scorers. And I'll tell you what it doesn't prove.</p></div></div>
+<div class="qa"><div class="qa-q">How does this become production?</div>
+<div class="qa-a"><p>Swap the historian feed in behind the detector; point <code>CMMS_BASE_URL</code> at real SAP PM (only the adapter changes); SSO at the existing auth chokepoint; a job queue where the async hook already sits; run in shadow mode against real planners to earn trust before it writes anything. The architecture doesn't move.</p></div></div>
+
+<h2 id="cheat">90-second cheat sheet</h2>
+<div class="frame">
+  <p><b>What:</b> predictive-maintenance triage — telemetry → evidence-backed recommendation → mandatory human decision → CMMS write-back, all audited.</p>
+  <p><b>Real:</b> one asset (SKAB pump) is real recorded telemetry with real labels; it forced a second detection rule. Rest simulated for breadth.</p>
+  <p><b>Why it scores:</b> hits both hard gates (integration + human accountability); the differentiator is measuring the AI's trustworthiness on real labels, honestly.</p>
+  <p><b>Numbers:</b> 100% detection; mock baseline 57.5% synthetic / 50% real; live delta +20pp on the prior pipeline, re-run pending.</p>
+  <p><b>Governance:</b> access gate + attribution, LLM spend cap + graceful degradation, idempotent write-back, honest error codes.</p>
+  <p><b>Honesty lines:</b> one real machine not a plant; small n; live number being re-measured; production-shaped, not production-scale.</p>
+</div>
+<p class="side-note">Live: <code>pm-triage.vercel.app</code> · API <code>pm-triage-backend.onrender.com</code> · source <code>github.com/amarshikhar/pm-triage</code>. Both halves auto-deploy from <code>main</code>; data persists in Postgres.</p>
+</main>
