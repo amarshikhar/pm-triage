@@ -248,24 +248,25 @@
 <p><b>The idea:</b> the simulator (and SKAB) already know which fault is present, so every alert is a free labelled test. The harness replays those through the real pipeline and scores the result.</p>
 <div class="stats">
   <div class="stat good"><div class="stat-n">100%</div><div class="stat-l">detection rate — synthetic &amp; real</div></div>
-  <div class="stat"><div class="stat-n tnum">57.5%</div><div class="stat-l">mock top-1, synthetic (40 trials)</div></div>
-  <div class="stat real"><div class="stat-n tnum">50%</div><div class="stat-l">mock top-1, real SKAB episodes</div></div>
-  <div class="stat real"><div class="stat-n tnum">75%</div><div class="stat-l">hit@any on real episodes</div></div>
+  <div class="stat accent"><div class="stat-n tnum">+12.5pp</div><div class="stat-l">live over mock, synthetic (70.8 vs 58.3%)</div></div>
+  <div class="stat warn"><div class="stat-n tnum">−18.8pp</div><div class="stat-l">live vs mock, real SKAB (31 vs 50%)</div></div>
+  <div class="stat warn"><div class="stat-n tnum">0.398</div><div class="stat-l">live ECE on real data (overconfident)</div></div>
 </div>
-<p>The <b>mock scripted baseline is current and measured</b> on this pipeline. The <b>live-model figures — 77.5% top-1, ECE 0.046, the cavitation 25%→100% story — were measured on the <i>earlier</i> pipeline</b>, before the noisy corpus and real episodes.</p>
+<p>Measured on the current pipeline in CI (live Sonnet 4.5, synthetic n=24, real n=16). On <b>synthetic</b> faults the LLM buys <b>+12.5pp</b> over the scripted baseline with excellent calibration (ECE <b>0.043</b>). On <b>real SKAB data it is the other way around</b>: the LLM scores <b>31% vs the mock's 50%</b> and its confidence is badly miscalibrated (ECE 0.398 — confidently wrong).</p>
 <div class="frame warn">
-  <p class="label">Say this, don't hide it</p>
-  <p>"The scripted baseline holds at ~57.5% synthetic / 50% on real data, at 100% detection. The live model bought +20 points on the prior pipeline with calibrated confidence; I'm re-running that measurement on the current, harder pipeline — the API key is just out of credit right now." <b>That honesty is the FDE signal.</b> Never present 77.5% as the current live number.</p>
+  <p class="label">The headline finding — this is the most senior thing here</p>
+  <p class="say">"The most valuable thing the eval told me is that the model's accuracy <i>and</i> its confidence don't transfer to real data it wasn't built around. On synthetic faults it looks great and well-calibrated; on the real pump it's worse than a keyword baseline and overconfident. That's exactly why the human gate is structural, not decorative — and exactly why you measure on real data before trusting a model in production. The harness catching this <b>is</b> the deliverable."</p>
+  <p>Caveat to volunteer: real n=16 (4/class), so −18.8pp is directional; the calibration blow-up (0.398 vs 0.043) is the robust signal and doesn't hinge on a few trials.</p>
 </div>
 <div class="frame">
-  <p class="label">The method story — memorize it</p>
-  <p>Live cavitation first scored <b>25%</b> — every case called it bearing wear, yet the agent <i>cited the cavitation work order every time.</i> It had the precedent and no way to choose it: both faults show rising vibration and the detector only reported the breaching signal. <b>No prompt fixes an absent signal.</b> So I made the detector report drift/volatility/range for every signal — the shapes separate cleanly. <b>Cavitation went 25% → 100%.</b> Measure → find the real cause → fix the system → re-measure. That loop is the deliverable; the number is just its output.</p>
+  <p class="label">The method story — how the eval earns its keep</p>
+  <p>On the earlier synthetic-only pipeline, cavitation first scored <b>25%</b> — every case called it bearing wear, yet the agent <i>cited the cavitation work order every time.</i> It had the precedent and no way to choose it: both faults show rising vibration and the detector only reported the breaching signal. <b>No prompt fixes an absent signal.</b> So I made the detector report drift/volatility/range for every signal — the shapes separate cleanly, and cavitation went <b>25% → 100%</b>. Measure → find the real cause → fix the system → re-measure. That same loop is what just surfaced the real-data calibration gap above.</p>
 </div>
 <p class="side-note">The measuring tape is itself cross-checked: two independent scorers (one reads the agent's free text, one reads its cited work-order ids) share no code, so their agreement rate audits the instrument — it caught two "agent mistakes" that were really harness bugs.</p>
 
 <h2 id="weak">Weaknesses to volunteer yourself</h2>
 <ul>
-  <li><b>The live number is stale until re-run.</b> The 77.5% is from the pre-real-data pipeline; the current live figure is unmeasured (out of API credit). I lead with the baseline and the method, not a number I can't currently reproduce.</li>
+  <li><b>The LLM underperforms on real data.</b> +12.5pp on synthetic, but −18.8pp and badly overconfident on the real pump. I don't bury it — it's the finding that most justifies the human gate. (Real n=16 keeps it directional, not definitive.)</li>
   <li><b>"Real data" is one machine deep,</b> and SKAB is a lab testbed, not a plant. It proves the pipeline works on real physics; it doesn't prove plant-scale performance.</li>
   <li><b>Small n</b> — 40 synthetic trials, fewer per real class. The mock's own score swung 50→57.5% between runs with identical code; that's the noise floor.</li>
   <li><b>Ground truth is still friendly</b> — the fault is one the simulator/testbed seeded and the CMMS documents. "The harness is the deliverable; point it at real CMMS data and the loop is unchanged."</li>
@@ -290,7 +291,7 @@
   <li><b>Cue a fault (10s):</b> on <code>PMP-03</code>, "Cue real fault" → rotor imbalance; or on a simulated machine, inject overheat. "The lever cues the real recording; normally these arise on their own."</li>
   <li><b>Open the case (~60s):</b> walk the investigation-as-a-conversation — detector line → the <b>signal-context table</b> ("same numbers the agent saw; one signal breached, the pattern names the fault") → the hypothesis + cited precedents (safety flags in red, routine records marked) → the <b>priority formula</b> → the <b>dollar exposure</b> → the tool trace.</li>
   <li><b>Approve with your name.</b> Show the CMMS work order on the case, then the <b>CMMS tab</b> (translated fields), then the <b>audit trail</b> — system → agent → human → system, each attributed.</li>
-  <li><b>The trust question (mic-drop):</b> "How do I know the AI is good?" → the eval: "100% detection on real SKAB faults, a scripted baseline at 57.5% synthetic / 50% real, and the method that took cavitation 25→100. Here's the live delta from the prior pipeline, and here's what I'm still re-measuring." Volunteer a caveat.</li>
+  <li><b>The trust question (mic-drop):</b> "How do I know the AI is good?" → open the <b>Evaluation page</b> (confusion matrix live): "+12.5pp over the baseline on synthetic and well-calibrated — but on real data it's worse than the baseline and overconfident. That reversal is the most important thing I learned, and it's why the human gate is non-negotiable." Volunteer the small-n caveat.</li>
   <li><b>If asked about resilience:</b> the mock pill (AI down → identical pipeline), the spend cap, CMMS-down → sync failed → Retry (decision never lost, retry can't duplicate).</li>
 </ol>
 <h3>Gotchas that look like bugs but are the design</h3>
@@ -321,7 +322,7 @@
   <p><b>What:</b> predictive-maintenance triage — telemetry → evidence-backed recommendation → mandatory human decision → CMMS write-back, all audited.</p>
   <p><b>Real:</b> one asset (SKAB pump) is real recorded telemetry with real labels; it forced a second detection rule. Rest simulated for breadth.</p>
   <p><b>Why it scores:</b> hits both hard gates (integration + human accountability); the differentiator is measuring the AI's trustworthiness on real labels, honestly.</p>
-  <p><b>Numbers:</b> 100% detection; mock baseline 57.5% synthetic / 50% real; live delta +20pp on the prior pipeline, re-run pending.</p>
+  <p><b>Numbers:</b> 100% detection; live +12.5pp over mock on synthetic (ECE 0.043) but −18.8pp and overconfident (ECE 0.398) on real SKAB — the model's confidence doesn't transfer to real data, which is the whole point.</p>
   <p><b>Governance:</b> access gate + attribution, LLM spend cap + graceful degradation, idempotent write-back, honest error codes.</p>
   <p><b>Honesty lines:</b> one real machine not a plant; small n; live number being re-measured; production-shaped, not production-scale.</p>
 </div>

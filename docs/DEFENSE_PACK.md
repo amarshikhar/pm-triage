@@ -47,26 +47,41 @@ says otherwise, this section wins:
   `pm-triage-backend.onrender.com`, both auto-deploying from
   `github.com/amarshikhar/pm-triage`, backend kept warm and persistent.
 
-### The numbers, corrected and honest
+### The numbers — re-measured on the current pipeline (CI, live Sonnet 4.5)
 
-The **mock scripted baseline is current and measured** on this pipeline:
+Both baseline and live are now measured on *this* pipeline (noisy corpus + real
+episodes), via the `Eval` GitHub workflow. Detection is 100% everywhere.
 
-| | mock baseline — synthetic faults | mock baseline — real SKAB episodes |
-|---|---|---|
-| detection rate | 100% | 100% (4/4 real fault classes) |
-| top-1 root-cause accuracy | 57.5% | 50.0% |
-| hit@any | 60.0% | 75.0% |
+| | mock (scripted) | live (Sonnet 4.5) | delta |
+|---|---|---|---|
+| **Synthetic** top-1 | 58.3% | **70.8%** | **+12.5pp** |
+| **Synthetic** hit@any | 62.5% | 83.3% | |
+| **Synthetic** ECE (↓ better) | 0.194 | **0.043** | calibrated |
+| **Real SKAB** top-1 | **50.0%** | 31.2% | **−18.8pp** |
+| **Real SKAB** hit@any | 75.0% | 31.2% | |
+| **Real SKAB** ECE (↓ better) | 0.25 | **0.398** | overconfident |
 
-The **live-model figures quoted later (77.5%, ECE 0.046, the cavitation
-25%→100% story, the calibration bands) were measured on the *earlier* pipeline**
-— before the noisy corpus and the real episodes. They demonstrate the *method*
-(measure → find the real cause → fix the system → re-measure), which is the
-point, but the specific accuracy has **not yet been re-measured on the current,
-harder pipeline** (the OpenRouter key is out of credit). **Do not present 77.5%
-as the current live number.** Say: *"the scripted baseline holds at ~57.5%
-synthetic / 50% on real data at 100% detection; the live-model delta was +20pp on
-the prior pipeline and I'm re-running it on the current one."* That honesty is
-itself the FDE signal.
+(synthetic n=24, real n=16 — 4 per real class.)
+
+**The headline finding, and it's a strong one:** on synthetic faults the LLM
+buys +12.5pp with excellent calibration (0.043). But **on real SKAB data the LLM
+*underperforms* the scripted baseline (31% vs 50%) and is badly overconfident
+(ECE 0.398 — confidently wrong).** Say this out loud, because it's the most
+senior thing in the whole project:
+
+> *"The single most valuable thing the eval told me is that the model's accuracy
+> and its confidence do **not** transfer to real data it wasn't built around. On
+> synthetic faults it looks great and well-calibrated; on the real pump it's
+> worse than a keyword baseline and overconfident. That is exactly why the human
+> gate is structural, not decorative — and exactly why you measure on real data
+> before you trust a model in production. The harness catching this **is** the
+> deliverable."*
+
+Caveat to volunteer: real n=16 (4/class), so the −18.8pp is directional, not
+definitive — but the calibration blow-up (0.398 vs 0.043) is the robust signal
+and doesn't depend on a few trials. The earlier pipeline's live run (77.5%, the
+cavitation 25→100 story below) came from simpler synthetic-only conditions;
+treat those as the *method* illustration, not the current headline.
 
 ---
 
