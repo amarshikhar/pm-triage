@@ -1,0 +1,18 @@
+# Keep the free-tier API instance warm so the shared link answers immediately.
+# Render free spins down after ~15 idle minutes; a ping every 10 keeps it up
+# around the clock, and the steady traffic also keeps the free Supabase
+# project from pausing for inactivity. Best-effort by nature.
+name: Keep API warm
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch: {}
+permissions: {}
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping API health
+        run: |
+          curl -sS --max-time 90 --retry 2 \
+            https://pm-triage-backend.onrender.com/api/health || true

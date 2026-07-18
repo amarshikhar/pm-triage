@@ -1,0 +1,80 @@
+{
+  "dataset": "SKAB v0.9 (Skoltech Anomaly Benchmark)",
+  "url": "https://github.com/waico/SKAB",
+  "license": "GPL-3.0",
+  "description": "Real telemetry from a water-circulation pump testbed; anomaly labels mark physically induced faults.",
+  "signals": [
+    {
+      "key": "vibration_g",
+      "name": "Vibration accel RMS",
+      "unit": "g"
+    },
+    {
+      "key": "current_a",
+      "name": "Motor current",
+      "unit": "A"
+    },
+    {
+      "key": "pressure_bar",
+      "name": "Loop pressure",
+      "unit": "bar"
+    },
+    {
+      "key": "temp_motor_c",
+      "name": "Motor body temp",
+      "unit": "\u00b0C"
+    },
+    {
+      "key": "temp_fluid_c",
+      "name": "Fluid temp",
+      "unit": "\u00b0C"
+    },
+    {
+      "key": "flow_lpm",
+      "name": "Flow rate",
+      "unit": "L/min"
+    }
+  ],
+  "episodes": [
+    {
+      "file": "skab-imbalance-linear.csv",
+      "fault": "rotor_imbalance",
+      "rows": 1147,
+      "labelled_rows": 402,
+      "first_labelled_row": 573,
+      "source_file": "data/other/6.csv"
+    },
+    {
+      "file": "skab-cavitation-two-phase.csv",
+      "fault": "cavitation",
+      "rows": 923,
+      "labelled_rows": 265,
+      "first_labelled_row": 495,
+      "source_file": "data/other/13.csv"
+    },
+    {
+      "file": "skab-discharge-restriction-a.csv",
+      "fault": "discharge_restriction",
+      "rows": 1125,
+      "labelled_rows": 394,
+      "first_labelled_row": 562,
+      "source_file": "data/valve2/0.csv"
+    },
+    {
+      "file": "skab-discharge-restriction-b.csv",
+      "fault": "discharge_restriction",
+      "rows": 1063,
+      "labelled_rows": 333,
+      "first_labelled_row": 560,
+      "source_file": "data/valve2/1.csv"
+    },
+    {
+      "file": "skab-suction-restriction.csv",
+      "fault": "suction_restriction",
+      "rows": 1075,
+      "labelled_rows": 337,
+      "first_labelled_row": 566,
+      "source_file": "data/valve1/2.csv"
+    }
+  ]
+}

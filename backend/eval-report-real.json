@@ -1,0 +1,330 @@
+{
+  "generated_at": "2026-07-18T05:58:55.718629+00:00",
+  "seed": 7,
+  "trials_requested": 8,
+  "reports": {
+    "mock": {
+      "n_trials": 8,
+      "n_scored": 8,
+      "n_detector_missed": 0,
+      "n_agent_errors": 0,
+      "llm_mode": "mock",
+      "llm_model": "deterministic-mock",
+      "detection_rate_pct": 100.0,
+      "accuracy": {
+        "top1_text_pct": 50.0,
+        "top1_citation_pct": 50.0,
+        "hit_any_pct": 75.0,
+        "hedged_pct": 0.0,
+        "unclassifiable_pct": 0.0
+      },
+      "scorer_agreement_pct": 100.0,
+      "scorer_agreement_n": 8,
+      "per_class": {
+        "cavitation": {
+          "n": 2,
+          "top1_text_pct": 0.0,
+          "hit_any_pct": 100.0,
+          "mean_confidence": 0.75,
+          "mean_ticks_to_detect": 42.0
+        },
+        "rotor_imbalance": {
+          "n": 2,
+          "top1_text_pct": 100.0,
+          "hit_any_pct": 100.0,
+          "mean_confidence": 0.75,
+          "mean_ticks_to_detect": 48.0
+        },
+        "suction_restriction": {
+          "n": 2,
+          "top1_text_pct": 100.0,
+          "hit_any_pct": 100.0,
+          "mean_confidence": 0.75,
+          "mean_ticks_to_detect": 48.0
+        },
+        "discharge_restriction": {
+          "n": 2,
+          "top1_text_pct": 0.0,
+          "hit_any_pct": 0.0,
+          "mean_confidence": 0.75,
+          "mean_ticks_to_detect": 99.0
+        }
+      },
+      "confusion": {
+        "cavitation": {
+          "suction_restriction": 2
+        },
+        "discharge_restriction": {
+          "rotor_imbalance": 2
+        },
+        "rotor_imbalance": {
+          "rotor_imbalance": 2
+        },
+        "suction_restriction": {
+          "suction_restriction": 2
+        }
+      },
+      "calibration": [
+        {
+          "bucket": "0.70-0.85",
+          "n": 8,
+          "mean_confidence_pct": 75.0,
+          "accuracy_pct": 50.0,
+          "gap_pct": -25.0
+        }
+      ],
+      "ece": 0.25,
+      "latency_s": {
+        "mean": 0.01,
+        "p50": 0.01,
+        "max": 0.01
+      },
+      "trials_detail": [
+        {
+          "machine_id": "PMP-03",
+          "machine_type": "pump",
+          "fault": "cavitation",
+          "detected": true,
+          "detected_metric": "temp_fluid_c",
+          "severity": "low",
+          "ticks_to_detect": 42,
+          "case_id": 1,
+          "root_cause": "inlet-side valve found partially closed after maintenance on the loop, starving suction",
+          "confidence": 0.75,
+          "priority": "P4",
+          "cited_work_orders": [
+            "WO-1016",
+            "WO-1018",
+            "WO-1017"
+          ],
+          "predicted_text": "suction_restriction",
+          "predicted_citation": "suction_restriction",
+          "hedged": false,
+          "hit_any": true,
+          "correct_text": false,
+          "correct_citation": false,
+          "llm_mode": "mock",
+          "llm_model": "deterministic-mock",
+          "latency_s": 0.01,
+          "error": "",
+          "data_source": "replay",
+          "in_labelled_window": false
+        },
+        {
+          "machine_id": "PMP-03",
+          "machine_type": "pump",
+          "fault": "discharge_restriction",
+          "detected": true,
+          "detected_metric": "flow_lpm",
+          "severity": "high",
+          "ticks_to_detect": 99,
+          "case_id": 1,
+          "root_cause": "imbalance mass on the rotor (blade fouling); confirmed by runout check",
+          "confidence": 0.75,
+          "priority": "P3",
+          "cited_work_orders": [
+            "WO-1018",
+            "WO-1017",
+            "WO-1016"
+          ],
+          "predicted_text": "rotor_imbalance",
+          "predicted_citation": "rotor_imbalance",
+          "hedged": false,
+          "hit_any": false,
+          "correct_text": false,
+          "correct_citation": false,
+          "llm_mode": "mock",
+          "llm_model": "deterministic-mock",
+          "latency_s": 0.01,
+          "error": "",
+          "data_source": "replay",
+          "in_labelled_window": true
+        },
+        {
+          "machine_id": "PMP-03",
+          "machine_type": "pump",
+          "fault": "rotor_imbalance",
+          "detected": true,
+          "detected_metric": "vibration_g",
+          "severity": "high",
+          "ticks_to_detect": 48,
+          "case_id": 1,
+          "root_cause": "imbalance mass on the rotor (blade fouling); confirmed by runout check",
+          "confidence": 0.75,
+          "priority": "P3",
+          "cited_work_orders": [
+            "WO-1018",
+            "WO-1016",
+            "WO-1019"
+          ],
+          "predicted_text": "rotor_imbalance",
+          "predicted_citation": "rotor_imbalance",
+          "hedged": false,
+          "hit_any": true,
+          "correct_text": true,
+          "correct_citation": true,
+          "llm_mode": "mock",
+          "llm_model": "deterministic-mock",
+          "latency_s": 0.01,
+          "error": "",
+          "data_source": "replay",
+          "in_labelled_window": true
+        },
+        {
+          "machine_id": "PMP-03",
+          "machine_type": "pump",
+          "fault": "suction_restriction",
+          "detected": true,
+          "detected_metric": "temp_motor_c",
+          "severity": "low",
+          "ticks_to_detect": 48,
+          "case_id": 1,
+          "root_cause": "inlet-side valve found partially closed after maintenance on the loop, starving suction",
+          "confidence": 0.75,
+          "priority": "P4",
+          "cited_work_orders": [
+            "WO-1016",
+            "WO-1018",
+            "WO-1017"
+          ],
+          "predicted_text": "suction_restriction",
+          "predicted_citation": "suction_restriction",
+          "hedged": false,
+          "hit_any": true,
+          "correct_text": true,
+          "correct_citation": true,
+          "llm_mode": "mock",
+          "llm_model": "deterministic-mock",
+          "latency_s": 0.01,
+          "error": "",
+          "data_source": "replay",
+          "in_labelled_window": true
+        },
+        {
+          "machine_id": "PMP-03",
+          "machine_type": "pump",
+          "fault": "cavitation",
+          "detected": true,
+          "detected_metric": "temp_fluid_c",
+          "severity": "low",
+          "ticks_to_detect": 42,
+          "case_id": 1,
+          "root_cause": "inlet-side valve found partially closed after maintenance on the loop, starving suction",
+          "confidence": 0.75,
+          "priority": "P4",
+          "cited_work_orders": [
+            "WO-1016",
+            "WO-1018",
+            "WO-1017"
+          ],
+          "predicted_text": "suction_restriction",
+          "predicted_citation": "suction_restriction",
+          "hedged": false,
+          "hit_any": true,
+          "correct_text": false,
+          "correct_citation": false,
+          "llm_mode": "mock",
+          "llm_model": "deterministic-mock",
+          "latency_s": 0.01,
+          "error": "",
+          "data_source": "replay",
+          "in_labelled_window": false
+        },
+        {
+          "machine_id": "PMP-03",
+          "machine_type": "pump",
+          "fault": "discharge_restriction",
+          "detected": true,
+          "detected_metric": "flow_lpm",
+          "severity": "high",
+          "ticks_to_detect": 99,
+          "case_id": 1,
+          "root_cause": "imbalance mass on the rotor (blade fouling); confirmed by runout check",
+          "confidence": 0.75,
+          "priority": "P3",
+          "cited_work_orders": [
+            "WO-1018",
+            "WO-1017",
+            "WO-1016"
+          ],
+          "predicted_text": "rotor_imbalance",
+          "predicted_citation": "rotor_imbalance",
+          "hedged": false,
+          "hit_any": false,
+          "correct_text": false,
+          "correct_citation": false,
+          "llm_mode": "mock",
+          "llm_model": "deterministic-mock",
+          "latency_s": 0.01,
+          "error": "",
+          "data_source": "replay",
+          "in_labelled_window": true
+        },
+        {
+          "machine_id": "PMP-03",
+          "machine_type": "pump",
+          "fault": "rotor_imbalance",
+          "detected": true,
+          "detected_metric": "vibration_g",
+          "severity": "high",
+          "ticks_to_detect": 48,
+          "case_id": 1,
+          "root_cause": "imbalance mass on the rotor (blade fouling); confirmed by runout check",
+          "confidence": 0.75,
+          "priority": "P3",
+          "cited_work_orders": [
+            "WO-1018",
+            "WO-1016",
+            "WO-1019"
+          ],
+          "predicted_text": "rotor_imbalance",
+          "predicted_citation": "rotor_imbalance",
+          "hedged": false,
+          "hit_any": true,
+          "correct_text": true,
+          "correct_citation": true,
+          "llm_mode": "mock",
+          "llm_model": "deterministic-mock",
+          "latency_s": 0.01,
+          "error": "",
+          "data_source": "replay",
+          "in_labelled_window": true
+        },
+        {
+          "machine_id": "PMP-03",
+          "machine_type": "pump",
+          "fault": "suction_restriction",
+          "detected": true,
+          "detected_metric": "temp_motor_c",
+          "severity": "low",
+          "ticks_to_detect": 48,
+          "case_id": 1,
+          "root_cause": "inlet-side valve found partially closed after maintenance on the loop, starving suction",
+          "confidence": 0.75,
+          "priority": "P4",
+          "cited_work_orders": [
+            "WO-1016",
+            "WO-1018",
+            "WO-1017"
+          ],
+          "predicted_text": "suction_restriction",
+          "predicted_citation": "suction_restriction",
+          "hedged": false,
+          "hit_any": true,
+          "correct_text": true,
+          "correct_citation": true,
+          "llm_mode": "mock",
+          "llm_model": "deterministic-mock",
+          "latency_s": 0.01,
+          "error": "",
+          "data_source": "replay",
+          "in_labelled_window": true
+        }
+      ],
+      "replay": {
+        "detection_rate_pct": 100.0,
+        "in_labelled_window_pct": 75.0
+      }
+    }
+  }
+}
