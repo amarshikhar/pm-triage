@@ -48,8 +48,14 @@ def login(body: Login, db: Session = Depends(get_db)):
 
 @router.get("/llm")
 def llm_status(db: Session = Depends(get_db)):
+    import os
+
     return {"mode": llm_mode(), "model": llm_model(),
-            "runtime_override": runtime_mode(), "budget": budget(db)}
+            "runtime_override": runtime_mode(),
+            # Without a key, a "live" toggle silently resolves to mock — the UI
+            # needs to say WHY, not just show mock.
+            "key_configured": bool(os.getenv("OPENROUTER_API_KEY")),
+            "budget": budget(db)}
 
 
 class LlmMode(BaseModel):
@@ -69,19 +75,34 @@ def set_llm_mode(body: LlmMode, db: Session = Depends(get_db),
 
 @router.get("/machines")
 def list_machines(db: Session = Depends(get_db)):
+    """Fleet snapshot in three queries, not 2N+1.
+
+    Against a remote Postgres every query is a network round trip; the per-
+    machine latest-reading + pending-count pattern made this endpoint ~20
+    round trips and it is polled every few seconds by the dashboard."""
+    from sqlalchemy import func
+
+    machines = db.query(Machine).order_by(Machine.id).all()
+    latest_ids = (
+        db.query(func.max(TelemetryReading.id))
+        .group_by(TelemetryReading.machine_id)
+        .subquery()
+    )
+    latest_by_machine = {
+        r.machine_id: r
+        for r in db.query(TelemetryReading).filter(TelemetryReading.id.in_(latest_ids)).all()
+    }
+    pending_by_machine = dict(
+        db.query(TriageCase.machine_id, func.count())
+        .filter(TriageCase.status == "pending_review")
+        .group_by(TriageCase.machine_id)
+        .all()
+    )
+
     out = []
-    for m in db.query(Machine).order_by(Machine.id).all():
-        latest = (
-            db.query(TelemetryReading)
-            .filter(TelemetryReading.machine_id == m.id)
-            .order_by(TelemetryReading.id.desc())
-            .first()
-        )
-        pending = (
-            db.query(TriageCase)
-            .filter(TriageCase.machine_id == m.id, TriageCase.status == "pending_review")
-            .count()
-        )
+    for m in machines:
+        latest = latest_by_machine.get(m.id)
+        pending = pending_by_machine.get(m.id, 0)
         if m.source == "replay":
             fault_active = replayer.active_fault(m.id) is not None
         else:

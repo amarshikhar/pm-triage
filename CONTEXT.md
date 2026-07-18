@@ -78,3 +78,33 @@ Audit trail (every event: detection, agent run, tool calls, human decision)
       `OPENROUTER_API_KEY`; create the Vercel project for `frontend/` and put
       its `projectId` in the registry.
 - [ ] Dry-run the live demo script in `README.md` before the defense.
+
+---
+
+## Update v2 — 2026-07-18 (post-overhaul; the section above is the original log, kept verbatim)
+
+**Canonical home moved:** github.com/amarshikhar/pm-triage (public). The copy
+in Antigravity_Skills `01-revenue/pm-triage` is frozen history — do not
+develop there. Backend auto-deploys from pm-triage `main` via Render
+(Blueprint, service `pm-triage-backend`); frontend auto-deploys from the same
+repo via Vercel (Root Directory `frontend`, domain pm-triage.vercel.app).
+
+**What changed since the original log (all decided with Shikhar):**
+
+| Area | Decision |
+|---|---|
+| Real data | `PMP-03` replays curated real SKAB pump-testbed episodes (GPL-3.0, committed in `backend/data/episodes/`); dataset labels = eval ground truth; demo lever cues the real recording. Simulated fleet kept alongside for breadth + on-demand demos; UI badges distinguish. |
+| Telemetry schema | Signal-generic: `Machine.signals_json` roster + `TelemetryReading.values_json`; per-machine limits. |
+| Detection | Second deterministic rule: robust z-score (median/MAD, \|z\|>4 sustained 3 readings) vs the machine's own baseline — real operating-point variance made fixed thresholds insufficient. |
+| Persistence | Supabase Postgres via `DATABASE_URL` (Session-pooler DSN; NOT the https:// API URL), own `pm_triage` schema, telemetry retention pruning. SQLite stays for local/tests. |
+| Auth | `APP_ACCESS_PASSWORD` crew gate on mutating routes; HMAC session tokens carry the reviewer name, which signs decisions. Reads stay open. |
+| LLM control | Mock by default; header toggle (audited) to live; `LLM_DAILY_CALL_CAP` counted from DB; live-call failure falls back to mock mid-case, noted in trace. |
+| CMMS corpus | 19 corrective + 12 routine records (`record_type` field, SAP-order-type analogue); retrieval must discriminate. Economics cited in `docs/ECONOMICS.md` (Siemens/Senseye TCOD). |
+| Eval | `--data replay` scores against real SKAB labels. Current mock floor: 100% detection both modes, 50% top-1. Live re-run pending on the new pipeline (old live: 77.5%, +20pp, ECE 0.046). |
+| UI | Routes: `/` fleet, `/machines/[id]` full-size charts, `/cases`, `/cases/[id]` (investigation as conversation), `/cmms`, `/audit`. Dark control-room theme, validated palette, mobile. |
+| Always-on | Keep-warm workflow pings the API every 10 min; Postgres persistence means redeploys keep cases. |
+
+**Known caveats to volunteer, not hide:** keep-warm is best-effort; live-LLM
+numbers not yet re-measured on the harder pipeline; SKAB cavitation episode
+can fire slightly before the labelled window (reported as out-of-window, not
+hidden); `/machines` endpoint batched to 3 queries for remote-Postgres latency.

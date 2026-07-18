@@ -122,23 +122,22 @@ def render_context(context: dict, breached_metric: str) -> str:
     return "\n".join(lines)
 
 
-def _recent_open(db: Session, machine_id: str, metric: str) -> bool:
+def _blocked_metrics(db: Session, machine_id: str) -> set[str]:
+    """Metrics under cooldown or with an open case — two queries per machine
+    per reading, instead of two per *signal* (which, against a remote Postgres,
+    was the dominant cost of a detection tick)."""
     cutoff = (datetime.now(timezone.utc) - timedelta(minutes=COOLDOWN_MIN)).isoformat()
-    dup = (
-        db.query(Anomaly)
-        .filter(Anomaly.machine_id == machine_id, Anomaly.metric == metric, Anomaly.ts >= cutoff)
-        .first()
-    )
-    if dup:
-        return True
-    open_case = (
-        db.query(TriageCase)
-        .filter(TriageCase.machine_id == machine_id, TriageCase.status == "pending_review")
-        .join(Anomaly, TriageCase.anomaly_id == Anomaly.id)
-        .filter(Anomaly.metric == metric)
-        .first()
-    )
-    return open_case is not None
+    recent = {
+        m for (m,) in db.query(Anomaly.metric)
+        .filter(Anomaly.machine_id == machine_id, Anomaly.ts >= cutoff).all()
+    }
+    open_cases = {
+        m for (m,) in db.query(Anomaly.metric)
+        .join(TriageCase, TriageCase.anomaly_id == Anomaly.id)
+        .filter(TriageCase.machine_id == machine_id,
+                TriageCase.status == "pending_review").all()
+    }
+    return recent | open_cases
 
 
 def _raise_anomaly(db: Session, machine: Machine, metric: str, value: float,
@@ -188,9 +187,10 @@ def run_detection(db: Session, machine: Machine, reading: TelemetryReading,
     )[1:]  # exclude the reading itself
 
     past_values = [r.values for r in history]
+    blocked = _blocked_metrics(db, machine.id)
 
     for metric, value in values.items():
-        if _recent_open(db, machine.id, metric):
+        if metric in blocked:
             continue
         past = [v[metric] for v in past_values if metric in v]
 

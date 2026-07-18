@@ -4,9 +4,10 @@ import { useState } from "react";
 /** Single-series 2px sparkline with hover tooltip; the metric name is the title,
  * so no legend is needed. Ink stays in text tokens; the line carries identity. */
 export default function Sparkline({
-  values, labels, width = 110, height = 30, threshold,
+  values, labels, width = 110, height = 30, threshold, fluid = false,
 }: {
-  values: number[]; labels?: string[]; width?: number; height?: number; threshold?: number;
+  values: number[]; labels?: string[]; width?: number; height?: number;
+  threshold?: number; fluid?: boolean;
 }) {
   const [hover, setHover] = useState<number | null>(null);
   if (values.length < 2) return <svg width={width} height={height} aria-hidden />;
@@ -19,13 +20,16 @@ export default function Sparkline({
   const d = values.map((v, i) => `${i ? "L" : "M"}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(" ");
 
   return (
-    <span style={{ position: "relative", display: "inline-block" }}>
+    <span style={{ position: "relative", display: fluid ? "block" : "inline-block" }}>
       <svg
-        width={width} height={height} role="img" aria-label="recent trend"
+        {...(fluid
+          ? { viewBox: `0 0 ${width} ${height}`, style: { width: "100%", height: "auto", display: "block" } }
+          : { width, height })}
+        role="img" aria-label="recent trend"
         onMouseLeave={() => setHover(null)}
         onMouseMove={(e) => {
           const rect = e.currentTarget.getBoundingClientRect();
-          const i = Math.round(((e.clientX - rect.left - 2) / (width - 4)) * (values.length - 1));
+          const i = Math.round(((e.clientX - rect.left) / rect.width) * (values.length - 1));
           setHover(Math.max(0, Math.min(values.length - 1, i)));
         }}
       >

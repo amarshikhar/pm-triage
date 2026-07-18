@@ -120,7 +120,24 @@ def run_triage(db: Session, anomaly_id: int) -> TriageCase:
     cited_history: list[dict] = []
 
     for _ in range(MAX_STEPS):
-        msg = mock.chat(messages, T.TOOL_SCHEMAS) if mock else chat(messages, T.TOOL_SCHEMAS)
+        if mock:
+            msg = mock.chat(messages, T.TOOL_SCHEMAS)
+        else:
+            try:
+                msg = chat(messages, T.TOOL_SCHEMAS)
+            except Exception as exc:
+                # A live-model failure (bad key, provider outage, timeout) must
+                # not lose the case: fall back to the deterministic policy and
+                # say so in the trace. Silently raising here meant no case, no
+                # budget movement, and nothing for the planner to review.
+                trace.append({"step": "llm_fallback", "ts": utcnow().isoformat(),
+                              "detail": f"live LLM call failed ({type(exc).__name__}: "
+                                        f"{str(exc)[:120]}) — continuing with the "
+                                        f"deterministic mock policy"})
+                mode = "mock"
+                mock = MockLLM(ctx)
+                messages = messages[:2]  # restart cleanly from system+user
+                msg = mock.chat(messages, T.TOOL_SCHEMAS)
         messages.append(msg)
 
         tool_calls = msg.get("tool_calls")

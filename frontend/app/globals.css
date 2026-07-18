@@ -251,3 +251,10 @@ button.pill:hover { background: var(--surface-2); }
   .bubble { max-width: 100%; }
   .audit-row { grid-template-columns: 1fr; gap: 2px; padding: 8px 0; }
 }
+
+/* --- machine detail page ---------------------------------------------------- */
+a.machine-link { color: var(--text-primary); text-decoration: none; }
+a.machine-link:hover { color: var(--accent); }
+.big-signal { margin-bottom: 10px; }
+.big-signal .metric-title { font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-secondary); }
+.big-signal .metric-now { font-size: 16px; font-weight: 700; color: var(--text-primary); font-variant-numeric: tabular-nums; }

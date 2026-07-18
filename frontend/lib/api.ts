@@ -80,6 +80,7 @@ export type AuditEvent = {
 };
 export type LlmStatus = {
   mode: "live" | "mock"; model: string; runtime_override: string | null;
+  key_configured: boolean;
   budget: { daily_cap: number; used_today: number; remaining: number };
 };
 

@@ -67,13 +67,20 @@ export default function Chrome() {
         {offline && <span className="pill danger">backend waking up…</span>}
         {llm && (
           <button
-            className={`pill llm-toggle ${llm.mode === "live" ? "live" : "mock"}`}
+            className={`pill llm-toggle ${llm.mode === "live" ? "live"
+              : llm.runtime_override === "live" && !llm.key_configured ? "danger" : "mock"}`}
             onClick={toggleLlm}
-            title={llm.mode === "live"
-              ? `${llm.model} — ${llm.budget.remaining}/${llm.budget.daily_cap} live runs left today. Click for mock.`
-              : `Deterministic mock policy (free). Click for live LLM (${llm.budget.remaining}/${llm.budget.daily_cap} left today).`}
+            title={llm.runtime_override === "live" && !llm.key_configured
+              ? "Live was requested but the server has no OPENROUTER_API_KEY — running mock. Set the key in Render → Environment."
+              : llm.mode === "live"
+                ? `${llm.model} — ${llm.budget.used_today}/${llm.budget.daily_cap} live triage runs used today. New anomalies use the live model. Click for mock.`
+                : `Deterministic mock policy (free). Click to switch new triage runs to the live LLM (${llm.budget.used_today}/${llm.budget.daily_cap} used today).`}
           >
-            {llm.mode === "live" ? `LIVE · ${llm.budget.remaining} left` : "LLM: mock"}
+            {llm.runtime_override === "live" && !llm.key_configured
+              ? "LIVE unavailable — no key"
+              : llm.mode === "live"
+                ? `LIVE · ${llm.budget.used_today}/${llm.budget.daily_cap} used`
+                : "LLM: mock"}
           </button>
         )}
         {health?.auth_enabled === false ? null : session ? (

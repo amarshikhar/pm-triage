@@ -1,4 +1,5 @@
 "use client";
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Machine, Reading, getTelemetry } from "@/lib/api";
 import Sparkline from "./Sparkline";
@@ -23,7 +24,8 @@ export default function MachineCard({ m }: { m: Machine }) {
     <div className={`card machine-card ${m.fault_active ? "faulted" : ""}`}>
       <div className="head">
         <div>
-          <div className="name">{m.name}</div>
+          <Link href={`/machines/${m.id}`} className="name machine-link"
+                title="Open full-size charts">{m.name} ↗</Link>
           <div className="loc">{m.location} · criticality {m.criticality}/5</div>
         </div>
         <div className="row" style={{ gap: 4 }}>
