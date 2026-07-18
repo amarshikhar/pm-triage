@@ -8,6 +8,17 @@ from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
 # default for local dev and the test suite.
 DB_URL = os.getenv("DATABASE_URL") or os.getenv("PM_TRIAGE_DB_URL", "sqlite:///./pm_triage.db")
 
+# Guard the classic Supabase mix-up: the project *API* URL (https://<ref>.supabase.co)
+# is not the Postgres connection string. Fail with a message that says what to fix
+# instead of SQLAlchemy's opaque "Can't load plugin: sqlalchemy.dialects:https".
+if DB_URL.startswith(("http://", "https://")):
+    raise RuntimeError(
+        "DATABASE_URL is an HTTP(S) URL — that is the Supabase project API URL, "
+        "not the database connection string. Use Supabase → Connect → Session "
+        "pooler, which looks like:  postgresql://postgres.<ref>:<db-password>@"
+        "<region>.pooler.supabase.com:5432/postgres"
+    )
+
 # Platforms hand out postgres:// URLs; SQLAlchemy 2.x needs an explicit driver.
 if DB_URL.startswith("postgres://"):
     DB_URL = "postgresql+psycopg://" + DB_URL[len("postgres://"):]
