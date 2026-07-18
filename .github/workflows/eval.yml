@@ -1,0 +1,54 @@
+# Re-measure the agent against ground truth in CI (open internet reaches
+# OpenRouter, which the dev sandbox proxy blocks). Manual dispatch so it only
+# spends OpenRouter credit when you ask. Commits the refreshed reports so the
+# in-app Evaluation page shows real numbers. Author is set to the repo owner so
+# the Vercel Hobby-plan deploy is never blocked (see CLAUDE.md).
+name: Eval (accuracy + calibration)
+on:
+  workflow_dispatch:
+    inputs:
+      trials:
+        description: "Synthetic trials per mode (live cost ~ trials x a few cents)"
+        default: "24"
+      mode:
+        description: "mock | live | both"
+        default: "both"
+      commit:
+        description: "Commit refreshed reports back to main?"
+        type: boolean
+        default: true
+permissions:
+  contents: write
+jobs:
+  eval:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install -r requirements.txt
+      - name: Synthetic eval
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+        run: python -m app.eval --trials ${{ inputs.trials }} --mode ${{ inputs.mode }} --out eval-report.json
+      - name: Real SKAB replay eval
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+        run: python -m app.eval --data replay --mode ${{ inputs.mode }} --out eval-report-real.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: eval-reports
+          path: backend/eval-report*.json
+      - name: Commit refreshed reports
+        if: ${{ inputs.commit == true || inputs.commit == 'true' }}
+        run: |
+          cd "$GITHUB_WORKSPACE"
+          git config user.name "amarshikhar"
+          git config user.email "amar.shikhar007@gmail.com"
+          git add backend/eval-report.json backend/eval-report-real.json
+          git commit -m "chore(eval): refresh reports from CI run (${{ inputs.mode }}, ${{ inputs.trials }} trials)" || echo "no changes"
+          git push
