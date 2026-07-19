@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-19T14:43:08.999846+00:00",
+  "generated_at": "2026-07-19T15:07:32.973671+00:00",
   "pipeline_version": "2026-07-19-trained-ml-ood-v3",
   "seed": 7,
   "trials_requested": 8,
@@ -188,10 +188,216 @@
       ],
       "ece": 0.239,
       "latency_s": {
-        "mean": 0.03,
-        "p50": 0.04,
-        "max": 0.05
+        "mean": 0.05,
+        "p50": 0.08,
+        "max": 0.09
       },
+      "replay": {
+        "detection_rate_pct": 100.0,
+        "in_labelled_window_pct": 87.5
+      }
+    },
+    "live": {
+      "n_trials": 8,
+      "n_scored": 7,
+      "n_detector_missed": 0,
+      "n_agent_errors": 1,
+      "llm_mode": "live",
+      "llm_model": "deepseek/deepseek-v4-flash",
+      "detection_rate_pct": 100.0,
+      "accuracy": {
+        "top1_text_pct": 85.7,
+        "top1_citation_pct": 57.1,
+        "classifier_top1_pct": 85.7,
+        "hit_any_pct": 100.0,
+        "hedged_pct": 28.6,
+        "unclassifiable_pct": 0.0,
+        "abstained_pct": 42.9,
+        "textual_abstained_pct": 0.0
+      },
+      "scorer_agreement_pct": 75.0,
+      "scorer_agreement_n": 4,
+      "scorer_coverage_pct": 57.1,
+      "scorer_uncovered_n": 3,
+      "per_class": {
+        "bearing_wear": {
+          "n": 2,
+          "top1_text_pct": 100.0,
+          "classifier_top1_pct": 100.0,
+          "hit_any_pct": 100.0,
+          "mean_confidence": 0.66,
+          "mean_ticks_to_detect": 48.0
+        },
+        "cavitation": {
+          "n": 1,
+          "top1_text_pct": 100.0,
+          "classifier_top1_pct": 0.0,
+          "hit_any_pct": 100.0,
+          "mean_confidence": 0.44,
+          "mean_ticks_to_detect": 42.0
+        },
+        "rotor_imbalance": {
+          "n": 1,
+          "top1_text_pct": 100.0,
+          "classifier_top1_pct": 100.0,
+          "hit_any_pct": 100.0,
+          "mean_confidence": 0.32,
+          "mean_ticks_to_detect": 48.0
+        },
+        "suction_restriction": {
+          "n": 1,
+          "top1_text_pct": 100.0,
+          "classifier_top1_pct": 100.0,
+          "hit_any_pct": 100.0,
+          "mean_confidence": 0.95,
+          "mean_ticks_to_detect": 48.0
+        },
+        "discharge_restriction": {
+          "n": 2,
+          "top1_text_pct": 50.0,
+          "classifier_top1_pct": 100.0,
+          "hit_any_pct": 100.0,
+          "mean_confidence": 0.71,
+          "mean_ticks_to_detect": 90.0
+        }
+      },
+      "confusion": {
+        "rotor_imbalance": {
+          "rotor_imbalance": 1
+        },
+        "cavitation": {
+          "cavitation": 1
+        },
+        "discharge_restriction": {
+          "overheat": 1,
+          "discharge_restriction": 1
+        },
+        "suction_restriction": {
+          "suction_restriction": 1
+        },
+        "bearing_wear": {
+          "bearing_wear": 2
+        }
+      },
+      "operational_confusion": {
+        "rotor_imbalance": {
+          "abstained": 1
+        },
+        "cavitation": {
+          "abstained": 1
+        },
+        "discharge_restriction": {
+          "overheat": 1,
+          "discharge_restriction": 1
+        },
+        "suction_restriction": {
+          "suction_restriction": 1
+        },
+        "bearing_wear": {
+          "bearing_wear": 1,
+          "abstained": 1
+        }
+      },
+      "agent_selection": {
+        "coverage_pct": 57.1,
+        "selective_accuracy_pct": 75.0,
+        "abstained_pct": 42.9
+      },
+      "classifier_confusion": {
+        "rotor_imbalance": {
+          "rotor_imbalance": 1
+        },
+        "cavitation": {
+          "abstained": 1
+        },
+        "discharge_restriction": {
+          "discharge_restriction": 2
+        },
+        "suction_restriction": {
+          "suction_restriction": 1
+        },
+        "bearing_wear": {
+          "bearing_wear": 2
+        }
+      },
+      "classifier": {
+        "top1_accuracy_pct": 85.7,
+        "coverage_pct": 85.7,
+        "selective_accuracy_pct": 100.0,
+        "abstained_pct": 14.3,
+        "trained_layer_used_n": 3,
+        "trained_layer_used_pct": 42.9,
+        "narrow_model_ood_n": 4,
+        "per_class": {
+          "bearing_wear": {
+            "n": 2,
+            "top1_pct": 100.0,
+            "coverage_pct": 100.0,
+            "abstained_pct": 0.0
+          },
+          "cavitation": {
+            "n": 1,
+            "top1_pct": 0.0,
+            "coverage_pct": 0.0,
+            "abstained_pct": 100.0
+          },
+          "rotor_imbalance": {
+            "n": 1,
+            "top1_pct": 100.0,
+            "coverage_pct": 100.0,
+            "abstained_pct": 0.0
+          },
+          "suction_restriction": {
+            "n": 1,
+            "top1_pct": 100.0,
+            "coverage_pct": 100.0,
+            "abstained_pct": 0.0
+          },
+          "discharge_restriction": {
+            "n": 2,
+            "top1_pct": 100.0,
+            "coverage_pct": 100.0,
+            "abstained_pct": 0.0
+          }
+        }
+      },
+      "comparison": {
+        "agent_top1_pct": 85.7,
+        "classifier_top1_pct": 85.7,
+        "mock_top1_pct": 87.5
+      },
+      "calibration": [
+        {
+          "bucket": "0.00-0.50",
+          "n": 3,
+          "mean_confidence_pct": 37.7,
+          "accuracy_pct": 100.0,
+          "gap_pct": 62.3
+        },
+        {
+          "bucket": "0.50-0.70",
+          "n": 1,
+          "mean_confidence_pct": 53.0,
+          "accuracy_pct": 100.0,
+          "gap_pct": 47.0
+        },
+        {
+          "bucket": "0.85-1.00",
+          "n": 3,
+          "mean_confidence_pct": 93.0,
+          "accuracy_pct": 66.7,
+          "gap_pct": -26.3
+        }
+      ],
+      "ece": 0.447,
+      "latency_s": {
+        "mean": 32.88,
+        "p50": 27.7,
+        "max": 58.65
+      },
+      "errors": [
+        "JSONDecodeError: Unterminated string starting at: line 1 column 18 (char 17)"
+      ],
       "replay": {
         "detection_rate_pct": 100.0,
         "in_labelled_window_pct": 87.5
