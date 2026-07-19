@@ -1,5 +1,10 @@
 # PM Triage defense pack — current
 
+This is the concise revision sheet. For the company-specific presentation,
+rubric mapping, complete code trace, and adversarial questions, start with
+`FDE_DEFENSE_MASTER_GUIDE.md`, then use `CODE_AND_DATA_FLOW_REFERENCE.md` and
+`PRODUCTION_CHALLENGE_QA.md`.
+
 ## 30-second pitch
 
 “This system turns machine telemetry into a maintenance recommendation without
@@ -36,7 +41,7 @@ The component boundaries are the point:
 
 ## Numbers to quote
 
-Fresh runs after the 2026-07-19 fixes:
+Current committed evaluation reports:
 
 | Evidence | Synthetic mock n=24 | Real mock n=8 | Real DeepSeek n=8 |
 |---|---:|---:|---:|

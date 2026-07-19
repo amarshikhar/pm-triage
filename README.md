@@ -125,6 +125,9 @@ reviewed, committed, pushed, and the services redeploy.
 
 ## Documentation
 
+- [FDE assessment defense master guide](docs/FDE_DEFENSE_MASTER_GUIDE.md)
+- [Complete code and data-flow reference](docs/CODE_AND_DATA_FLOW_REFERENCE.md)
+- [Production challenge questions and answers](docs/PRODUCTION_CHALLENGE_QA.md)
 - [Documentation index](docs/README.md)
 - [Current status and honest claims](docs/CURRENT_STATUS.md)
 - [Evaluation numbers in simple language](docs/EVALUATION_GUIDE.md)

@@ -57,7 +57,7 @@ Vercel hosts the Next.js frontend. The frontend's
 pytest runs automated Python tests. The suite checks detector rules, signature
 classification, calibration, the agent tool loop, authentication, paid-call
 caps, human decisions, CMMS translation/retry/idempotency, and evaluation logic.
-Current result: 99 passing backend tests and a successful Next.js production build.
+Current result: 105 passing backend tests and a successful Next.js production build.
 
 ### Dockerfile
 
