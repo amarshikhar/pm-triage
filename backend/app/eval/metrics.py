@@ -50,6 +50,12 @@ def summarize(results: list) -> dict:
         "hedged_pct": _pct(len([r for r in scored if r.hedged]), len(scored)),
         "unclassifiable_pct": _pct(
             len([r for r in scored if r.predicted_text is None]), len(scored)),
+        # An abstention is a *deliberate* non-answer ("transient / instrumentation
+        # / operating-condition change") — the agent declining to name a fault it
+        # can't ground, not a parser miss. Tracked separately so the confusion
+        # matrix and this number show refusals distinctly from wrong guesses.
+        "abstained_pct": _pct(
+            len([r for r in scored if getattr(r, "abstained", False)]), len(scored)),
     }
 
     # The two scorers share no logic, so disagreement is a warning about the
@@ -76,7 +82,11 @@ def summarize(results: list) -> dict:
 
     matrix = defaultdict(lambda: defaultdict(int))
     for r in scored:
-        matrix[r.fault][r.predicted_text or "unclassified"] += 1
+        if r.predicted_text:
+            label = r.predicted_text
+        else:
+            label = "abstained" if getattr(r, "abstained", False) else "unclassified"
+        matrix[r.fault][label] += 1
     report["confusion"] = {truth: dict(preds) for truth, preds in matrix.items()}
 
     report["calibration"] = _calibration(scored)
@@ -155,6 +165,7 @@ def format_report(report: dict) -> str:
     L.append(f"  hit@any           : {a['hit_any_pct']}%   (true cause named anywhere)")
     L.append(f"  hedged answers    : {a['hedged_pct']}%")
     L.append(f"  unclassifiable    : {a['unclassifiable_pct']}%")
+    L.append(f"  abstained         : {a.get('abstained_pct')}%   (declined to name a cause)")
     L.append(f"  ECE               : {report['ece']}  (0 = perfectly calibrated)")
     L.append(f"  latency           : mean {report['latency_s']['mean']}s"
              f"  p50 {report['latency_s']['p50']}s  max {report['latency_s']['max']}s")

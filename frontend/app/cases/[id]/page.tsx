@@ -145,13 +145,24 @@ function TraceBubble({ t }: { t: any }) {
 }
 
 function FinalBubble({ c }: { c: Case }) {
+  const cal = c.evidence?.confidence_calibration;
+  const discounted = cal && cal.calibrated < cal.raw - 0.001;
   return (
     <div className="bubble agent final">
-      <div className="who">agent — hypothesis · confidence {(c.confidence * 100).toFixed(0)}%</div>
+      <div className="who">
+        agent — hypothesis · confidence {(c.confidence * 100).toFixed(0)}%
+        {cal?.abstain && <span className="abstain-chip">uncertain · deferring to planner</span>}
+      </div>
       <p className="root-cause">{c.root_cause}</p>
       <p>{c.explanation}</p>
       {c.recommended_actions?.length > 0 && (
         <ul>{c.recommended_actions.map((a, i) => <li key={i}>{a}</li>)}</ul>
+      )}
+      {cal && discounted && (
+        <p className="calib-note">
+          Confidence grounded in evidence: model reported {(cal.raw * 100).toFixed(0)}%, shown as{" "}
+          {(cal.calibrated * 100).toFixed(0)}% — {cal.reason}.
+        </p>
       )}
     </div>
   );

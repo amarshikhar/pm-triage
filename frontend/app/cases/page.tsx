@@ -78,6 +78,7 @@ function CasesInner() {
         {filtered.map((c) => {
           const pb = c.priority_breakdown || {};
           const conf = Math.round(c.confidence * 100);
+          const abstain = pb.confidence_calibration?.abstain;
           return (
             <Link key={c.id} href={`/cases/${c.id}`} className={`case-card prio-${c.priority}`}>
               <div className="cc-head">
@@ -92,9 +93,11 @@ function CasesInner() {
               <div className="cc-cause">{c.root_cause}</div>
 
               <div className="cc-conf-row">
-                <div className="cc-conf-bar"><span style={{ width: `${conf}%` }} /></div>
+                <div className={`cc-conf-bar ${abstain ? "low" : ""}`}><span style={{ width: `${conf}%` }} /></div>
                 <span className="cc-conf-val">{conf}%</span>
-                <span className="cc-conf-label">confidence · {c.llm_mode === "live" ? "live LLM" : "mock"}</span>
+                {abstain
+                  ? <span className="cc-abstain">uncertain</span>
+                  : <span className="cc-conf-label">confidence · {c.llm_mode === "live" ? "live LLM" : "mock"}</span>}
               </div>
 
               <div className="cc-foot">

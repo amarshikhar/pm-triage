@@ -219,3 +219,28 @@ def mentions_class(text: str, cls: str) -> bool:
     Feeds the hit@any metric, which separates 'wrong' from 'right but hedged'.
     """
     return any(rx.search(text or "") for _, rx in _MARKER_RE[cls])
+
+
+# An abstaining answer names no fault at all — it retreats to noise, a transient,
+# an instrument problem, or a non-answer. The scorer recognises this on its own
+# (no shared code with the agent's calibrator) so the confusion matrix can show
+# "abstained" distinctly from "unclassified": the SKAB run had the live model
+# dodge every suction-restriction episode with "test-loop operational transient",
+# and reporting that as a plain miss hid *how* it failed.
+_ABSTENTION_RE = re.compile(
+    r"\b("
+    r"transient|load cycling|operating condition change|operational transient|"
+    r"instrumentation (?:malfunction|error|fault)|control system oscillation|"
+    r"sensor (?:error|fault|malfunction|drift)|measurement (?:noise|artifact|error)|"
+    r"normal variation|within normal|no clear (?:cause|root cause|pattern)|"
+    r"unable to determine|cannot determine|could not determine|undetermined|"
+    r"inconclusive|unknown cause|novel anomaly|does not resemble|"
+    r"no matching (?:failure|pattern)|insufficient evidence"
+    r")\b",
+    re.I,
+)
+
+
+def is_abstention(text: str) -> bool:
+    """True when the agent's stated cause names no concrete fault — a hedge."""
+    return bool(_ABSTENTION_RE.search(text or ""))

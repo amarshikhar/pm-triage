@@ -16,6 +16,7 @@ from ..detector import render_context
 from ..models import Anomaly, Machine, TriageCase, utcnow
 from ..priority import apply_adjustment, compute_priority
 from . import tools as T
+from .calibration import calibrate
 from .llm import MockLLM, chat, llm_mode, llm_model
 
 SYSTEM_PROMPT = """You are a predictive-maintenance triage assistant for a factory.
@@ -187,6 +188,13 @@ def run_triage(db: Session, anomaly_id: int) -> TriageCase:
     breakdown["est_downtime_hours"] = est_downtime_hours
     breakdown["est_cost_exposure"] = round(machine.hourly_downtime_cost * est_downtime_hours, 2)
 
+    # Ground the model's self-reported confidence in the evidence behind it. A
+    # language model's raw certainty tracks fluency, not whether a matching
+    # precedent exists — the SKAB eval showed it confidently wrong on real data.
+    # The calibrated value is what the case (and the eval's ECE) actually carry.
+    calibration = calibrate(answer.get("confidence"), str(answer.get("root_cause", "")),
+                            cited_history)
+
     cited_ids = set(answer.get("cited_work_orders") or [])
     evidence = {
         "anomaly": {"metric": anomaly.metric, "value": anomaly.value,
@@ -203,15 +211,24 @@ def run_triage(db: Session, anomaly_id: int) -> TriageCase:
         # a distinct signal and reconstructing it later is impossible.
         "cited_work_orders": [str(w) for w in (answer.get("cited_work_orders") or [])],
         "recurrence_count": recurrence,
+        "confidence_calibration": calibration.as_dict(),
+    }
+    # Carry a compact calibration summary on the breakdown too, so the case list
+    # (which does not ship the full evidence payload) can flag an abstaining case.
+    breakdown["confidence_calibration"] = {
+        "raw": calibration.raw, "calibrated": calibration.calibrated,
+        "abstain": calibration.abstain, "reason": calibration.reason,
     }
     trace.append({"step": "final_answer", "ts": utcnow().isoformat(),
-                  "detail": f"root_cause='{answer['root_cause']}' confidence={answer.get('confidence')}"})
+                  "detail": f"root_cause='{answer['root_cause']}' "
+                            f"confidence={calibration.calibrated} (raw {calibration.raw}, "
+                            f"{'ABSTAIN — ' + calibration.reason if calibration.abstain else calibration.reason})"})
 
     case = TriageCase(
         anomaly_id=anomaly.id, machine_id=machine.id, created_ts=utcnow().isoformat(),
         status="pending_review",
         root_cause=str(answer.get("root_cause", "")),
-        confidence=float(answer.get("confidence") or 0),
+        confidence=calibration.calibrated,
         priority=final_priority,
         priority_breakdown_json=json.dumps(breakdown),
         recommended_actions_json=json.dumps(answer.get("recommended_actions") or []),
@@ -225,7 +242,8 @@ def run_triage(db: Session, anomaly_id: int) -> TriageCase:
     db.commit()
     audit(db, "agent", "case_created", "case", case.id, {
         "machine_id": machine.id, "priority": final_priority,
-        "confidence": case.confidence, "llm_mode": mode,
+        "confidence": case.confidence, "confidence_raw": calibration.raw,
+        "abstain": calibration.abstain, "llm_mode": mode,
     })
     return case
 

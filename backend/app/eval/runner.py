@@ -23,7 +23,7 @@ from ..db import Base
 from ..models import Anomaly, Machine
 from ..seed import seed_if_empty
 from ..simulator import FAULTS, FleetSimulator
-from .taxonomy import classify_citations, classify_text, mentions_class
+from .taxonomy import classify_citations, classify_text, is_abstention, mentions_class
 
 # A fault is only usable on a machine whose type the detector can see it through.
 # LIMITS gives cnc_mill and conveyor no pressure threshold at all, so a
@@ -57,6 +57,7 @@ class TrialResult:
     predicted_text: str | None = None      # scorer 1: free text
     predicted_citation: str | None = None  # scorer 2: cited work orders
     hedged: bool = False
+    abstained: bool = False         # named no concrete fault (a hedge/non-answer)
     hit_any: bool = False           # ground truth named anywhere, even secondarily
     correct_text: bool = False
     correct_citation: bool = False
@@ -159,6 +160,7 @@ def run_trial(machine_id: str, fault: str, seed: int) -> TrialResult:
         # a long explanation mentions many things, and crediting that would
         # inflate accuracy for free.
         result.predicted_text, result.hedged = classify_text(case.root_cause)
+        result.abstained = is_abstention(case.root_cause)
         result.predicted_citation = classify_citations(cited)
         result.hit_any = mentions_class(case.root_cause, fault)
         result.correct_text = result.predicted_text == fault
@@ -234,6 +236,7 @@ def run_replay_trial(fault: str) -> TrialResult:
         result.llm_model = case.llm_model
 
         result.predicted_text, result.hedged = classify_text(case.root_cause)
+        result.abstained = is_abstention(case.root_cause)
         result.predicted_citation = classify_citations(cited)
         result.hit_any = mentions_class(case.root_cause, fault)
         result.correct_text = result.predicted_text == fault
