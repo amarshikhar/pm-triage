@@ -45,8 +45,8 @@ cue progress instead of an indefinite “Connecting” state.
 | Human-in-the-loop production flow | Done | Every case is `pending_review`; a named planner approves/rejects/edits; only approval creates a CMMS work order. |
 | Cost-safe live mode | Done | Mock default, DeepSeek V4 Flash default, random production faults off, 12 provider requests/day, $0.25/day, 700 output tokens, persistent usage/cost ledger. |
 | Fresh live DeepSeek evaluation | Done | GitHub run `29692423022`: 8/8 live rows, 0 errors/fallbacks, 34 calls, 161,585 tokens, $0.014535 returned cost. |
-| Vercel frontend deployment | Release verification pending | Git integration deploys frontend changes from `main`; this row is updated with the deployment id after production verification. |
-| Render backend deployment | Release verification pending | Render deploys backend changes from `main`; health and behavior are checked after this release is pushed. |
+| Vercel frontend deployment | Done and verified | Frontend-bearing commit `4a17235` completed its production deployment; public `/` and `/eval` both returned HTTP 200 with the new wake-up, cue, and plain-language evaluation content. |
+| Render backend deployment | Done and verified | `/api/health` returned HTTP 200 from release `a778c80`, simulator running, auth enabled, and mock mode. `/api/llm` confirmed the key is configured while paid live mode remains off. |
 
 ## Current mock-mode numbers
 
