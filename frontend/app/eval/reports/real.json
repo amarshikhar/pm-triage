@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-19T15:07:32.973671+00:00",
+  "generated_at": "2026-07-19T15:18:48.715133+00:00",
   "pipeline_version": "2026-07-19-trained-ml-ood-v3",
   "seed": 7,
   "trials_requested": 8,
@@ -199,41 +199,41 @@
     },
     "live": {
       "n_trials": 8,
-      "n_scored": 7,
+      "n_scored": 8,
       "n_detector_missed": 0,
-      "n_agent_errors": 1,
+      "n_agent_errors": 0,
       "llm_mode": "live",
       "llm_model": "deepseek/deepseek-v4-flash",
       "detection_rate_pct": 100.0,
       "accuracy": {
-        "top1_text_pct": 85.7,
-        "top1_citation_pct": 57.1,
-        "classifier_top1_pct": 85.7,
+        "top1_text_pct": 87.5,
+        "top1_citation_pct": 62.5,
+        "classifier_top1_pct": 87.5,
         "hit_any_pct": 100.0,
-        "hedged_pct": 28.6,
+        "hedged_pct": 0.0,
         "unclassifiable_pct": 0.0,
-        "abstained_pct": 42.9,
+        "abstained_pct": 25.0,
         "textual_abstained_pct": 0.0
       },
-      "scorer_agreement_pct": 75.0,
-      "scorer_agreement_n": 4,
-      "scorer_coverage_pct": 57.1,
-      "scorer_uncovered_n": 3,
+      "scorer_agreement_pct": 100.0,
+      "scorer_agreement_n": 6,
+      "scorer_coverage_pct": 75.0,
+      "scorer_uncovered_n": 2,
       "per_class": {
         "bearing_wear": {
-          "n": 2,
+          "n": 3,
           "top1_text_pct": 100.0,
           "classifier_top1_pct": 100.0,
           "hit_any_pct": 100.0,
-          "mean_confidence": 0.66,
+          "mean_confidence": 0.95,
           "mean_ticks_to_detect": 48.0
         },
         "cavitation": {
           "n": 1,
-          "top1_text_pct": 100.0,
+          "top1_text_pct": 0.0,
           "classifier_top1_pct": 0.0,
           "hit_any_pct": 100.0,
-          "mean_confidence": 0.44,
+          "mean_confidence": 0.41,
           "mean_ticks_to_detect": 42.0
         },
         "rotor_imbalance": {
@@ -241,7 +241,7 @@
           "top1_text_pct": 100.0,
           "classifier_top1_pct": 100.0,
           "hit_any_pct": 100.0,
-          "mean_confidence": 0.32,
+          "mean_confidence": 0.79,
           "mean_ticks_to_detect": 48.0
         },
         "suction_restriction": {
@@ -249,15 +249,15 @@
           "top1_text_pct": 100.0,
           "classifier_top1_pct": 100.0,
           "hit_any_pct": 100.0,
-          "mean_confidence": 0.95,
+          "mean_confidence": 0.53,
           "mean_ticks_to_detect": 48.0
         },
         "discharge_restriction": {
           "n": 2,
-          "top1_text_pct": 50.0,
+          "top1_text_pct": 100.0,
           "classifier_top1_pct": 100.0,
           "hit_any_pct": 100.0,
-          "mean_confidence": 0.71,
+          "mean_confidence": 0.62,
           "mean_ticks_to_detect": 90.0
         }
       },
@@ -266,42 +266,40 @@
           "rotor_imbalance": 1
         },
         "cavitation": {
-          "cavitation": 1
+          "suction_restriction": 1
         },
         "discharge_restriction": {
-          "overheat": 1,
-          "discharge_restriction": 1
+          "discharge_restriction": 2
         },
         "suction_restriction": {
           "suction_restriction": 1
         },
         "bearing_wear": {
-          "bearing_wear": 2
+          "bearing_wear": 3
         }
       },
       "operational_confusion": {
         "rotor_imbalance": {
-          "abstained": 1
+          "rotor_imbalance": 1
         },
         "cavitation": {
           "abstained": 1
         },
         "discharge_restriction": {
-          "overheat": 1,
+          "abstained": 1,
           "discharge_restriction": 1
         },
         "suction_restriction": {
           "suction_restriction": 1
         },
         "bearing_wear": {
-          "bearing_wear": 1,
-          "abstained": 1
+          "bearing_wear": 3
         }
       },
       "agent_selection": {
-        "coverage_pct": 57.1,
-        "selective_accuracy_pct": 75.0,
-        "abstained_pct": 42.9
+        "coverage_pct": 75.0,
+        "selective_accuracy_pct": 100.0,
+        "abstained_pct": 25.0
       },
       "classifier_confusion": {
         "rotor_imbalance": {
@@ -317,20 +315,20 @@
           "suction_restriction": 1
         },
         "bearing_wear": {
-          "bearing_wear": 2
+          "bearing_wear": 3
         }
       },
       "classifier": {
-        "top1_accuracy_pct": 85.7,
-        "coverage_pct": 85.7,
+        "top1_accuracy_pct": 87.5,
+        "coverage_pct": 87.5,
         "selective_accuracy_pct": 100.0,
-        "abstained_pct": 14.3,
+        "abstained_pct": 12.5,
         "trained_layer_used_n": 3,
-        "trained_layer_used_pct": 42.9,
-        "narrow_model_ood_n": 4,
+        "trained_layer_used_pct": 37.5,
+        "narrow_model_ood_n": 5,
         "per_class": {
           "bearing_wear": {
-            "n": 2,
+            "n": 3,
             "top1_pct": 100.0,
             "coverage_pct": 100.0,
             "abstained_pct": 0.0
@@ -362,17 +360,17 @@
         }
       },
       "comparison": {
-        "agent_top1_pct": 85.7,
-        "classifier_top1_pct": 85.7,
-        "mock_top1_pct": 87.5
+        "agent_top1_pct": 87.5,
+        "classifier_top1_pct": 87.5,
+        "mock_top1_pct": null
       },
       "calibration": [
         {
           "bucket": "0.00-0.50",
-          "n": 3,
-          "mean_confidence_pct": 37.7,
-          "accuracy_pct": 100.0,
-          "gap_pct": 62.3
+          "n": 2,
+          "mean_confidence_pct": 35.0,
+          "accuracy_pct": 50.0,
+          "gap_pct": 15.0
         },
         {
           "bucket": "0.50-0.70",
@@ -382,22 +380,37 @@
           "gap_pct": 47.0
         },
         {
+          "bucket": "0.70-0.85",
+          "n": 1,
+          "mean_confidence_pct": 79.0,
+          "accuracy_pct": 100.0,
+          "gap_pct": 21.0
+        },
+        {
           "bucket": "0.85-1.00",
-          "n": 3,
-          "mean_confidence_pct": 93.0,
-          "accuracy_pct": 66.7,
-          "gap_pct": -26.3
+          "n": 4,
+          "mean_confidence_pct": 95.0,
+          "accuracy_pct": 100.0,
+          "gap_pct": 5.0
         }
       ],
-      "ece": 0.447,
+      "ece": 0.148,
       "latency_s": {
-        "mean": 32.88,
-        "p50": 27.7,
-        "max": 58.65
+        "mean": 32.17,
+        "p50": 30.41,
+        "max": 56.25
       },
-      "errors": [
-        "JSONDecodeError: Unterminated string starting at: line 1 column 18 (char 17)"
-      ],
+      "paid_usage": {
+        "provider_requests": 34,
+        "returned_cost_usd": 0.014535,
+        "prompt_tokens": 143044,
+        "completion_tokens": 18541,
+        "total_tokens": 161585,
+        "model": "deepseek/deepseek-v4-flash",
+        "cost_source": "OpenRouter response usage.cost",
+        "request_cap": 50,
+        "returned_cost_stop_usd": 0.05
+      },
       "replay": {
         "detection_rate_pct": 100.0,
         "in_labelled_window_pct": 87.5

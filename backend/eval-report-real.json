@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-19T15:07:32.973671+00:00",
+  "generated_at": "2026-07-19T15:18:48.715133+00:00",
   "pipeline_version": "2026-07-19-trained-ml-ood-v3",
   "seed": 7,
   "trials_requested": 8,
@@ -507,41 +507,41 @@
     },
     "live": {
       "n_trials": 8,
-      "n_scored": 7,
+      "n_scored": 8,
       "n_detector_missed": 0,
-      "n_agent_errors": 1,
+      "n_agent_errors": 0,
       "llm_mode": "live",
       "llm_model": "deepseek/deepseek-v4-flash",
       "detection_rate_pct": 100.0,
       "accuracy": {
-        "top1_text_pct": 85.7,
-        "top1_citation_pct": 57.1,
-        "classifier_top1_pct": 85.7,
+        "top1_text_pct": 87.5,
+        "top1_citation_pct": 62.5,
+        "classifier_top1_pct": 87.5,
         "hit_any_pct": 100.0,
-        "hedged_pct": 28.6,
+        "hedged_pct": 0.0,
         "unclassifiable_pct": 0.0,
-        "abstained_pct": 42.9,
+        "abstained_pct": 25.0,
         "textual_abstained_pct": 0.0
       },
-      "scorer_agreement_pct": 75.0,
-      "scorer_agreement_n": 4,
-      "scorer_coverage_pct": 57.1,
-      "scorer_uncovered_n": 3,
+      "scorer_agreement_pct": 100.0,
+      "scorer_agreement_n": 6,
+      "scorer_coverage_pct": 75.0,
+      "scorer_uncovered_n": 2,
       "per_class": {
         "bearing_wear": {
-          "n": 2,
+          "n": 3,
           "top1_text_pct": 100.0,
           "classifier_top1_pct": 100.0,
           "hit_any_pct": 100.0,
-          "mean_confidence": 0.66,
+          "mean_confidence": 0.95,
           "mean_ticks_to_detect": 48.0
         },
         "cavitation": {
           "n": 1,
-          "top1_text_pct": 100.0,
+          "top1_text_pct": 0.0,
           "classifier_top1_pct": 0.0,
           "hit_any_pct": 100.0,
-          "mean_confidence": 0.44,
+          "mean_confidence": 0.41,
           "mean_ticks_to_detect": 42.0
         },
         "rotor_imbalance": {
@@ -549,7 +549,7 @@
           "top1_text_pct": 100.0,
           "classifier_top1_pct": 100.0,
           "hit_any_pct": 100.0,
-          "mean_confidence": 0.32,
+          "mean_confidence": 0.79,
           "mean_ticks_to_detect": 48.0
         },
         "suction_restriction": {
@@ -557,15 +557,15 @@
           "top1_text_pct": 100.0,
           "classifier_top1_pct": 100.0,
           "hit_any_pct": 100.0,
-          "mean_confidence": 0.95,
+          "mean_confidence": 0.53,
           "mean_ticks_to_detect": 48.0
         },
         "discharge_restriction": {
           "n": 2,
-          "top1_text_pct": 50.0,
+          "top1_text_pct": 100.0,
           "classifier_top1_pct": 100.0,
           "hit_any_pct": 100.0,
-          "mean_confidence": 0.71,
+          "mean_confidence": 0.62,
           "mean_ticks_to_detect": 90.0
         }
       },
@@ -574,42 +574,40 @@
           "rotor_imbalance": 1
         },
         "cavitation": {
-          "cavitation": 1
+          "suction_restriction": 1
         },
         "discharge_restriction": {
-          "overheat": 1,
-          "discharge_restriction": 1
+          "discharge_restriction": 2
         },
         "suction_restriction": {
           "suction_restriction": 1
         },
         "bearing_wear": {
-          "bearing_wear": 2
+          "bearing_wear": 3
         }
       },
       "operational_confusion": {
         "rotor_imbalance": {
-          "abstained": 1
+          "rotor_imbalance": 1
         },
         "cavitation": {
           "abstained": 1
         },
         "discharge_restriction": {
-          "overheat": 1,
+          "abstained": 1,
           "discharge_restriction": 1
         },
         "suction_restriction": {
           "suction_restriction": 1
         },
         "bearing_wear": {
-          "bearing_wear": 1,
-          "abstained": 1
+          "bearing_wear": 3
         }
       },
       "agent_selection": {
-        "coverage_pct": 57.1,
-        "selective_accuracy_pct": 75.0,
-        "abstained_pct": 42.9
+        "coverage_pct": 75.0,
+        "selective_accuracy_pct": 100.0,
+        "abstained_pct": 25.0
       },
       "classifier_confusion": {
         "rotor_imbalance": {
@@ -625,20 +623,20 @@
           "suction_restriction": 1
         },
         "bearing_wear": {
-          "bearing_wear": 2
+          "bearing_wear": 3
         }
       },
       "classifier": {
-        "top1_accuracy_pct": 85.7,
-        "coverage_pct": 85.7,
+        "top1_accuracy_pct": 87.5,
+        "coverage_pct": 87.5,
         "selective_accuracy_pct": 100.0,
-        "abstained_pct": 14.3,
+        "abstained_pct": 12.5,
         "trained_layer_used_n": 3,
-        "trained_layer_used_pct": 42.9,
-        "narrow_model_ood_n": 4,
+        "trained_layer_used_pct": 37.5,
+        "narrow_model_ood_n": 5,
         "per_class": {
           "bearing_wear": {
-            "n": 2,
+            "n": 3,
             "top1_pct": 100.0,
             "coverage_pct": 100.0,
             "abstained_pct": 0.0
@@ -670,17 +668,17 @@
         }
       },
       "comparison": {
-        "agent_top1_pct": 85.7,
-        "classifier_top1_pct": 85.7,
-        "mock_top1_pct": 87.5
+        "agent_top1_pct": 87.5,
+        "classifier_top1_pct": 87.5,
+        "mock_top1_pct": null
       },
       "calibration": [
         {
           "bucket": "0.00-0.50",
-          "n": 3,
-          "mean_confidence_pct": 37.7,
-          "accuracy_pct": 100.0,
-          "gap_pct": 62.3
+          "n": 2,
+          "mean_confidence_pct": 35.0,
+          "accuracy_pct": 50.0,
+          "gap_pct": 15.0
         },
         {
           "bucket": "0.50-0.70",
@@ -690,22 +688,37 @@
           "gap_pct": 47.0
         },
         {
+          "bucket": "0.70-0.85",
+          "n": 1,
+          "mean_confidence_pct": 79.0,
+          "accuracy_pct": 100.0,
+          "gap_pct": 21.0
+        },
+        {
           "bucket": "0.85-1.00",
-          "n": 3,
-          "mean_confidence_pct": 93.0,
-          "accuracy_pct": 66.7,
-          "gap_pct": -26.3
+          "n": 4,
+          "mean_confidence_pct": 95.0,
+          "accuracy_pct": 100.0,
+          "gap_pct": 5.0
         }
       ],
-      "ece": 0.447,
+      "ece": 0.148,
       "latency_s": {
-        "mean": 32.88,
-        "p50": 27.7,
-        "max": 58.65
+        "mean": 32.17,
+        "p50": 30.41,
+        "max": 56.25
       },
-      "errors": [
-        "JSONDecodeError: Unterminated string starting at: line 1 column 18 (char 17)"
-      ],
+      "paid_usage": {
+        "provider_requests": 34,
+        "returned_cost_usd": 0.014535,
+        "prompt_tokens": 143044,
+        "completion_tokens": 18541,
+        "total_tokens": 161585,
+        "model": "deepseek/deepseek-v4-flash",
+        "cost_source": "OpenRouter response usage.cost",
+        "request_cap": 50,
+        "returned_cost_stop_usd": 0.05
+      },
       "trials_detail": [
         {
           "machine_id": "PMP-03",
@@ -716,17 +729,19 @@
           "severity": "high",
           "ticks_to_detect": 48,
           "case_id": 1,
-          "root_cause": "rotor imbalance (classifier verdict)",
-          "confidence": 0.32,
+          "root_cause": "Rotor imbalance due to blade fouling",
+          "confidence": 0.79,
           "priority": "P3",
-          "cited_work_orders": [],
+          "cited_work_orders": [
+            "WO-1018"
+          ],
           "predicted_text": "rotor_imbalance",
-          "predicted_citation": null,
+          "predicted_citation": "rotor_imbalance",
           "hedged": false,
-          "abstained": true,
+          "abstained": false,
           "hit_any": true,
           "correct_text": true,
-          "correct_citation": false,
+          "correct_citation": true,
           "classifier_pred": "rotor_imbalance",
           "classifier_correct": true,
           "classifier_abstained": false,
@@ -734,7 +749,7 @@
           "classifier_ood": true,
           "llm_mode": "live",
           "llm_model": "deepseek/deepseek-v4-flash",
-          "latency_s": 18.96,
+          "latency_s": 44.93,
           "error": "",
           "data_source": "replay",
           "dataset": "SKAB v0.9 (Skoltech Anomaly Benchmark)",
@@ -751,19 +766,19 @@
           "severity": "low",
           "ticks_to_detect": 42,
           "case_id": 1,
-          "root_cause": "Incipient cavitation / air entrainment at pump inlet (two-phase flow)",
-          "confidence": 0.44,
+          "root_cause": "Suction line restriction (partial blockage or partially closed inlet valve) causing the pump to operate in an unstable region of its performance curve",
+          "confidence": 0.41,
           "priority": "P3",
           "cited_work_orders": [
-            "WO-1019"
+            "WO-1016"
           ],
-          "predicted_text": "cavitation",
-          "predicted_citation": "cavitation",
+          "predicted_text": "suction_restriction",
+          "predicted_citation": "suction_restriction",
           "hedged": false,
           "abstained": true,
           "hit_any": true,
-          "correct_text": true,
-          "correct_citation": true,
+          "correct_text": false,
+          "correct_citation": false,
           "classifier_pred": null,
           "classifier_correct": false,
           "classifier_abstained": true,
@@ -771,7 +786,7 @@
           "classifier_ood": true,
           "llm_mode": "live",
           "llm_model": "deepseek/deepseek-v4-flash",
-          "latency_s": 58.65,
+          "latency_s": 56.25,
           "error": "",
           "data_source": "replay",
           "dataset": "SKAB v0.9 (Skoltech Anomaly Benchmark)",
@@ -788,19 +803,17 @@
           "severity": "high",
           "ticks_to_detect": 99,
           "case_id": 1,
-          "root_cause": "Discharge-side flow restriction \u2014 most likely the outlet (discharge) valve has been throttled or is partially closed, pushing the pump back on its operating curve (reduced flow at lower motor load while discharge pressure holds erratic)",
-          "confidence": 0.89,
+          "root_cause": "discharge restriction (classifier verdict)",
+          "confidence": 0.29,
           "priority": "P3",
-          "cited_work_orders": [
-            "WO-1017"
-          ],
-          "predicted_text": "overheat",
-          "predicted_citation": "discharge_restriction",
-          "hedged": true,
-          "abstained": false,
+          "cited_work_orders": [],
+          "predicted_text": "discharge_restriction",
+          "predicted_citation": null,
+          "hedged": false,
+          "abstained": true,
           "hit_any": true,
-          "correct_text": false,
-          "correct_citation": true,
+          "correct_text": true,
+          "correct_citation": false,
           "classifier_pred": "discharge_restriction",
           "classifier_correct": true,
           "classifier_abstained": false,
@@ -808,7 +821,7 @@
           "classifier_ood": false,
           "llm_mode": "live",
           "llm_model": "deepseek/deepseek-v4-flash",
-          "latency_s": 48.33,
+          "latency_s": 24.41,
           "error": "",
           "data_source": "replay",
           "dataset": "SKAB v0.9 (Skoltech Anomaly Benchmark)",
@@ -825,17 +838,19 @@
           "severity": "high",
           "ticks_to_detect": 81,
           "case_id": 1,
-          "root_cause": "discharge restriction (classifier verdict)",
-          "confidence": 0.53,
-          "priority": "P3",
-          "cited_work_orders": [],
+          "root_cause": "Discharge-side flow restriction \u2014 most likely a partially closed or throttled outlet valve, causing the pump to operate back on its curve (reduced flow, elevated back-pressure).",
+          "confidence": 0.95,
+          "priority": "P1",
+          "cited_work_orders": [
+            "WO-1017"
+          ],
           "predicted_text": "discharge_restriction",
-          "predicted_citation": null,
+          "predicted_citation": "discharge_restriction",
           "hedged": false,
           "abstained": false,
           "hit_any": true,
           "correct_text": true,
-          "correct_citation": false,
+          "correct_citation": true,
           "classifier_pred": "discharge_restriction",
           "classifier_correct": true,
           "classifier_abstained": false,
@@ -843,7 +858,7 @@
           "classifier_ood": false,
           "llm_mode": "live",
           "llm_model": "deepseek/deepseek-v4-flash",
-          "latency_s": 15.65,
+          "latency_s": 24.77,
           "error": "",
           "data_source": "replay",
           "dataset": "SKAB v0.9 (Skoltech Anomaly Benchmark)",
@@ -860,19 +875,17 @@
           "severity": "low",
           "ticks_to_detect": 48,
           "case_id": 1,
-          "root_cause": "Suction line restriction \u2014 likely a partially closed inlet valve or debris blocking the suction side, starving the pump of flow.",
-          "confidence": 0.95,
+          "root_cause": "suction restriction (classifier verdict)",
+          "confidence": 0.53,
           "priority": "P4",
-          "cited_work_orders": [
-            "WO-1016"
-          ],
+          "cited_work_orders": [],
           "predicted_text": "suction_restriction",
-          "predicted_citation": "suction_restriction",
-          "hedged": true,
+          "predicted_citation": null,
+          "hedged": false,
           "abstained": false,
           "hit_any": true,
           "correct_text": true,
-          "correct_citation": true,
+          "correct_citation": false,
           "classifier_pred": "suction_restriction",
           "classifier_correct": true,
           "classifier_abstained": false,
@@ -880,7 +893,7 @@
           "classifier_ood": false,
           "llm_mode": "live",
           "llm_model": "deepseek/deepseek-v4-flash",
-          "latency_s": 34.64,
+          "latency_s": 23.99,
           "error": "",
           "data_source": "replay",
           "dataset": "SKAB v0.9 (Skoltech Anomaly Benchmark)",
@@ -897,7 +910,7 @@
           "severity": "high",
           "ticks_to_detect": 48,
           "case_id": 1,
-          "root_cause": "Localized rolling-element bearing damage (bearing wear) \u2014 the drive-end bearing has developed a defect (e.g., spall or crack on race/rolling element), causing a 4\u00d7 jump in vibration RMS, impulsive spikes in kurtosis and crest factor, while motor speed remained steady at 1796 RPM.",
+          "root_cause": "Localized rolling-element bearing damage (drive-end bearing defect)",
           "confidence": 0.95,
           "priority": "P2",
           "cited_work_orders": [
@@ -917,7 +930,7 @@
           "classifier_ood": true,
           "llm_mode": "live",
           "llm_model": "deepseek/deepseek-v4-flash",
-          "latency_s": 26.25,
+          "latency_s": 21.85,
           "error": "",
           "data_source": "replay",
           "dataset": "Case Western Reserve University Bearing Data Center",
@@ -934,17 +947,19 @@
           "severity": "high",
           "ticks_to_detect": 48,
           "case_id": 1,
-          "root_cause": "bearing wear (classifier verdict)",
-          "confidence": 0.37,
+          "root_cause": "Localized rolling-element bearing damage (drive-end) \u2014 same failure mode as prior incident WO-1032",
+          "confidence": 0.95,
           "priority": "P3",
-          "cited_work_orders": [],
+          "cited_work_orders": [
+            "WO-1032"
+          ],
           "predicted_text": "bearing_wear",
-          "predicted_citation": null,
+          "predicted_citation": "bearing_wear",
           "hedged": false,
-          "abstained": true,
+          "abstained": false,
           "hit_any": true,
           "correct_text": true,
-          "correct_citation": false,
+          "correct_citation": true,
           "classifier_pred": "bearing_wear",
           "classifier_correct": true,
           "classifier_abstained": false,
@@ -952,7 +967,7 @@
           "classifier_ood": true,
           "llm_mode": "live",
           "llm_model": "deepseek/deepseek-v4-flash",
-          "latency_s": 27.7,
+          "latency_s": 30.76,
           "error": "",
           "data_source": "replay",
           "dataset": "Case Western Reserve University Bearing Data Center",
@@ -968,27 +983,29 @@
           "detected_metric": "vibration_rms_g",
           "severity": "high",
           "ticks_to_detect": 48,
-          "case_id": null,
-          "root_cause": "",
-          "confidence": 0.0,
-          "priority": "",
-          "cited_work_orders": [],
-          "predicted_text": null,
-          "predicted_citation": null,
+          "case_id": 1,
+          "root_cause": "Localized rolling-element bearing defect (drive-end bearing) \u2014 recurrence of the same failure mode documented in WO-1032. The vibration RMS spiked 10\u00d7 above baseline (0.07g \u2192 0.70g), kurtosis jumped to 7.8 (highly impulsive, indicating metal-on-metal impacts), and crest factor rose to 4.8, while motor speed held perfectly steady at 1796 RPM. This exact pattern \u2014 sharp rise in RMS and impulsiveness with steady speed \u2014 was previously diagnosed as a localized bearing defect on this same machine in February 2025.",
+          "confidence": 0.95,
+          "priority": "P2",
+          "cited_work_orders": [
+            "WO-1032"
+          ],
+          "predicted_text": "bearing_wear",
+          "predicted_citation": "bearing_wear",
           "hedged": false,
           "abstained": false,
-          "hit_any": false,
-          "correct_text": false,
-          "correct_citation": false,
+          "hit_any": true,
+          "correct_text": true,
+          "correct_citation": true,
           "classifier_pred": "bearing_wear",
           "classifier_correct": true,
           "classifier_abstained": false,
           "classifier_layer": "deterministic_signature",
           "classifier_ood": true,
-          "llm_mode": "",
-          "llm_model": "",
-          "latency_s": 16.69,
-          "error": "JSONDecodeError: Unterminated string starting at: line 1 column 18 (char 17)",
+          "llm_mode": "live",
+          "llm_model": "deepseek/deepseek-v4-flash",
+          "latency_s": 30.41,
+          "error": "",
           "data_source": "replay",
           "dataset": "Case Western Reserve University Bearing Data Center",
           "episode_name": "cwru-outer-race-007",
