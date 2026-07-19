@@ -24,7 +24,8 @@ router = APIRouter(prefix="/api")
 @router.get("/health")
 def health():
     return {"ok": True, "llm_mode": llm_mode(), "llm_model": llm_model(),
-            "simulator_running": simulator.running, "auth_enabled": auth_enabled()}
+            "simulator_running": simulator.running, "auth_enabled": auth_enabled(),
+            "release": os.getenv("RENDER_GIT_COMMIT", "local")[:7]}
 
 
 class Login(BaseModel):

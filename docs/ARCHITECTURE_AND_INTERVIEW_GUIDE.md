@@ -201,6 +201,10 @@ keeps advancing. This prevents a 30–60 second live LLM call from freezing ever
 machine. The anomaly timestamp therefore means “rules fired”; the later case
 timestamp means “triage finished and the case was committed.”
 
+`GET /api/health` also exposes Render's seven-character Git release id. This is
+non-secret deployment metadata and lets an operator distinguish “the endpoint
+is awake” from “the endpoint is running the commit I just released.”
+
 For a demo, manual injection on `PMP-03` does not synthesize a fault. It calls
 `jump_to_fault`, which moves the cursor to 45 rows before the labelled region.
 Thirty rows rebuild the detector baseline and 15 rows preserve honest healthy
