@@ -13,6 +13,7 @@ import json
 import os
 import sys
 from datetime import datetime, timezone
+from pathlib import Path
 
 from dotenv import load_dotenv
 
@@ -20,6 +21,7 @@ load_dotenv()
 
 from .metrics import format_report, summarize  # noqa: E402
 from .runner import run_replay_suite, run_suite  # noqa: E402
+from ..llm_budget import process_budget_snapshot  # noqa: E402
 
 
 def _run(mode: str, trials: int, seed: int, quiet: bool, data: str) -> dict:
@@ -39,6 +41,7 @@ def _run(mode: str, trials: int, seed: int, quiet: bool, data: str) -> dict:
             mark = "x"
         print(mark, end="", flush=True)
 
+    paid_before = process_budget_snapshot()
     if data == "replay":
         print(f"\n[{mode}] replaying {trials} real dataset episode(s) ",
               end="", flush=True)
@@ -49,6 +52,20 @@ def _run(mode: str, trials: int, seed: int, quiet: bool, data: str) -> dict:
     print()
 
     report = summarize(results)
+    if mode == "live":
+        paid_after = process_budget_snapshot()
+        report["paid_usage"] = {
+            key: round(paid_after[key] - paid_before[key], 6)
+            if "cost" in key else paid_after[key] - paid_before[key]
+            for key in ("provider_requests", "returned_cost_usd", "prompt_tokens",
+                        "completion_tokens", "total_tokens")
+        }
+        report["paid_usage"].update({
+            "model": report.get("llm_model"),
+            "cost_source": "OpenRouter response usage.cost",
+            "request_cap": paid_after["request_cap"],
+            "returned_cost_stop_usd": paid_after["returned_cost_stop_usd"],
+        })
     report["trials_detail"] = [r.as_dict() for r in results]
     if data == "replay":
         detected = [r for r in results if r.detected]
@@ -69,6 +86,8 @@ def main() -> None:
     p.add_argument("--data", choices=("simulated", "replay"), default="simulated",
                    help="replay = score all configured real-data episodes")
     p.add_argument("--out", help="write the JSON report here")
+    p.add_argument("--merge-existing", action="store_true",
+                   help="preserve modes already present in --out and replace only modes run now")
     p.add_argument("--quiet", action="store_true")
     args = p.parse_args()
 
@@ -94,12 +113,19 @@ def main() -> None:
                   "   <- what the LLM buys over a scripted policy")
 
     if args.out:
+        merged_reports = {}
+        if args.merge_existing and Path(args.out).exists():
+            try:
+                merged_reports = json.loads(Path(args.out).read_text()).get("reports", {})
+            except (json.JSONDecodeError, OSError):
+                merged_reports = {}
+        merged_reports.update(reports)
         payload = {
             "generated_at": datetime.now(timezone.utc).isoformat(),
             "pipeline_version": "2026-07-19-trained-ml-ood-v3",
             "seed": args.seed,
             "trials_requested": args.trials,
-            "reports": reports,
+            "reports": merged_reports,
         }
         with open(args.out, "w") as fh:
             json.dump(payload, fh, indent=2)

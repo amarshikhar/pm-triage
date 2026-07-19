@@ -101,6 +101,54 @@ def test_live_cap_falls_back_mid_case_without_losing_case(db, monkeypatch):
                for t in json.loads(case.trace_json))
 
 
+def test_malformed_live_tool_arguments_are_rejected_and_retried(db, monkeypatch):
+    """A truncated DeepSeek tool-call must not abort real-data triage."""
+    import app.agent.triage as triage_mod
+    from app.agent.llm import set_runtime_mode
+
+    anomaly_id = _make_anomaly(db)
+    replies = iter([
+        ({
+            "role": "assistant",
+            "content": None,
+            "tool_calls": [{
+                "id": "bad-1",
+                "type": "function",
+                "function": {
+                    "name": "get_machine_info",
+                    "arguments": '{"machine_id":"CNC-01"',
+                },
+            }],
+        }, {"cost": 0.001}),
+        ({
+            "role": "assistant",
+            "content": json.dumps({
+                "root_cause": "bearing wear",
+                "confidence": 0.6,
+                "explanation": "Classifier-backed finding; planner verification required.",
+                "recommended_actions": ["Inspect the bearing"],
+                "cited_work_orders": [],
+                "priority_adjustment": 0,
+                "adjustment_justification": "",
+            }),
+        }, {"cost": 0.001}),
+    ])
+    monkeypatch.setenv("OPENROUTER_API_KEY", "test-key")
+    monkeypatch.setenv("LLM_MODE", "live")
+    monkeypatch.setenv("LLM_DAILY_CALL_CAP", "10")
+    monkeypatch.setenv("LLM_DAILY_USD_CAP", "1")
+    set_runtime_mode(None)
+    monkeypatch.setattr(triage_mod, "chat", lambda messages, tools: next(replies))
+
+    case = run_triage(db, anomaly_id)
+
+    assert case.root_cause
+    assert case.llm_mode == "live"
+    trace = json.loads(case.trace_json)
+    assert any(t["step"] == "invalid_tool_arguments" for t in trace)
+    assert db.query(LlmCall).count() == 2
+
+
 def test_priority_formula():
     p = compute_priority(criticality=5, severity="high", recurrence_count=2, safety_related=False)
     assert p["priority"] == "P1" and p["score"] == 13

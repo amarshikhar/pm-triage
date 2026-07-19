@@ -200,7 +200,26 @@ def run_triage(db: Session, anomaly_id: int) -> TriageCase:
 
         for tc in tool_calls:
             name = tc["function"]["name"]
-            args = json.loads(tc["function"]["arguments"] or "{}")
+            raw_args = tc["function"].get("arguments") or "{}"
+            try:
+                args = json.loads(raw_args)
+                if not isinstance(args, dict):
+                    raise ValueError("tool arguments must be a JSON object")
+            except (json.JSONDecodeError, ValueError) as exc:
+                # Providers occasionally stream/truncate an otherwise valid
+                # tool call. Do not lose the case and do not guess at the
+                # intended arguments: return a structured tool error so the
+                # model can retry on its next bounded turn.
+                detail = f"invalid JSON arguments for {name}: {type(exc).__name__}"
+                trace.append({"step": "invalid_tool_arguments", "tool": name,
+                              "detail": detail, "ts": utcnow().isoformat()})
+                messages.append({"role": "tool", "tool_call_id": tc["id"],
+                                 "name": name,
+                                 "content": json.dumps({
+                                     "error": detail,
+                                     "instruction": "Retry this tool call with one valid JSON object.",
+                                 })})
+                continue
             result = _dispatch_tool(db, name, args)
             if name == "search_maintenance_history":
                 cited_history = result.get("matches", [])

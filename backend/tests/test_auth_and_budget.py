@@ -7,7 +7,8 @@ from fastapi.testclient import TestClient
 import app.main as main_mod
 from app.auth import issue_token, verify_token
 from app.agent.llm import llm_mode, set_runtime_mode
-from app.llm_budget import budget, finish_live_call, live_allowed, reserve_live_call
+from app.llm_budget import (budget, finish_live_call, live_allowed,
+                            process_budget_snapshot, reserve_live_call)
 from app.models import LlmCall, Machine, TelemetryReading, utcnow
 from app.detector import run_detection
 from app.agent.triage import run_triage
@@ -116,6 +117,12 @@ def test_llm_budget_counts_provider_requests_and_cost(db, monkeypatch):
     assert b["unit"] == "provider_requests"
     assert b["used_today"] == 1 and b["remaining"] == 1
     assert b["cost_usd_today"] == 0.004
+    process = process_budget_snapshot()
+    assert process["provider_requests"] == 1
+    assert process["returned_cost_usd"] == 0.004
+    assert process["prompt_tokens"] == 100
+    assert process["completion_tokens"] == 20
+    assert process["total_tokens"] == 120
     assert live_allowed(db)
     assert reserve_live_call(db, "cheap/model") is not None
     assert not live_allowed(db)

@@ -106,7 +106,7 @@ CLASS_MARKERS: dict[str, list[tuple[int, str]]] = {
         (4, "gearbox oil"),
         (3, "cooling fan"), (3, "coolant flow"), (3, "coolant filter"),
         (3, "cooling system"), (3, "intercooler"),
-        (3, "coolant restriction"), (3, "flow restriction"), (3, "heat dissipation"),
+        (3, "coolant restriction"), (3, "heat dissipation"),
         (2, "overheat"), (2, "overheating"), (2, "thermal"), (2, "cooling"),
         (1, "clogged filter"),
     ],
@@ -120,7 +120,7 @@ CLASS_MARKERS: dict[str, list[tuple[int, str]]] = {
         (1, "seal"), (1, "restriction"),
     ],
     "cavitation": [
-        (3, "cavitation"), (3, "suction strainer"), (3, "suction side"),
+        (3, "cavitation"), (3, "suction strainer"),
         (3, "npsh"), (3, "strainer"), (3, "two-phase"), (3, "air entrained"),
         (3, "air ingress"),
         (2, "suction"), (2, "cavitating"),
@@ -136,7 +136,8 @@ CLASS_MARKERS: dict[str, list[tuple[int, str]]] = {
         (2, "partially closed"), (2, "inlet-side"),
     ],
     "discharge_restriction": [
-        (3, "discharge restriction"), (3, "outlet valve"), (3, "throttled"),
+        (4, "discharge-side"), (3, "discharge restriction"),
+        (3, "outlet valve"), (3, "throttled"),
         (3, "back on its curve"), (3, "deadhead"),
         (2, "throttling"),
     ],

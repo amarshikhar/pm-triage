@@ -22,6 +22,9 @@ _process_lock = threading.Lock()
 _process_day = ""
 _process_calls = 0
 _process_cost = 0.0
+_process_prompt_tokens = 0
+_process_completion_tokens = 0
+_process_total_tokens = 0
 
 
 def daily_cap() -> int:
@@ -39,20 +42,43 @@ def _midnight() -> str:
 
 def _reset_process_day_if_needed() -> None:
     global _process_day, _process_calls, _process_cost
+    global _process_prompt_tokens, _process_completion_tokens, _process_total_tokens
     today = datetime.now(timezone.utc).date().isoformat()
     if _process_day != today:
         _process_day = today
         _process_calls = 0
         _process_cost = 0.0
+        _process_prompt_tokens = 0
+        _process_completion_tokens = 0
+        _process_total_tokens = 0
 
 
 def reset_process_budget() -> None:
     """Reset the secondary guard (used by isolated tests, not by API routes)."""
     global _process_day, _process_calls, _process_cost
+    global _process_prompt_tokens, _process_completion_tokens, _process_total_tokens
     with _process_lock:
         _process_day = datetime.now(timezone.utc).date().isoformat()
         _process_calls = 0
         _process_cost = 0.0
+        _process_prompt_tokens = 0
+        _process_completion_tokens = 0
+        _process_total_tokens = 0
+
+
+def process_budget_snapshot() -> dict:
+    """Return process-wide paid usage, including eval's isolated databases."""
+    with _process_lock:
+        _reset_process_day_if_needed()
+        return {
+            "provider_requests": _process_calls,
+            "returned_cost_usd": round(_process_cost, 6),
+            "prompt_tokens": _process_prompt_tokens,
+            "completion_tokens": _process_completion_tokens,
+            "total_tokens": _process_total_tokens,
+            "request_cap": daily_cap(),
+            "returned_cost_stop_usd": daily_usd_cap(),
+        }
 
 
 def live_calls_today(db: Session) -> int:
@@ -115,7 +141,8 @@ def reserve_live_call(db: Session, model: str) -> LlmCall | None:
 
 def finish_live_call(db: Session, row: LlmCall, usage: dict | None = None,
                      error: str = "") -> None:
-    global _process_cost
+    global _process_cost, _process_prompt_tokens, _process_completion_tokens
+    global _process_total_tokens
     usage = usage or {}
     row.status = "failed" if error else "succeeded"
     row.prompt_tokens = int(usage.get("prompt_tokens") or 0)
@@ -127,3 +154,6 @@ def finish_live_call(db: Session, row: LlmCall, usage: dict | None = None,
     with _process_lock:
         _reset_process_day_if_needed()
         _process_cost += row.cost_usd
+        _process_prompt_tokens += row.prompt_tokens
+        _process_completion_tokens += row.completion_tokens
+        _process_total_tokens += row.total_tokens

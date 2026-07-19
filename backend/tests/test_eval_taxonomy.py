@@ -90,6 +90,25 @@ def test_unhedged_answer_is_not_flagged():
     assert hedged is False
 
 
+def test_explicit_discharge_restriction_is_not_stolen_by_generic_words():
+    """Regression from the paid DeepSeek replay: this is one correct physical
+    answer, not a three-way overheat/pressure/suction hedge. Generic "flow
+    restriction" and "suction side" markers previously polluted its score."""
+    text = (
+        "Discharge-side flow restriction — most likely the outlet (discharge) "
+        "valve has been throttled or is partially closed"
+    )
+    assert classify_text(text) == ("discharge_restriction", False)
+
+
+def test_suction_restriction_is_not_called_a_cavitation_hedge():
+    text = (
+        "Suction line restriction — likely a partially closed inlet valve or "
+        "debris blocking the suction side"
+    )
+    assert classify_text(text) == ("suction_restriction", False)
+
+
 def test_machine_name_does_not_leak_a_verdict():
     """PMP-01 is literally named 'Coolant Pump 01'. Bare 'coolant' must not
     drag every pump verdict to overheat."""
