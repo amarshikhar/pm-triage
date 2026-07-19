@@ -53,6 +53,8 @@ jobs:
               d = json.load(open(src))
               for r in d.get("reports", {}).values():
                   if r:
+                      if "classifier" not in r or "classifier_confusion" not in r:
+                          raise RuntimeError(f"{src} is missing deterministic classifier metrics")
                       r.pop("trials_detail", None)
               json.dump(d, open(dst, "w"), indent=2)
           PY

@@ -30,6 +30,8 @@ def test_mock_agent_produces_explainable_case(db):
 
     evidence = json.loads(case.evidence_json)
     assert evidence["historical_matches"], "must cite historical work orders"
+    assert evidence["signature_analysis"]["ranked"]
+    assert "agent_agreement" in evidence["signature_analysis"]
     trace = json.loads(case.trace_json)
     tools_used = [t["tool"] for t in trace if t["step"] == "tool_call"]
     assert "search_maintenance_history" in tools_used
@@ -37,6 +39,8 @@ def test_mock_agent_produces_explainable_case(db):
     breakdown = json.loads(case.priority_breakdown_json)
     assert set(breakdown["components"]) == {
         "machine_criticality", "anomaly_severity", "recurrence", "safety_flag"}
+    assert set(breakdown["signature_analysis"]) == {
+        "predicted", "confidence", "abstain", "agent_agreement", "evidence"}
 
 
 def test_priority_formula():

@@ -170,6 +170,9 @@ def test_trial_runs_the_real_pipeline_and_scores_it():
     # with cavitation precedent WO-1007 present, it should land on cavitation.
     assert r.predicted_text == "cavitation"
     assert r.correct_text and r.correct_citation
+    assert r.classifier_pred is not None
+    assert isinstance(r.classifier_correct, bool)
+    assert not r.classifier_abstained
 
 
 def test_case_preserves_the_agents_own_citation_order(db):
@@ -222,6 +225,10 @@ def test_summary_shape_and_arithmetic():
     assert 0 <= report["accuracy"]["top1_text_pct"] <= 100
     assert report["ece"] is not None
     assert sum(sum(p.values()) for p in report["confusion"].values()) == report["n_scored"]
+    assert report["accuracy"]["classifier_top1_pct"] == report["classifier"]["top1_accuracy_pct"]
+    assert 0 <= report["classifier"]["coverage_pct"] <= 100
+    assert report["comparison"]["mock_top1_pct"] == report["accuracy"]["top1_text_pct"]
+    assert sum(sum(p.values()) for p in report["classifier_confusion"].values()) == report["n_scored"]
     for bucket in report["calibration"]:
         assert bucket["n"] > 0
 

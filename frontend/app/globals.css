@@ -113,6 +113,20 @@ body {
 .signals tr.breached td:first-child::after { content: " ← breached"; color: var(--p1); font-weight: 400; }
 .signals .hint { font-size: 11px; color: var(--text-muted); margin-top: 6px; }
 
+.signature-card { border-left: 3px solid var(--p4); }
+.signature-card.uncertain { border-left-color: var(--p3); }
+.signature-verdict { display: flex; align-items: baseline; justify-content: space-between; gap: 10px;
+  color: var(--text-primary); font-size: 15px; font-weight: 700; text-transform: capitalize; }
+.signature-confidence { color: var(--text-secondary); font-size: 13px; font-variant-numeric: tabular-nums; }
+.signature-flags { margin: 5px 0 8px; }
+.signature-flag { display: inline-block; border: 1px solid var(--border); color: var(--text-muted);
+  border-radius: 999px; padding: 2px 8px; font-size: 10px; font-weight: 700; }
+.signature-flag.agrees { color: var(--p4); border-color: color-mix(in srgb, var(--p4) 45%, var(--border)); }
+.signature-flag.disagrees { color: var(--p1); border-color: color-mix(in srgb, var(--p1) 50%, var(--border)); }
+.signature-flag.abstain { color: var(--p3); border-color: color-mix(in srgb, var(--p3) 50%, var(--border)); }
+.signature-evidence { margin: 6px 0; padding-left: 18px; color: var(--text-secondary); font-size: 12px; }
+.signature-evidence li { margin: 4px 0; line-height: 1.4; }
+
 .btn {
   border: 1px solid var(--border); background: var(--surface-2); color: var(--text-primary);
   padding: 7px 14px; border-radius: 7px; font-size: 13px; font-weight: 600; cursor: pointer;
@@ -372,6 +386,8 @@ a.machine-link:hover { color: var(--accent); }
   font-size: 11px; color: var(--text-muted); font-variant-numeric: tabular-nums;
 }
 .cc-id { color: var(--text-muted); }
+.cc-signature { color: var(--p4); text-transform: capitalize; }
+.cc-signature.uncertain { color: var(--p3); }
 .cc-spacer { flex: 1; }
 .cc-exposure { color: var(--text-secondary); font-weight: 600; }
 .cc-exposure-l { color: var(--text-muted); font-weight: 400; }

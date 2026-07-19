@@ -12,6 +12,7 @@ import re
 from sqlalchemy.orm import Session
 
 from ..audit import audit
+from ..classifier import classify_signature, signature_agrees
 from ..detector import render_context
 from ..models import Anomaly, Machine, TriageCase, utcnow
 from ..priority import apply_adjustment, compute_priority
@@ -33,7 +34,10 @@ confidence. Always search maintenance history before answering.
 The signal context reports what every metric was doing, not just the one that
 breached. A failure is identified by the pattern across signals — which are
 drifting, which are erratic, which are steady — so weigh all of them against
-the symptoms recorded in past work orders before choosing a cause."""
+the symptoms recorded in past work orders before choosing a cause.
+You may also receive a deterministic signature prior. Treat a concrete verdict
+as physics-based evidence to verify against history; if it abstains, do not turn
+its weak ranking into certainty."""
 
 MAX_STEPS = 8
 
@@ -103,18 +107,37 @@ def run_triage(db: Session, anomaly_id: int) -> TriageCase:
         "machine_id": machine.id, "machine_type": machine.type,
         "metric": anomaly.metric, "severity": anomaly.severity,
     }
-    context_block = render_context(
-        json.loads(anomaly.context_json or "{}"), anomaly.metric)
+    signal_stats = json.loads(anomaly.context_json or "{}")
+    signature_analysis = classify_signature(
+        signal_stats, machine.signals, machine.type, machine.source)
+    context_block = render_context(signal_stats, anomaly.metric)
+    if signature_analysis["abstain"]:
+        leaders = ", ".join(name.replace("_", " ")
+                            for name, _ in signature_analysis["ranked"][:2])
+        signature_prior = (
+            "Signature analysis (deterministic) abstained: no separable class "
+            f"({leaders} were closest). Evidence: " +
+            " ".join(signature_analysis["evidence"])
+        )
+    else:
+        signature_prior = (
+            "Signature analysis (deterministic) suggests: "
+            f"{signature_analysis['predicted'].replace('_', ' ')} "
+            f"({signature_analysis['confidence']:.0%}) because " +
+            " ".join(signature_analysis["evidence"])
+        )
     messages = [
         {"role": "system", "content": SYSTEM_PROMPT},
         {"role": "user", "content": (
             f"Anomaly on machine {machine.id} ({machine.name}, type {machine.type}, "
             f"criticality {machine.criticality}/5, location {machine.location}):\n"
             f"{anomaly.description}\nSeverity: {anomaly.severity}.\n"
-            f"{context_block}\n\nInvestigate and triage."
+            f"{context_block}\n\n{signature_prior}\n\nInvestigate and triage."
         )},
     ]
     trace: list[dict] = [{"step": "anomaly", "detail": anomaly.description,
+                          "ts": utcnow().isoformat()},
+                         {"step": "signature_analysis", "detail": signature_prior,
                           "ts": utcnow().isoformat()}]
     mock = MockLLM(ctx) if mode == "mock" else None
     answer: dict | None = None
@@ -192,8 +215,15 @@ def run_triage(db: Session, anomaly_id: int) -> TriageCase:
     # language model's raw certainty tracks fluency, not whether a matching
     # precedent exists — the SKAB eval showed it confidently wrong on real data.
     # The calibrated value is what the case (and the eval's ECE) actually carry.
-    calibration = calibrate(answer.get("confidence"), str(answer.get("root_cause", "")),
-                            cited_history)
+    agreement = signature_agrees(
+        str(answer.get("root_cause", "")), signature_analysis["predicted"])
+    calibration = calibrate(
+        answer.get("confidence"), str(answer.get("root_cause", "")), cited_history,
+        signature_agreement=agreement,
+        signature_confidence=signature_analysis["confidence"],
+    )
+
+    signature_for_case = {**signature_analysis, "agent_agreement": agreement}
 
     cited_ids = set(answer.get("cited_work_orders") or [])
     evidence = {
@@ -202,7 +232,8 @@ def run_triage(db: Session, anomaly_id: int) -> TriageCase:
                     "description": anomaly.description},
         # The statistics the agent was shown, kept with the case so a planner
         # reviewing it later sees the same evidence the agent reasoned from.
-        "signal_context": json.loads(anomaly.context_json or "{}"),
+        "signal_context": signal_stats,
+        "signature_analysis": signature_for_case,
         "historical_matches": [m for m in cited_history
                                if not cited_ids or m["work_order"] in cited_ids] or cited_history[:3],
         # The agent's own citation list, in its own order. historical_matches
@@ -218,6 +249,13 @@ def run_triage(db: Session, anomaly_id: int) -> TriageCase:
     breakdown["confidence_calibration"] = {
         "raw": calibration.raw, "calibrated": calibration.calibrated,
         "abstain": calibration.abstain, "reason": calibration.reason,
+    }
+    breakdown["signature_analysis"] = {
+        "predicted": signature_analysis["predicted"],
+        "confidence": signature_analysis["confidence"],
+        "abstain": signature_analysis["abstain"],
+        "agent_agreement": agreement,
+        "evidence": signature_analysis["evidence"][:2],
     }
     trace.append({"step": "final_answer", "ts": utcnow().isoformat(),
                   "detail": f"root_cause='{answer['root_cause']}' "

@@ -10,6 +10,7 @@ Each trial gets its own in-memory database. Trials must not see each other:
 repeat anomalies, so a shared database would make trial N depend on trial N-1.
 """
 
+import json
 import time
 from dataclasses import asdict, dataclass, field
 
@@ -19,6 +20,7 @@ from sqlalchemy.pool import StaticPool
 
 from .. import db as db_module
 from ..agent.triage import run_triage
+from ..classifier import classify_signature
 from ..db import Base
 from ..models import Anomaly, Machine
 from ..seed import seed_if_empty
@@ -61,6 +63,9 @@ class TrialResult:
     hit_any: bool = False           # ground truth named anywhere, even secondarily
     correct_text: bool = False
     correct_citation: bool = False
+    classifier_pred: str | None = None
+    classifier_correct: bool = False
+    classifier_abstained: bool = True
     llm_mode: str = ""
     llm_model: str = ""
     latency_s: float = 0.0
@@ -92,6 +97,19 @@ def eligible_machines(db, fault: str) -> list[Machine]:
     types = FAULT_MACHINE_TYPES[fault]
     return [m for m in db.query(Machine).all()
             if m.type in types and m.source == "simulated"]
+
+
+def _record_classifier(result: TrialResult, anomaly: Anomaly, machine: Machine) -> None:
+    """Run the production classifier without exposing the trial label to it."""
+    analysis = classify_signature(
+        json.loads(anomaly.context_json or "{}"),
+        machine.signals,
+        machine.type,
+        machine.source,
+    )
+    result.classifier_pred = analysis["predicted"]
+    result.classifier_abstained = analysis["abstain"]
+    result.classifier_correct = analysis["predicted"] == result.fault
 
 
 def run_trial(machine_id: str, fault: str, seed: int) -> TrialResult:
@@ -128,6 +146,7 @@ def run_trial(machine_id: str, fault: str, seed: int) -> TrialResult:
         result.detected = True
         result.detected_metric = anomaly.metric
         result.severity = anomaly.severity
+        _record_classifier(result, anomaly, machine)
 
         started = time.monotonic()
         try:
@@ -213,6 +232,7 @@ def run_replay_trial(fault: str) -> TrialResult:
         result.detected_metric = anomaly.metric
         result.severity = anomaly.severity
         result.in_labelled_window = anomaly.ground_truth_fault == fault
+        _record_classifier(result, anomaly, machine)
 
         started = time.monotonic()
         try:

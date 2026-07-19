@@ -79,6 +79,7 @@ function CasesInner() {
           const pb = c.priority_breakdown || {};
           const conf = Math.round(c.confidence * 100);
           const abstain = pb.confidence_calibration?.abstain;
+          const signature = pb.signature_analysis;
           return (
             <Link key={c.id} href={`/cases/${c.id}`} className={`case-card prio-${c.priority}`}>
               <div className="cc-head">
@@ -102,6 +103,13 @@ function CasesInner() {
 
               <div className="cc-foot">
                 <span className="cc-id">#{c.id}</span>
+                {signature && (
+                  <span className={`cc-signature ${signature.abstain ? "uncertain" : ""}`}>
+                    signature: {signature.abstain
+                      ? "abstained"
+                      : String(signature.predicted || "none").replaceAll("_", " ")}
+                  </span>
+                )}
                 {pb.est_cost_exposure != null && (
                   <span className="cc-exposure">{usd(pb.est_cost_exposure)}<span className="cc-exposure-l"> exposure</span></span>
                 )}

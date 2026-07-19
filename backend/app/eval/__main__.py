@@ -86,6 +86,9 @@ def main() -> None:
     if args.mode == "both":
         mock_acc = (reports["mock"].get("accuracy") or {}).get("top1_text_pct")
         live_acc = (reports["live"].get("accuracy") or {}).get("top1_text_pct")
+        for report in reports.values():
+            if report.get("comparison"):
+                report["comparison"]["mock_top1_pct"] = mock_acc
         if mock_acc is not None and live_acc is not None:
             print("\n=== LIVE vs MOCK ===")
             print(f"  scripted baseline : {mock_acc}%")

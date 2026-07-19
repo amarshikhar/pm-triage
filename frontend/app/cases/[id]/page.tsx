@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
-import { Case, SignalStats, decideCase, getCase, getSession, retryCmmsSync } from "@/lib/api";
+import { Case, SignalStats, SignatureAnalysis, decideCase, getCase, getSession, retryCmmsSync } from "@/lib/api";
 
 const usd = (n: number) => `$${Math.round(n).toLocaleString()}`;
 
@@ -67,6 +67,8 @@ export default function CasePage() {
           )}
 
           <SignalTable c={c} />
+
+          <SignaturePanel c={c} />
 
           <div className="card block">
             <h4>Priority — auditable formula</h4>
@@ -207,6 +209,36 @@ function SignalTable({ c }: { c: Case }) {
         One signal breaches, but the pattern across all of them names the fault —
         these are the same numbers the agent was given.
       </p>
+    </div>
+  );
+}
+
+function SignaturePanel({ c }: { c: Case }) {
+  const s = c.evidence?.signature_analysis as SignatureAnalysis | undefined;
+  if (!s) return null;
+  const top = s.ranked?.[0]?.[0];
+  const verdict = s.predicted || (top ? `${top.replaceAll("_", " ")} family` : "no class");
+  const agreement = s.agent_agreement;
+  return (
+    <div className={`card block signature-card ${s.abstain ? "uncertain" : ""}`}>
+      <h4>Signature analysis (deterministic)</h4>
+      <div className="signature-verdict">
+        <span>{verdict.replaceAll("_", " ")}</span>
+        <span className="signature-confidence">{(s.confidence * 100).toFixed(0)}%</span>
+      </div>
+      <div className="signature-flags">
+        {s.abstain
+          ? <span className="signature-flag abstain">abstained · low separability</span>
+          : agreement === true
+            ? <span className="signature-flag agrees">agrees with agent</span>
+            : agreement === false
+              ? <span className="signature-flag disagrees">disagrees with agent</span>
+              : <span className="signature-flag">agent comparison unavailable</span>}
+      </div>
+      <ul className="signature-evidence">
+        {(s.evidence || []).map((line, i) => <li key={i}>{line}</li>)}
+      </ul>
+      <p className="hint">Hand-set physical rules over detector statistics; no model or fault label.</p>
     </div>
   );
 }

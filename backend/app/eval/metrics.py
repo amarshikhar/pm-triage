@@ -40,10 +40,16 @@ def summarize(results: list) -> dict:
 
     correct_text = [r for r in scored if r.correct_text]
     correct_cite = [r for r in scored if r.correct_citation]
+    classifier_correct = [r for r in scored if getattr(r, "classifier_correct", False)]
+    classifier_covered = [
+        r for r in scored if not getattr(r, "classifier_abstained", True)
+        and getattr(r, "classifier_pred", None)
+    ]
 
     report["accuracy"] = {
         "top1_text_pct": _pct(len(correct_text), len(scored)),
         "top1_citation_pct": _pct(len(correct_cite), len(scored)),
+        "classifier_top1_pct": _pct(len(classifier_correct), len(scored)),
         # Credits an answer that named the true cause as a secondary hypothesis.
         # Separating this from top-1 keeps hedging visible instead of rewarding it.
         "hit_any_pct": _pct(len([r for r in scored if r.hit_any]), len(scored)),
@@ -67,16 +73,32 @@ def summarize(results: list) -> dict:
     report["scorer_agreement_n"] = len(both)
 
     per_class = {}
+    classifier_per_class = {}
     for cls in FAULT_CLASSES:
         rows = [r for r in scored if r.fault == cls]
         if rows:
+            class_covered = [
+                r for r in rows if not getattr(r, "classifier_abstained", True)
+                and getattr(r, "classifier_pred", None)
+            ]
             per_class[cls] = {
                 "n": len(rows),
                 "top1_text_pct": _pct(len([r for r in rows if r.correct_text]), len(rows)),
+                "classifier_top1_pct": _pct(
+                    len([r for r in rows if getattr(r, "classifier_correct", False)]),
+                    len(rows)),
                 "hit_any_pct": _pct(len([r for r in rows if r.hit_any]), len(rows)),
                 "mean_confidence": round(sum(r.confidence for r in rows) / len(rows), 2),
                 "mean_ticks_to_detect": round(
                     sum(r.ticks_to_detect for r in rows) / len(rows), 1),
+            }
+            classifier_per_class[cls] = {
+                "n": len(rows),
+                "top1_pct": per_class[cls]["classifier_top1_pct"],
+                "coverage_pct": _pct(len(class_covered), len(rows)),
+                "abstained_pct": _pct(
+                    len([r for r in rows if getattr(r, "classifier_abstained", True)]),
+                    len(rows)),
             }
     report["per_class"] = per_class
 
@@ -88,6 +110,36 @@ def summarize(results: list) -> dict:
             label = "abstained" if getattr(r, "abstained", False) else "unclassified"
         matrix[r.fault][label] += 1
     report["confusion"] = {truth: dict(preds) for truth, preds in matrix.items()}
+
+    classifier_matrix = defaultdict(lambda: defaultdict(int))
+    for r in scored:
+        if getattr(r, "classifier_abstained", True):
+            label = "abstained"
+        else:
+            label = getattr(r, "classifier_pred", None) or "unclassified"
+        classifier_matrix[r.fault][label] += 1
+    report["classifier_confusion"] = {
+        truth: dict(preds) for truth, preds in classifier_matrix.items()
+    }
+    report["classifier"] = {
+        "top1_accuracy_pct": _pct(len(classifier_correct), len(scored)),
+        "coverage_pct": _pct(len(classifier_covered), len(scored)),
+        "selective_accuracy_pct": _pct(
+            len([r for r in classifier_covered
+                 if getattr(r, "classifier_correct", False)]),
+            len(classifier_covered)),
+        "abstained_pct": _pct(
+            len([r for r in scored if getattr(r, "classifier_abstained", True)]),
+            len(scored)),
+        "per_class": classifier_per_class,
+    }
+    report["comparison"] = {
+        "agent_top1_pct": report["accuracy"]["top1_text_pct"],
+        "classifier_top1_pct": report["classifier"]["top1_accuracy_pct"],
+        "mock_top1_pct": (
+            report["accuracy"]["top1_text_pct"] if report["llm_mode"] == "mock" else None
+        ),
+    }
 
     report["calibration"] = _calibration(scored)
     report["ece"] = _ece(scored)
@@ -161,6 +213,10 @@ def format_report(report: dict) -> str:
     L.append("")
     L.append(f"  top-1 accuracy    : {a['top1_text_pct']}%   (free-text scorer)")
     L.append(f"  top-1 accuracy    : {a['top1_citation_pct']}%   (citation scorer, independent)")
+    classifier = report.get("classifier") or {}
+    L.append(f"  classifier top-1 : {classifier.get('top1_accuracy_pct')}%   "
+             f"(coverage {classifier.get('coverage_pct')}%, "
+             f"selective accuracy {classifier.get('selective_accuracy_pct')}%)")
     L.append(f"  scorer agreement  : {report['scorer_agreement_pct']}% (n={report['scorer_agreement_n']})")
     L.append(f"  hit@any           : {a['hit_any_pct']}%   (true cause named anywhere)")
     L.append(f"  hedged answers    : {a['hedged_pct']}%")
@@ -172,9 +228,11 @@ def format_report(report: dict) -> str:
 
     L.append("")
     L.append("  per fault class:")
-    L.append(f"    {'class':<15}{'n':>4}{'top-1':>9}{'hit@any':>10}{'conf':>7}{'ticks':>7}")
+    L.append(f"    {'class':<23}{'n':>4}{'agent':>9}{'classif.':>10}"
+             f"{'hit@any':>10}{'conf':>7}{'ticks':>7}")
     for cls, s in report["per_class"].items():
-        L.append(f"    {cls:<15}{s['n']:>4}{str(s['top1_text_pct']) + '%':>9}"
+        L.append(f"    {cls:<23}{s['n']:>4}{str(s['top1_text_pct']) + '%':>9}"
+                 f"{str(s['classifier_top1_pct']) + '%':>10}"
                  f"{str(s['hit_any_pct']) + '%':>10}{s['mean_confidence']:>7}"
                  f"{s['mean_ticks_to_detect']:>7}")
 
@@ -191,6 +249,12 @@ def format_report(report: dict) -> str:
     for truth, preds in report["confusion"].items():
         row = ", ".join(f"{p}={n}" for p, n in sorted(preds.items(), key=lambda x: -x[1]))
         L.append(f"    {truth:<15} {row}")
+
+    L.append("")
+    L.append("  classifier confusion (truth -> predicted):")
+    for truth, preds in report.get("classifier_confusion", {}).items():
+        row = ", ".join(f"{p}={n}" for p, n in sorted(preds.items(), key=lambda x: -x[1]))
+        L.append(f"    {truth:<23} {row}")
 
     for e in report.get("errors", []):
         L.append(f"    error: {e}")
