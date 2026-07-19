@@ -29,7 +29,7 @@ maintenance system of record.
 ## Non-negotiable claims discipline
 
 - A trained classifier is complete only for the narrow restriction pair; it is
-  not a universal fault model.
+  not a universal fault model.[The system has universal orchestration, not an unjustifiably universal model. Clear faults use physics rules, the trained classifier resolves the overlapping restriction pair for which sufficient grouped data exists, and unsupported domains abstain. With additional customer-labelled data, I would add independently validated machine-family specialists behind the same classification service.]
 - Eight real replay episodes do not establish production accuracy.
 - Existing Sonnet reports are historical. The current paid DeepSeek real replay
   is n=8: 87.5% raw top-1, 75% operational coverage, 100% selective accuracy
