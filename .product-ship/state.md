@@ -6,7 +6,7 @@
 - Repository: https://github.com/amarshikhar/pm-triage
 - Released version: unversioned assessment artifact
 - Last verified: 2026-07-19
-- Release stage: design-partner ready on a published review branch; merge/redeploy pending
+- Release stage: design-partner ready; main merged and Vercel frontend deployed
 
 ## Shared understanding
 
@@ -37,7 +37,8 @@
   demand signal recorded.
 - Known limitations: real n=8 remains tiny; trained ML covers one fault pair;
   CWRU transitions are constructed and its commercial rights need confirmation;
-  mock CMMS shares deployment/database; deployment of the review branch is pending.
+  mock CMMS shares deployment/database; the current Render backend SHA was not
+  verified as part of the Vercel release.
 
 ## Open alignment questions
 
@@ -65,7 +66,7 @@
 | Alignment and demand | partial | Product promise/non-goals are documented. | No external paid/design-partner demand recorded. |
 | Core outcome and reliability | partial-pass | 102 tests, frontend build, full mock E2E, grouped ML evidence, fixed eval sets, paid DeepSeek replay. | External customer labels. |
 | Safety, privacy, cost, and compliance | partial-pass | Mandatory human gate, no control tool, auth, request/USD caps, SKAB license documented. | Customer retention/privacy policy and independent security review. |
-| Installation and operations | partial | `.env.example`, Render/Vercel/Supabase paths documented. | Commit/push/redeploy and verify current production state; backup/restore runbook. |
+| Installation and operations | partial | `.env.example`, Render/Vercel/Supabase paths documented; Vercel production is READY on `753b96f`. | Verify Render backend SHA/health; add backup/restore runbook. |
 | Onboarding and documentation | pass for assisted demo | Current status, architecture, eval, cost, defense, and economics guides. | Stranger-install usability not independently tested. |
 | Proof and demo | partial-pass | Reproducible synthetic n=24, real n=8, and paid DeepSeek n=8; full workflow. | Real n is tiny and not a customer-site validation. |
 | Offer and delivery | not ready | Assisted model hypothesized. | No price, terms, support SLA, or delivery agreement. |
@@ -93,12 +94,13 @@
 
 ## Next action
 
-- Action: review and merge PR #1, redeploy, then verify the published SHA and
-  one manual mock case before any intentional live demo.
-- Completion evidence: production health reports mock mode + DeepSeek model;
-  UI budget shows provider calls/USD; spontaneous faults do not appear; one
-  manual mock case completes; deployed commit SHA is recorded.
-- Blocking question: user authorization to merge/redeploy the review branch.
+- Action: verify the Render backend SHA/health and one manual mock case before
+  any intentional live production demo.
+- Completion evidence already captured: PR #1 merged; Vercel deployment
+  `dpl_EgUjFP7JyrJLEuot1AzGoW2SQpmd` is READY/PROMOTED from `753b96f`; frontend
+  reports and Evaluation-page paid fields match the committed backend report.
+- Remaining release evidence: Render health/model/budget state and one manual
+  mock case.
 
 ## Work log
 
@@ -106,4 +108,5 @@
 |---|---|---|---|
 | 2026-07-19 | Cost controls, eval honesty, replay episode coverage, and docs implemented | 94 pytest pass; Next.js build pass; synthetic n=24 and SKAB n=5 mock eval | Train narrow classifier and add OOD/second testbed |
 | 2026-07-19 | Narrow ML, learned OOD, and CWRU development replay implemented | 99 pytest pass; Next build; synthetic n=24; real n=8; restriction holdout 3/3 | Publish, then run capped live DeepSeek eval |
-| 2026-07-19 | Paid DeepSeek real replay and provider hardening completed | 102 pytest pass; 8/8 live rows; 0 errors; 34 calls; $0.014535; run 29692423022 | Review PR, merge, redeploy, verify |
+| 2026-07-19 | Paid DeepSeek real replay and provider hardening completed | 102 pytest pass; 8/8 live rows; 0 errors; 34 calls; $0.014535; run 29692423022 | Merge and deploy frontend |
+| 2026-07-19 | Main merged and Vercel frontend deployed | `753b96f`; deployment `dpl_EgUjFP7JyrJLEuot1AzGoW2SQpmd` READY/PROMOTED; artifacts match | Verify Render backend and external customer labels |

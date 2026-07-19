@@ -34,7 +34,8 @@ completes successfully.
 | Human-in-the-loop production flow | Done | Every case is `pending_review`; a named planner approves/rejects/edits; only approval creates a CMMS work order. |
 | Cost-safe live mode | Done | Mock default, DeepSeek V4 Flash default, random production faults off, 12 provider requests/day, $0.25/day, 700 output tokens, persistent usage/cost ledger. |
 | Fresh live DeepSeek evaluation | Done | GitHub run `29692423022`: 8/8 live rows, 0 errors/fallbacks, 34 calls, 161,585 tokens, $0.014535 returned cost. |
-| Deployment | Branch published; merge/redeploy pending | Draft PR #1 contains the implementation and committed reports. Production must still be updated and verified after merge. |
+| Vercel frontend deployment | Done | PR #1 merged as `753b96f`; Vercel deployment `dpl_EgUjFP7JyrJLEuot1AzGoW2SQpmd` is READY/PROMOTED at `pm-triage.vercel.app`. |
+| Render backend deployment | Not verified in this release | The frontend's committed reports are current even if Render is asleep or stale; backend SHA/health remains a separate release check. |
 
 ## Current mock-mode numbers
 
