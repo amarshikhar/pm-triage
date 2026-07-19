@@ -13,6 +13,7 @@ import asyncio
 import json
 import os
 import random
+import time
 
 from .db import SessionLocal
 from .detector import run_detection
@@ -123,13 +124,40 @@ simulator = FleetSimulator(
 async def simulator_loop(interval_s: float, on_anomaly):
     from .replay import replayer  # late import; replay also imports models
 
+    queue: asyncio.Queue[int] = asyncio.Queue()
+
+    async def triage_worker():
+        """Keep slow provider/tool work off the three-second telemetry clock."""
+        while True:
+            anomaly_id = await queue.get()
+            started = time.monotonic()
+            try:
+                print(f"[simulator] triage started for anomaly {anomaly_id}")
+                await on_anomaly(anomaly_id)
+                print(
+                    f"[simulator] triage finished for anomaly {anomaly_id} "
+                    f"in {time.monotonic() - started:.1f}s"
+                )
+            except asyncio.CancelledError:
+                raise
+            except Exception as e:  # one failed case must not kill later cases
+                print(f"[simulator] triage failed for anomaly {anomaly_id}: {e}")
+            finally:
+                queue.task_done()
+
+    worker = asyncio.create_task(triage_worker())
     simulator.running = True
-    while simulator.running:
-        try:
-            anomaly_ids = await asyncio.to_thread(simulator.tick)
-            anomaly_ids += await asyncio.to_thread(replayer.tick)
-            for aid in anomaly_ids:
-                await on_anomaly(aid)
-        except Exception as e:  # keep the feed alive; a dead simulator kills the demo
-            print(f"[simulator] tick failed: {e}")
-        await asyncio.sleep(interval_s)
+    try:
+        while simulator.running:
+            try:
+                anomaly_ids = await asyncio.to_thread(simulator.tick)
+                anomaly_ids += await asyncio.to_thread(replayer.tick)
+                for anomaly_id in anomaly_ids:
+                    queue.put_nowait(anomaly_id)
+                    print(f"[simulator] anomaly {anomaly_id} queued for triage")
+            except Exception as e:  # keep the feed alive; a dead simulator kills the demo
+                print(f"[simulator] tick failed: {e}")
+            await asyncio.sleep(interval_s)
+    finally:
+        worker.cancel()
+        await asyncio.gather(worker, return_exceptions=True)

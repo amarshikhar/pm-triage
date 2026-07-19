@@ -13,12 +13,16 @@ export default function FleetPage() {
   const [injMachine, setInjMachine] = useState("CMP-01");
   const [injFault, setInjFault] = useState("");
   const [injecting, setInjecting] = useState(false);
+  const [fleetError, setFleetError] = useState("");
+  const [cueNotice, setCueNotice] = useState("");
 
   const refresh = useCallback(async () => {
     try {
       const [ms, cs] = await Promise.all([getMachines(), getCases("pending_review")]);
-      setMachines(ms); setPending(cs);
-    } catch { /* chrome shows offline */ }
+      setMachines(ms); setPending(cs); setFleetError("");
+    } catch (error: any) {
+      setFleetError(error?.message || "Backend is still waking up");
+    }
   }, []);
 
   useEffect(() => {
@@ -36,9 +40,13 @@ export default function FleetPage() {
 
   async function inject() {
     if (!fault) return;
-    setInjecting(true);
-    try { await injectFault(injMachine, fault); await refresh(); }
-    catch { /* 401 handled by chrome */ }
+    setInjecting(true); setCueNotice("");
+    try {
+      const result = await injectFault(injMachine, fault);
+      setCueNotice(result.message || "Fault queued successfully.");
+      await refresh();
+    }
+    catch (error: any) { setCueNotice(`Could not cue fault: ${error?.message || "request failed"}`); }
     finally { setInjecting(false); }
   }
 
@@ -73,9 +81,18 @@ export default function FleetPage() {
         </div>
       </div>
 
+      {cueNotice && <div className="cue-status" role="status">{cueNotice}</div>}
+
       <div className="grid">
         {machines.map((m) => <MachineCard key={m.id} m={m} />)}
-        {machines.length === 0 && <div className="empty">Connecting to the fleet…</div>}
+        {machines.length === 0 && (
+          <div className="empty fleet-wake">
+            <b>{fleetError ? "Backend is waking up…" : "Connecting to the fleet…"}</b>
+            <span>Render can need about a minute after sleeping. This page retries automatically.</span>
+            {fleetError && <span className="hint">Latest response: {fleetError}</span>}
+            <button className="btn" onClick={() => void refresh()}>Retry now</button>
+          </div>
+        )}
       </div>
     </main>
   );

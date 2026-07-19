@@ -129,6 +129,11 @@ export type LlmStatus = {
   };
 };
 
+export type InjectionResult = {
+  ok: boolean; episode?: string; expected_detection_seconds?: number;
+  message?: string; faults?: Record<string, string>;
+};
+
 // --- calls ------------------------------------------------------------------
 
 export const getHealth = () => j<any>("/api/health");
@@ -142,7 +147,7 @@ export const getEvalReport = () => j<EvalBundle>("/api/eval-report");
 export const getFaults = () =>
   j<{ available: string[]; replay: Record<string, string[]>; active: Record<string, string> }>("/api/simulate/faults");
 export const injectFault = (machine_id: string, fault: string) =>
-  j("/api/simulate/inject", { method: "POST", body: JSON.stringify({ machine_id, fault }) });
+  j<InjectionResult>("/api/simulate/inject", { method: "POST", body: JSON.stringify({ machine_id, fault }) });
 export const decideCase = (
   id: number,
   body: { action: "approve" | "reject" | "edit"; reviewer: string; note?: string; priority?: string; recommended_actions?: string[] },

@@ -45,6 +45,22 @@ It means “every accepted answer in this tiny run was correct.”
 | `in_labelled_window_pct` | Replay anomaly fired inside the dataset authors' labelled abnormal region. | Higher. |
 | `ticks_to_detect` | Feed steps from fault cue to anomaly. At a 3-second interval, multiply by 3 for demo seconds. | Lower, subject to noise/safety tradeoff. |
 
+Other labels visible on the page:
+
+| Label | Plain meaning |
+|---|---|
+| `synthetic` | Generated, repeatable sensor patterns; useful but easier than real equipment. |
+| `real testbeds` | Five recorded SKAB pump episodes plus three recorded CWRU bearing episodes. |
+| `mock` | Free scripted decision policy using the real tools and schemas; no external AI call. |
+| `live` | Actual paid DeepSeek model calls through OpenRouter. |
+| `delta` / `pp` | Live minus mock; `pp` means percentage points. |
+| `provider requests` | Individual paid model API calls. One case normally needs several tool-loop turns. |
+| `tokens` | Text units sent to and returned by the model. |
+| `latency` | Mean wall-clock seconds to finish one case in that evaluation run. |
+| `exact cost` | Cost returned by OpenRouter, not a guessed price calculation. |
+| `seed` | Number that makes randomized trial order reproducible. |
+| `generated` | UTC time when the saved report was produced. |
+
 ## Confusion matrix
 
 Rows are the true class. Columns are what the method predicted.

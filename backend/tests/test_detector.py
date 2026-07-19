@@ -1,6 +1,6 @@
 import json
 
-from app.detector import render_context, run_detection, signal_context
+from app.detector import force_detect, render_context, run_detection, signal_context
 from app.models import Anomaly, Machine, TelemetryReading, utcnow
 
 
@@ -51,6 +51,23 @@ def test_cooldown_prevents_duplicate_anomalies(db):
     assert len(run_detection(db, m, r1)) == 1
     r2 = _reading(db, m.id, vibration_mm_s=7.5)
     assert run_detection(db, m, r2) == []
+
+
+def test_cooldown_blocks_a_second_signal_from_the_same_physical_event(db):
+    m = db.get(Machine, "CNC-01")
+    first = _reading(db, m.id, vibration_mm_s=7.0)
+    assert len(run_detection(db, m, first)) == 1
+    second = _reading(db, m.id, temperature_c=90.0)
+    assert run_detection(db, m, second) == []
+
+
+def test_manual_multi_signal_fault_creates_exactly_one_anomaly(db):
+    m = db.get(Machine, "CNC-01")
+    force_detect(m.id)
+    reading = _reading(db, m.id, temperature_c=90.0, vibration_mm_s=7.0)
+    created = run_detection(db, m, reading)
+    assert len(created) == 1
+    assert db.query(Anomaly).filter(Anomaly.machine_id == m.id).count() == 1
 
 
 # --- signal context ---------------------------------------------------------

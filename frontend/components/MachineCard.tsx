@@ -17,8 +17,15 @@ export default function MachineCard({ m }: { m: Machine }) {
 
   const l = m.latest;
   const times = series.map((r) => new Date(r.ts).toLocaleTimeString());
-  const fmt = (v: any) =>
-    typeof v === "number" ? (Math.abs(v) >= 100 ? Math.round(v).toLocaleString() : v) : "—";
+  const fmt = (value: any, unit: string) => {
+    if (typeof value !== "number" || !Number.isFinite(value)) return "—";
+    if (unit === "rpm") return Math.round(value).toLocaleString();
+    if (unit === "ratio") return value.toFixed(2);
+    if (unit === "g") return value.toFixed(3);
+    if (unit === "mm/s") return value.toFixed(2);
+    if (Math.abs(value) >= 100) return value.toFixed(1);
+    return value.toFixed(2);
+  };
 
   return (
     <div className={`card machine-card ${m.fault_active ? "faulted" : ""}`}>
@@ -42,7 +49,7 @@ export default function MachineCard({ m }: { m: Machine }) {
         {m.signals.map((s) => (
           <div className="metric" key={s.key}>
             <div className="label">{s.name} {s.unit && <span className="unit">{s.unit}</span>}</div>
-            <div className="value"><b>{fmt(l?.[s.key])}</b></div>
+            <div className="value"><b>{fmt(l?.[s.key], s.unit)}</b></div>
             <Sparkline values={series.map((r) => r[s.key]).filter((v) => typeof v === "number")}
                        labels={times} />
           </div>

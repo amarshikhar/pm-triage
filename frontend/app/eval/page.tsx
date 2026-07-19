@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { EvalBundle, EvalReport, getEvalReport } from "@/lib/api";
+import { EvalBundle, EvalModeReport, EvalReport, getEvalReport } from "@/lib/api";
 import syntheticStatic from "./reports/synthetic.json";
 import realStatic from "./reports/real.json";
 
@@ -85,6 +85,7 @@ export default function EvalPage() {
       ) : (
         <>
           <div className="stat-row">
+            <Stat n={`${primary.n_trials}`} l="labelled trials tested" />
             <Stat n={`${primary.detection_rate_pct}%`} l="detection rate" good />
             {primary.classifier && <Stat n={`${primary.classifier.top1_accuracy_pct}%`} l="hybrid classifier top-1" />}
             {mock && <Stat n={`${mock.accuracy.top1_text_pct}%`} l="mock top-1 accuracy" />}
@@ -93,6 +94,32 @@ export default function EvalPage() {
             {live?.paid_usage && <Stat n={`$${live.paid_usage.returned_cost_usd.toFixed(5)}`} l="exact live eval cost" accent />}
             {primary.replay && <Stat n={`${primary.replay.in_labelled_window_pct}%`} l="fired in labelled window" />}
           </div>
+
+          <PlainResult report={primary} dataset={which} />
+
+          <Panel title="Every Evaluation-page word, in simple language">
+            <div className="eval-glossary">
+              <Explain term="Synthetic faults">Computer-generated sensor patterns with known answers. Useful for repeatable tests, but easier than real equipment.</Explain>
+              <Explain term="Real testbeds">Recorded sensor data: five SKAB pump episodes plus three CWRU bearing episodes. No sensor values are invented during replay.</Explain>
+              <Explain term="Detection rate">Out of all fault recordings, how many made the deterministic rules say “something abnormal happened.” This is detection, not fault naming.</Explain>
+              <Explain term="Top-1 accuracy">The first fault name was correct. Every test counts; an abstention is not counted as correct.</Explain>
+              <Explain term="Coverage">How often the system felt supported enough to name a fault. 75% coverage on 8 tests means it named 6 and sent 2 down the uncertain/human path.</Explain>
+              <Explain term="Selective accuracy">Accuracy only among answers it accepted. 100% at 6/8 coverage means 6/6 accepted answers were right—not 8/8.</Explain>
+              <Explain term="Rules + trained hard-fault layer">Rules detect the event; a small Extra Trees classifier separates the overlapping SKAB restriction faults. It abstains outside its learned support.</Explain>
+              <Explain term="Agent / live LLM">The paid DeepSeek run. The LLM uses evidence and maintenance history to explain, recommend action, cite precedent, and draft the case. It does not own detection.</Explain>
+              <Explain term="Mock (scripted baseline)">A free, deterministic stand-in that uses the same tools and case schema but no external AI call. It proves plumbing and gives the live LLM a fair baseline.</Explain>
+              <Explain term="ECE / calibration error">How far confidence was from measured correctness on average. 0 is perfect; 0.148 means about a 14.8 percentage-point mismatch. ECE is not accuracy.</Explain>
+              <Explain term="Fired in labelled window">Whether detection happened after the dataset author marked the fault. A lower value can mean an early precursor, so read it separately from detection accuracy.</Explain>
+              <Explain term="Hit@any">The correct fault appeared somewhere in the explanation, even if it was not the first answer. This is weaker than top-1.</Explain>
+              <Explain term="Delta / pp">Live minus mock. “+12.5 pp” means 12.5 percentage points, not a 12.5% relative increase. For ECE, lower is better.</Explain>
+              <Explain term="Confusion matrix">Rows are the true fault; columns are the answer. Diagonal numbers are correct. Off-diagonal numbers are mistakes. “Abstained” means deliberately deferred.</Explain>
+              <Explain term="Per fault: n / conf">n is how many examples of that fault were tested. conf is average calibrated confidence from 0 to 1; 0.80 means 80% stated confidence.</Explain>
+              <Explain term="Calibration band: states / actual / gap">“States” is average claimed confidence, “actual” is observed accuracy, and gap is actual minus claimed. A large negative gap means overconfidence.</Explain>
+              <Explain term="Provider requests / tokens / latency / cost">Requests are paid OpenRouter calls; tokens are text units sent and received; latency is average seconds per case; cost is the exact amount OpenRouter returned.</Explain>
+              <Explain term="Scorer agreement / coverage / n">Two separate graders read case text and cited work orders. Agreement says how often their labels matched; coverage says how often both could grade; n is that jointly graded count.</Explain>
+              <Explain term="Seed / generated time">Seed makes the randomized order repeatable. Generated time says when this saved report was produced, in UTC—not when you opened the page.</Explain>
+            </div>
+          </Panel>
 
           {primary.classifier && (
             <Panel title="Agent vs rules + trained classifier">
@@ -225,6 +252,45 @@ function Stat({ n, l, good, accent }: { n: string; l: string; good?: boolean; ac
 }
 function Panel({ title, children }: { title: string; children: React.ReactNode }) {
   return <div className="card block"><h4>{title}</h4>{children}</div>;
+}
+function Explain({ term, children }: { term: string; children: React.ReactNode }) {
+  return <div><b>{term}</b><span>{children}</span></div>;
+}
+function PlainResult({ report, dataset }: { report: EvalModeReport; dataset: "synthetic" | "real" }) {
+  const scored = report.n_scored;
+  const detected = Math.round(report.n_trials * report.detection_rate_pct / 100);
+  const agentCoverage = report.agent_selection?.coverage_pct ?? 100;
+  const agentCovered = Math.round(scored * agentCoverage / 100);
+  const agentCorrect = Math.round(scored * report.accuracy.top1_text_pct / 100);
+  const acceptedCorrect = report.agent_selection?.selective_accuracy_pct == null
+    ? null : Math.round(agentCovered * report.agent_selection.selective_accuracy_pct / 100);
+  const classCovered = report.classifier
+    ? Math.round(scored * report.classifier.coverage_pct / 100) : null;
+  const classCorrect = report.classifier
+    ? Math.round(scored * report.classifier.top1_accuracy_pct / 100) : null;
+  const classAcceptedCorrect = report.classifier && report.classifier.selective_accuracy_pct != null && classCovered != null
+    ? Math.round(classCovered * report.classifier.selective_accuracy_pct / 100) : null;
+
+  return (
+    <div className="eval-note plain-result">
+      <b>Read this result as counts:</b>
+      <ul>
+        <li><b>Rules noticed {detected}/{report.n_trials}</b> labelled faults.</li>
+        {report.classifier && classCovered != null && (
+          <li><b>Rules + trained classifier:</b> correct on {classCorrect}/{scored} overall;
+            named a fault on {classCovered}/{scored}; {classAcceptedCorrect}/{classCovered} accepted answers were right.</li>
+        )}
+        <li><b>{report.llm_mode === "live" ? "Paid live agent" : "Free mock agent"}:</b> correct on {agentCorrect}/{scored} raw drafts;
+          accepted {agentCovered}/{scored}; {acceptedCorrect == null ? "selective accuracy unavailable" : `${acceptedCorrect}/${agentCovered} accepted answers were right`}.</li>
+        {report.n_agent_errors > 0
+          ? <li><b>{report.n_agent_errors} agent run(s) failed</b> after detection.</li>
+          : <li><b>0 agent runs failed.</b></li>}
+      </ul>
+      {dataset === "real"
+        ? "This is encouraging evidence on only eight laboratory recordings, not a claim of universal production accuracy."
+        : "These 24 generated trials check repeatability and plumbing; the real-testbed tab is the harder credibility check."}
+    </div>
+  );
 }
 function Row({ label, a, b, pct, invert }: { label: string; a: number; b: number; pct?: boolean; invert?: boolean }) {
   const d = b - a;

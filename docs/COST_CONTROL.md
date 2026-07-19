@@ -92,6 +92,9 @@ and resets on UTC day or process restart.
 - If a cap is reached mid-case, the system finishes the case with the free
   deterministic policy instead of losing the anomaly.
 - The header shows call count and actual dollars used today.
+- One physical machine event creates at most one anomaly/case during cooldown,
+  even when several bearing signals breach together. This prevents one episode
+  from multiplying paid triage calls by the number of changed signals.
 
 The dollar cap is checked before a call using cost already returned by completed
 calls. One final call can cross the line slightly because its exact cost is only
@@ -109,6 +112,16 @@ overshoot.
    comparison. For real replay, one pass is eight episodes across two testbeds; larger n
    repeats the same physical data. The workflow asks for explicit maximum paid
    calls and maximum returned USD cost for each evaluation process.
+
+### Why production briefly showed 12/12 on 2026-07-19
+
+One manually cued CWRU episode moved four signals and was incorrectly emitted as
+four anomalies/cases. The first live cases used several provider turns each and
+the request counter reached 12, after which remaining cases correctly fell back
+to mock. The ledger showed only **$0.003425** spent, so the request-count guard—not
+the $0.25 guard—stopped live calls. Machine-event deduplication now prevents that
+signal fan-out, and the header shows live calls already used even while mock mode
+is active.
 
 ## What “GitHub Actions pings Render every 10 minutes” means
 

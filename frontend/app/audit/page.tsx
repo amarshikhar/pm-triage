@@ -10,6 +10,10 @@ function actorClass(a: string) {
   return "system";
 }
 
+function localTimestamp(value: string) {
+  return new Date(value).toLocaleString(undefined, { timeZoneName: "short" });
+}
+
 function AuditInner() {
   const params = useSearchParams();
   const router = useRouter();
@@ -39,7 +43,10 @@ function AuditInner() {
           </div>
         )}
       </div>
-      <p className="hint" style={{ marginTop: 0 }}>system → agent → human → system, every step attributed.</p>
+      <p className="hint" style={{ marginTop: 0 }}>
+        system → agent → human → system, every step attributed. Times use your device timezone.
+        “Anomaly detected” is when rules fired; “case created” is later, after triage finished.
+      </p>
 
       <div className="card">
         {audit.length === 0 && <div className="empty small">No events{machine ? ` for ${machine}` : ""} yet.</div>}
@@ -47,7 +54,9 @@ function AuditInner() {
           const href = linkFor(a);
           const inner = (
             <>
-              <span className="ts">{new Date(a.ts).toLocaleString()}</span>
+              <span className="ts" title={`Stored as ${new Date(a.ts).toISOString()}`}>
+                {localTimestamp(a.ts)}
+              </span>
               <span className={`actor ${actorClass(a.actor)}`}>{a.actor}</span>
               <span>{a.event_type.replaceAll("_", " ")} · {a.entity} #{a.entity_id}{href && <span className="chev"> ›</span>}</span>
             </>

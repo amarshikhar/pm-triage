@@ -18,8 +18,19 @@ The intentionally paid DeepSeek replay also completed on all eight episodes:
 7/8 raw top-1, 6/8 operational coverage after abstention, 6/6 selective
 accuracy, ECE 0.148, zero errors/fallbacks, and $0.014535 returned provider cost.
 
-Verification: **102 backend tests pass** and the Next.js production build
+Verification: **105 backend tests pass** and the Next.js production build
 completes successfully.
+
+### Production behavior correction in this release
+
+The 2026-07-19 CWRU demo exposed two orchestration defects, not a clock or model
+accuracy defect. A cue at 21:25:38 IST was detected only at 21:32:18 because the
+three-second replay loop waited synchronously for earlier LLM work. The same
+bearing episode then created four cases from four changed signals. The fix keeps
+telemetry ticking while a serial worker performs triage, and deduplicates one
+physical machine event into one case. Audit now labels the browser timezone and
+explains cue, anomaly, and case timestamps; the Fleet page shows cold-start and
+cue progress instead of an indefinite “Connecting” state.
 
 ## Done versus pending
 
@@ -34,8 +45,8 @@ completes successfully.
 | Human-in-the-loop production flow | Done | Every case is `pending_review`; a named planner approves/rejects/edits; only approval creates a CMMS work order. |
 | Cost-safe live mode | Done | Mock default, DeepSeek V4 Flash default, random production faults off, 12 provider requests/day, $0.25/day, 700 output tokens, persistent usage/cost ledger. |
 | Fresh live DeepSeek evaluation | Done | GitHub run `29692423022`: 8/8 live rows, 0 errors/fallbacks, 34 calls, 161,585 tokens, $0.014535 returned cost. |
-| Vercel frontend deployment | Done | PR #1 merged as `753b96f`; Vercel deployment `dpl_EgUjFP7JyrJLEuot1AzGoW2SQpmd` is READY/PROMOTED at `pm-triage.vercel.app`. |
-| Render backend deployment | Not verified in this release | The frontend's committed reports are current even if Render is asleep or stale; backend SHA/health remains a separate release check. |
+| Vercel frontend deployment | Release verification pending | Git integration deploys frontend changes from `main`; this row is updated with the deployment id after production verification. |
+| Render backend deployment | Release verification pending | Render deploys backend changes from `main`; health and behavior are checked after this release is pushed. |
 
 ## Current mock-mode numbers
 

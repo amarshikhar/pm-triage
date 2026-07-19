@@ -1,5 +1,6 @@
 import asyncio
 import json
+import os
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
@@ -14,7 +15,7 @@ from .auth import auth_enabled, current_reviewer, issue_token
 from .db import get_db
 from .llm_budget import budget
 from .models import Anomaly, AuditEvent, Machine, TelemetryReading, TriageCase
-from .replay import replayer
+from .replay import JUMP_LEAD_ROWS, replayer
 from .simulator import FAULTS, simulator
 
 router = APIRouter(prefix="/api")
@@ -358,18 +359,35 @@ def inject_fault(body: Inject, db: Session = Depends(get_db),
         raise HTTPException(404, "unknown machine")
     try:
         from .detector import force_detect
-        force_detect(machine.id)  # a manual cue always surfaces a case (no dedup)
         if machine.source == "replay":
             episode = replayer.jump_to_fault(machine, body.fault)
+            force_detect(machine.id)  # successful cue gets one fresh machine event
+            tick_seconds = float(os.getenv("SIM_INTERVAL_S", "3"))
+            expected_seconds = round(JUMP_LEAD_ROWS * tick_seconds)
             audit(db, f"human:{reviewer or 'demo'}", "episode_cued", "machine", machine.id,
-                  {"fault": body.fault, "episode": episode})
-            return {"ok": True, "episode": episode}
+                  {"fault": body.fault, "episode": episode,
+                   "expected_detection_seconds": expected_seconds})
+            return {
+                "ok": True,
+                "episode": episode,
+                "expected_detection_seconds": expected_seconds,
+                "message": (
+                    f"Real recording cued. About {expected_seconds // 60}–"
+                    f"{expected_seconds // 60 + 1} minutes of honest baseline play before "
+                    "detection; triage then creates one case."
+                ),
+            }
         simulator.inject_fault(body.machine_id, body.fault)
+        force_detect(machine.id)  # successful injection gets one fresh event
     except ValueError as e:
         raise HTTPException(422, str(e))
     audit(db, f"human:{reviewer or 'demo'}", "fault_injected", "machine", body.machine_id,
           {"fault": body.fault})
-    return {"ok": True, "faults": {k: v["fault"] for k, v in simulator.active_faults.items()}}
+    return {
+        "ok": True,
+        "faults": {k: v["fault"] for k, v in simulator.active_faults.items()},
+        "message": "Fault injected. Readings now ramp each tick; one case will appear after detection and triage.",
+    }
 
 
 @router.post("/simulate/clear/{machine_id}")

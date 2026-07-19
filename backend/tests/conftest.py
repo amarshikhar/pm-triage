@@ -19,9 +19,11 @@ from app.seed import seed_if_empty
 
 @pytest.fixture()
 def db():
+    from app.detector import FORCE_DETECT
     from app.llm_budget import reset_process_budget
 
     reset_process_budget()
+    FORCE_DETECT.clear()
     engine = create_engine(
         "sqlite://", connect_args={"check_same_thread": False}, poolclass=StaticPool
     )
@@ -33,3 +35,4 @@ def db():
     seed_if_empty(session)
     yield session
     session.close()
+    FORCE_DETECT.clear()

@@ -46,6 +46,11 @@ export default function Chrome() {
 
   async function toggleLlm() {
     if (!llm) return;
+    if (llm.mode === "mock" && !window.confirm(
+      `Switch to paid live LLM? One case normally uses several provider calls. ` +
+      `Today: ${llm.budget.used_today}/${llm.budget.daily_cap} calls and ` +
+      `$${(llm.budget.cost_usd_today ?? 0).toFixed(4)}/$${(llm.budget.daily_usd_cap ?? 0).toFixed(2)}.`,
+    )) return;
     try { setLlm(await setLlmMode(llm.mode === "live" ? "mock" : "live")); }
     catch { /* 401 raises the login modal via the event */ }
   }
@@ -81,7 +86,7 @@ export default function Chrome() {
               ? "LIVE unavailable — no key"
               : llm.mode === "live"
                 ? `LIVE · ${llm.budget.used_today}/${llm.budget.daily_cap} calls · $${(llm.budget.cost_usd_today ?? 0).toFixed(4)}`
-                : "LLM: mock"}
+                : `MOCK · free · ${llm.budget.used_today}/${llm.budget.daily_cap} live calls used`}
           </button>
         )}
         {health?.auth_enabled === false ? null : session ? (

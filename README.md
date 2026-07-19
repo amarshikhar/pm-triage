@@ -107,7 +107,7 @@ cd backend
 .venv/bin/python -m app.eval --data replay --trials 8 --mode mock
 ```
 
-Current verification: **102 backend tests pass** and `npm run build` completes.
+Current verification: **105 backend tests pass** and `npm run build` completes.
 
 ## Deployment
 

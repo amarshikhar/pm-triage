@@ -148,7 +148,10 @@ On every tick:
 
 Manual injection calls `POST /api/simulate/inject` with a machine and fault. It
 puts that fault into `simulator.active_faults` and temporarily bypasses duplicate
-alert suppression so the demo can produce a fresh case.
+alert suppression so the demo can produce one fresh case. Deduplication is at
+the machine-event level, not the individual-signal level: vibration RMS,
+kurtosis, crest factor, and RPM may all move during one bearing episode, but
+they remain evidence on one anomaly/case rather than becoming four cases.
 
 Random injection still exists in code for local experiments, but production
 sets `SPONTANEOUS_FAULT_PROB=0`. Therefore production faults occur only after an
@@ -183,6 +186,20 @@ is slower than the original experiment:
 
 So it is **not an 18-minute production loop**. The original recordings are about
 15–19 minutes each, but the app emits them at one row every three seconds.
+
+The “Cue real fault” control skips to 45 healthy rows before the labelled fault
+window. At a three-second tick that is about 135 seconds of honest lead-in for
+the 30-reading detector baseline. Sustained detection and triage add more time,
+so the UI says about two to three minutes before detection and then waits for
+case drafting. The cue response is immediate and the Audit row is written at
+that moment.
+
+Detection and triage run on different clocks. Each telemetry/replay tick commits
+an anomaly and puts its id onto an in-process triage queue. A single worker
+handles the slower classifier/LLM/tool loop in order while the three-second feed
+keeps advancing. This prevents a 30–60 second live LLM call from freezing every
+machine. The anomaly timestamp therefore means “rules fired”; the later case
+timestamp means “triage finished and the case was committed.”
 
 For a demo, manual injection on `PMP-03` does not synthesize a fault. It calls
 `jump_to_fault`, which moves the cursor to 45 rows before the labelled region.

@@ -29,7 +29,7 @@ from .audit import audit
 from .models import Anomaly, Machine, TelemetryReading, TriageCase, utcnow
 
 WINDOW = 30          # readings used for the rolling baseline
-COOLDOWN_MIN = 10    # no duplicate anomaly for same machine+metric within this
+COOLDOWN_MIN = 10    # one physical machine event, not one alert per signal
 
 # Machines whose next detection bypasses the dedup/cooldown, so a *manually*
 # cued fault always surfaces a fresh case in a demo even if one is already open.
@@ -158,24 +158,32 @@ def render_context(context: dict, breached_metric: str) -> str:
     return "\n".join(lines)
 
 
-def _blocked_metrics(db: Session, machine_id: str) -> set[str]:
-    """Metrics under cooldown or with an open case — two queries per machine
-    per reading, instead of two per *signal* (which, against a remote Postgres,
-    was the dominant cost of a detection tick)."""
+def _machine_blocked(db: Session, machine_id: str) -> bool:
+    """Whether this machine already has an event being handled.
+
+    A bearing fault can move RMS, kurtosis, crest factor, and RPM together. Those
+    are evidence for one physical event, not four separately billable cases.
+    Deduplicating at machine level also covers the period while triage is still
+    running: the committed anomaly itself holds the cooldown before a case row
+    exists.
+    """
     if machine_id in FORCE_DETECT:
-        return set()  # manual cue: let the fault through even if a case is open
+        return False  # manual cue: allow exactly one fresh physical event
     cutoff = (datetime.now(timezone.utc) - timedelta(minutes=COOLDOWN_MIN)).isoformat()
-    recent = {
-        m for (m,) in db.query(Anomaly.metric)
-        .filter(Anomaly.machine_id == machine_id, Anomaly.ts >= cutoff).all()
-    }
-    open_cases = {
-        m for (m,) in db.query(Anomaly.metric)
+    recent = (
+        db.query(Anomaly.id)
+        .filter(Anomaly.machine_id == machine_id, Anomaly.ts >= cutoff)
+        .first()
+    )
+    open_case = (
+        db.query(TriageCase.id)
+        .select_from(Anomaly)
         .join(TriageCase, TriageCase.anomaly_id == Anomaly.id)
         .filter(TriageCase.machine_id == machine_id,
-                TriageCase.status == "pending_review").all()
-    }
-    return recent | open_cases
+                TriageCase.status == "pending_review")
+        .first()
+    )
+    return recent is not None or open_case is not None
 
 
 def _raise_anomaly(db: Session, machine: Machine, metric: str, value: float,
@@ -225,11 +233,10 @@ def run_detection(db: Session, machine: Machine, reading: TelemetryReading,
     )[1:]  # exclude the reading itself
 
     past_values = [r.values for r in history]
-    blocked = _blocked_metrics(db, machine.id)
+    if _machine_blocked(db, machine.id):
+        return []
 
     for metric, value in values.items():
-        if metric in blocked:
-            continue
         past = [v[metric] for v in past_values if metric in v]
 
         # Rule 1: absolute engineering limit from the asset catalog.
@@ -247,7 +254,7 @@ def run_detection(db: Session, machine: Machine, reading: TelemetryReading,
                     f"{metric} = {value} {'exceeded' if direction > 0 else 'fell below'} "
                     f"limit {limit} ({abs(zscore):.1f} sigma vs last {len(past)} readings)",
                     ground_truth_fault, history, reading))
-                continue
+                break  # one multi-signal physical event -> one anomaly/case
 
         # Rule 2: sustained robust excursion from the machine's own baseline.
         if len(past) >= WINDOW // 2:
@@ -267,6 +274,7 @@ def run_detection(db: Session, machine: Machine, reading: TelemetryReading,
                         f"{'above' if z > 0 else 'below'} its rolling baseline "
                         f"(median {med:.3g}, {Z_SUSTAIN} consecutive readings)",
                         ground_truth_fault, history, reading))
+                    break  # other changed signals remain evidence in context_json
     if created:
         FORCE_DETECT.discard(machine.id)  # the cue produced its case; resume dedup
     return created
