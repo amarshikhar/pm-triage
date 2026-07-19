@@ -108,6 +108,11 @@ export type EvalModeReport = {
   calibration: { bucket: string; n: number; mean_confidence_pct: number; accuracy_pct: number; gap_pct: number }[];
   ece: number; latency_s: { mean: number; p50: number; max: number } | any;
   replay?: { detection_rate_pct: number; in_labelled_window_pct: number };
+  paid_usage?: {
+    provider_requests: number; returned_cost_usd: number;
+    prompt_tokens: number; completion_tokens: number; total_tokens: number;
+    model: string; cost_source: string; request_cap: number; returned_cost_stop_usd: number;
+  };
 };
 export type EvalReport = {
   generated_at: string; pipeline_version?: string; seed: number; trials_requested: number;

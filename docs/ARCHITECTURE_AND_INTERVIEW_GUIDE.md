@@ -322,6 +322,12 @@ Every paid turn is reserved in `llm_calls` before sending. The returned usage
 updates exact tokens and cost. Failure or cap exhaustion restarts the free mock
 loop and records why in the trace.
 
+If a provider emits malformed JSON tool arguments, the backend does not guess
+what it meant and does not drop the case. It records `invalid_tool_arguments`,
+returns a structured tool error, and gives the model another turn within the
+same eight-step bound. This behavior is covered by a regression test from the
+paid DeepSeek replay.
+
 ## How a case is created
 
 The backend combines different owners rather than trusting one component:

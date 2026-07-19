@@ -14,7 +14,11 @@ testbeds. The hybrid classifier is correct on 7/8 overall, covers 7/8, and is
 That is 87.5% overall, 87.5% coverage, and 100% selective accuracy—not universal
 100% accuracy.
 
-Verification: **99 backend tests pass** and the Next.js production build
+The intentionally paid DeepSeek replay also completed on all eight episodes:
+7/8 raw top-1, 6/8 operational coverage after abstention, 6/6 selective
+accuracy, ECE 0.148, zero errors/fallbacks, and $0.014535 returned provider cost.
+
+Verification: **102 backend tests pass** and the Next.js production build
 completes successfully.
 
 ## Done versus pending
@@ -22,17 +26,17 @@ completes successfully.
 | Work item | Status | Exact evidence |
 |---|---|---|
 | Evidence-grounded confidence and abstention | Done | Precedent, specificity, classifier agreement/OOD and a 0.45 gate control the operational path. |
-| Scorer coverage fix | Done | Text and citation scorers report agreement and the fraction they both cover. |
+| Scorer coverage fix | Done | Text and citation scorers report agreement and joint coverage. Generic restriction words no longer override explicit suction/discharge wording; paid-run regression strings are tested. |
 | LLM job reframed | Done | Concrete classifier class owns `root_cause`; LLM owns precedent, explanation, actions, and drafting. A conflict guard retains the classifier and records the rejected LLM draft. |
 | Trained hard-fault classifier | Done, narrow | Extra Trees, 510 windows from 17 training experiments, physical-episode grouping, 3/3 frozen restriction holdout. Artifact: `backend/data/models/skab_restriction.joblib`. |
 | Genuine OOD detector/calibrator | Done for the narrow model | IsolationForest; threshold is the 10th percentile of leave-one-episode-out in-distribution scores. Same-roster non-restriction SKAB OOD test: AUROC 1.0 and 14/14 rejected. Unsupported sensor rosters abstain before inference. |
 | More real datasets | Done for development evidence | Five SKAB episodes plus three CWRU bearing episodes are integrated. Raw CWRU checksums and provenance are documented. |
 | Human-in-the-loop production flow | Done | Every case is `pending_review`; a named planner approves/rejects/edits; only approval creates a CMMS work order. |
 | Cost-safe live mode | Done | Mock default, DeepSeek V4 Flash default, random production faults off, 12 provider requests/day, $0.25/day, 700 output tokens, persistent usage/cost ledger. |
-| Fresh live DeepSeek evaluation | Pending external credential/run | No local OpenRouter key is available. Current committed reports are free mock reports until the authenticated GitHub workflow is run. |
-| Deployment | Pending publish/redeploy | Local changes must be committed and pushed before triggering workflow/redeploy, per repository policy. |
+| Fresh live DeepSeek evaluation | Done | GitHub run `29692423022`: 8/8 live rows, 0 errors/fallbacks, 34 calls, 161,585 tokens, $0.014535 returned cost. |
+| Deployment | Branch published; merge/redeploy pending | Draft PR #1 contains the implementation and committed reports. Production must still be updated and verified after merge. |
 
-## Current free-mode numbers
+## Current mock-mode numbers
 
 | Metric | Synthetic, n=24 | Real, n=8 across SKAB + CWRU |
 |---|---:|---:|
@@ -46,6 +50,27 @@ completes successfully.
 | Full-system abstention | 20.8% | 12.5% (1/8) |
 | ECE | 0.207 | 0.239 |
 | Scorer agreement / coverage | 100% / 79.2% | 100% / 100% |
+
+## Current paid DeepSeek numbers
+
+| Metric | Synthetic, n=24 | Real, n=8 across SKAB + CWRU |
+|---|---:|---:|
+| Detection | 100.0% | 100.0% |
+| Raw text top-1 | 75.0% | 87.5% (7/8) |
+| Operational coverage after confidence gate | 75.0% | 75.0% (6/8) |
+| Selective accuracy | 94.4% | 100.0% (6/6) |
+| Abstention | 25.0% | 25.0% (2/8) |
+| ECE | 0.319 | 0.148 |
+| Scorer agreement / joint coverage | 100% / 4.2% | 100% / 75.0% |
+| Mean / maximum latency | 26.03 s / 62.88 s | 32.17 s / 56.25 s |
+| Agent errors or mock fallbacks | 0 | 0 |
+| Exact returned cost | Not captured by the first report version | $0.014535 |
+
+The real paid report records 34 provider calls, 143,044 input tokens, 18,541
+output tokens, and 161,585 total tokens. “Scorer joint coverage” is lower than
+fault coverage because DeepSeek sometimes gave the right text class without a
+mapped work-order citation; it is a measurement-quality warning, not another
+accuracy denominator.
 
 The real result includes:
 
@@ -82,7 +107,9 @@ The production replacement is intentionally smaller and safer:
 - Numeric fault classification: use the hybrid rules + trained classifier. On
   this real suite it is 7/8 overall and 7/7 when it accepts.
 - Explanation, precedent retrieval, recommended actions, and work-order prose:
-  use the LLM, but measure it separately and keep the classifier class fixed.
+  use the LLM. DeepSeek was 7/8 raw, 6/6 after its confidence gate, but averaged
+  32.17 seconds and cost $0.014535 for the eight-case run. Keep the classifier
+  class fixed.
 - Detection, priority, spending controls, work-order authorization, and machine
   control: do not give these jobs to the LLM.
 

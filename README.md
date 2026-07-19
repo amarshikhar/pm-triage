@@ -37,7 +37,7 @@ flowchart LR
 
 ## Current measured position
 
-Fresh free-mode runs on 2026-07-19, after the evaluation fixes:
+Fresh runs on 2026-07-19, after the evaluation fixes:
 
 | Dataset | Method | Overall top-1 | Coverage | Accuracy when it speaks |
 |---|---|---:|---:|---:|
@@ -45,14 +45,18 @@ Fresh free-mode runs on 2026-07-19, after the evaluation fixes:
 | 24 synthetic faults | full mock triage | 83.3% | 79.2% after confidence gate | 89.5% |
 | 8 real episodes / 2 testbeds | rules + trained layer | 87.5% | 87.5% | 100.0% (7/7) |
 | 8 real episodes / 2 testbeds | full mock triage | 87.5% | 87.5% after confidence gate | 100.0% (7/7) |
+| 8 real episodes / 2 testbeds | live DeepSeek triage | 87.5% | 75.0% after confidence gate | 100.0% (6/6) |
 
 On real data the safe system abstains on the one cavitation recording and is
 correct on the seven cases it accepts. That is a strong development result, not
 a production guarantee: the sample remains tiny, and CWRU is a constructed
 healthy→fault replay from real steady-state recordings.
-The committed live-model reports predate the latest classifier/calibration
-changes and must not be quoted as current. A fresh, intentionally triggered live
-run is still pending.
+The fresh live run used `deepseek/deepseek-v4-flash` for all eight real cases:
+34 provider requests, 0 errors, 32.17 seconds mean latency, and **$0.014535**
+exact OpenRouter-returned cost. DeepSeek matched the classifier's 7/8 raw
+top-1, but abstained on two cases after calibration; the classifier answered
+seven and was correct on all seven. Use the classifier for numeric fault
+decisions and DeepSeek for explanation, retrieval, and drafting.
 
 See [Evaluation guide](docs/EVALUATION_GUIDE.md) for every metric in plain
 language and [Current status](docs/CURRENT_STATUS.md) for done versus pending.
@@ -103,7 +107,7 @@ cd backend
 .venv/bin/python -m app.eval --data replay --trials 8 --mode mock
 ```
 
-Current verification: **99 backend tests pass** and `npm run build` completes.
+Current verification: **102 backend tests pass** and `npm run build` completes.
 
 ## Deployment
 

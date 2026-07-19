@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { EvalBundle, EvalModeReport, EvalReport, getEvalReport } from "@/lib/api";
+import { EvalBundle, EvalReport, getEvalReport } from "@/lib/api";
 import syntheticStatic from "./reports/synthetic.json";
 import realStatic from "./reports/real.json";
 
@@ -90,6 +90,7 @@ export default function EvalPage() {
             {mock && <Stat n={`${mock.accuracy.top1_text_pct}%`} l="mock top-1 accuracy" />}
             {live && <Stat n={`${live.accuracy.top1_text_pct}%`} l={`live top-1 (${live.llm_model || "LLM"})`} accent />}
             {live && <Stat n={live.ece.toFixed(3)} l="calibration error (ECE)" accent />}
+            {live?.paid_usage && <Stat n={`$${live.paid_usage.returned_cost_usd.toFixed(5)}`} l="exact live eval cost" accent />}
             {primary.replay && <Stat n={`${primary.replay.in_labelled_window_pct}%`} l="fired in labelled window" />}
           </div>
 
@@ -117,7 +118,8 @@ export default function EvalPage() {
                   <tr>
                     <td>mock (scripted baseline)</td>
                     <td className="tnum">{mock?.accuracy.top1_text_pct ?? primary.comparison?.mock_top1_pct ?? "—"}{mock || primary.comparison?.mock_top1_pct != null ? "%" : ""}</td>
-                    <td className="tnum">100%</td><td>—</td>
+                    <td className="tnum">{mock?.agent_selection?.coverage_pct ?? "—"}{mock?.agent_selection?.coverage_pct != null ? "%" : ""}</td>
+                    <td className="tnum">{mock?.agent_selection?.selective_accuracy_pct ?? "—"}{mock?.agent_selection?.selective_accuracy_pct != null ? "%" : ""}</td>
                   </tr>
                 </tbody>
               </table></div>
@@ -130,10 +132,20 @@ export default function EvalPage() {
                 <thead><tr><th>metric</th><th>mock (scripted)</th><th>live ({live.llm_model || "LLM"})</th><th>delta</th></tr></thead>
                 <tbody>
                   <Row label="top-1 accuracy" a={mock.accuracy.top1_text_pct} b={live.accuracy.top1_text_pct} pct />
+                  <Row label="operational coverage" a={mock.agent_selection?.coverage_pct ?? 100} b={live.agent_selection?.coverage_pct ?? 100} pct />
+                  <Row label="selective accuracy" a={mock.agent_selection?.selective_accuracy_pct ?? 0} b={live.agent_selection?.selective_accuracy_pct ?? 0} pct />
                   <Row label="hit@any" a={mock.accuracy.hit_any_pct} b={live.accuracy.hit_any_pct} pct />
                   <Row label="ECE (lower better)" a={mock.ece} b={live.ece} invert />
                 </tbody>
               </table></div>
+            </Panel>
+          )}
+
+          {live?.paid_usage && (
+            <Panel title="Paid live execution">
+              <p className="hint" style={{ marginTop: 0, marginBottom: 0 }}>
+                {live.paid_usage.provider_requests} provider requests · {live.paid_usage.prompt_tokens.toLocaleString()} input tokens · {live.paid_usage.completion_tokens.toLocaleString()} output tokens · {live.paid_usage.total_tokens.toLocaleString()} total · ${live.paid_usage.returned_cost_usd.toFixed(6)} exact OpenRouter-returned cost · {live.latency_s.mean}s mean latency per case. The run used {live.paid_usage.model} with no hidden cost estimate.
+              </p>
             </Panel>
           )}
 

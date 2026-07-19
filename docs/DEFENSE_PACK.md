@@ -36,23 +36,24 @@ The component boundaries are the point:
 
 ## Numbers to quote
 
-Fresh deterministic runs after the 2026-07-19 fixes:
+Fresh runs after the 2026-07-19 fixes:
 
-| Evidence | Synthetic n=24 | Real n=8, SKAB + CWRU |
-|---|---:|---:|
-| Detection | 100% | 100% |
-| Hybrid classifier overall top-1 | 75.0% | 87.5% (7/8) |
-| Hybrid classifier coverage | 79.2% | 87.5% (7/8) |
-| Hybrid classifier selective accuracy | 94.7% | 100% (7/7) |
-| Full-system coverage | 79.2% | 87.5% |
-| Full-system selective accuracy | 89.5% | 100% (7/7) |
-| ECE | 0.207 | 0.239 |
+| Evidence | Synthetic mock n=24 | Real mock n=8 | Real DeepSeek n=8 |
+|---|---:|---:|---:|
+| Detection | 100% | 100% | 100% |
+| Hybrid classifier overall top-1 | 75.0% | 87.5% (7/8) | 87.5% (7/8) |
+| Hybrid classifier coverage | 79.2% | 87.5% (7/8) | 87.5% (7/8) |
+| Hybrid classifier selective accuracy | 94.7% | 100% (7/7) | 100% (7/7) |
+| Full-system raw top-1 | 83.3% | 87.5% | 87.5% |
+| Full-system coverage | 79.2% | 87.5% | 75.0% (6/8) |
+| Full-system selective accuracy | 89.5% | 100% (7/7) | 100% (6/6) |
+| ECE | 0.207 | 0.239 | 0.148 |
 
 Always say “7/7 accepted real cases, 7/8 overall, n=8,” never “100% real-data
 accuracy.” The sample is far too small for a plant-wide claim.
 
-Do not quote the older Sonnet live results as current; the pipeline changed and
-a new live DeepSeek run has not been purchased.
+The real DeepSeek run used 34 requests and cost $0.014535, with 32.17-second
+mean latency and zero errors/fallbacks. Do not quote older Sonnet results.
 
 ## Likely interview questions
 
@@ -68,7 +69,9 @@ own all other classes. It is not a universal classifier.
 They should not own the same job. On synthetic numeric classification the
 hybrid classifier is the owner and is 7/8 overall on the current real suite.
 The LLM's job is explanation, precedent use, recommended action, and work-order
-drafting. A guard prevents it from replacing a concrete classifier class.
+drafting. In the paid real run it matched 7/8 raw top-1 but covered 6/8 after
+calibration, versus the classifier's 7/8 coverage. A guard prevents it from
+replacing a concrete classifier class.
 
 ### Why so much abstention?
 
@@ -101,14 +104,16 @@ history search. No tool can control a machine or read the evaluation label.
 Production is mock by default. Live mode is an authenticated toggle. Random
 production faults are off. Every provider request is reserved and logged, with
 12-request and $0.25 daily limits plus a 700-output-token ceiling. Failure or
-cap exhaustion continues in deterministic mode and leaves a trace.
+cap exhaustion continues in deterministic mode and leaves a trace. Malformed
+tool arguments are rejected without guessing and the model gets a bounded retry.
 
 ### Why DeepSeek instead of GPT-4o?
 
 DeepSeek V4 Flash is the recommended cost-first tool-use model through the
 existing OpenRouter endpoint. GPT-4o mini is the fallback if its tool calls fail
-the smoke test. Full GPT-4o is not the cheap option. The architecture keeps the
-model name configurable so the eval—not preference—decides.
+the smoke test. It cost 1.45 cents for the eight-case real run. Full GPT-4o is
+not the cheap option. The architecture keeps the model name configurable so the
+eval—not preference—decides.
 
 ### What is the meaningful integration?
 
@@ -161,6 +166,6 @@ model name and budget, and turn it off afterward.
 - Not validated across plants or 10,000 assets.
 - Not a real SAP PM connector yet.
 - Not an autonomous maintenance controller.
-- Not current live-model accuracy until the paid eval is rerun.
+- Not proof that DeepSeek generalizes beyond these eight laboratory episodes.
 - Not externally certified OOD performance; current learned OOD evidence is
   SKAB-based plus a schema-OOD check on CWRU.

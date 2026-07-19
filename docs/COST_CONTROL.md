@@ -22,6 +22,21 @@ Prices change; re-check before budgeting.
 The token-price reduction is large, but architecture is the bigger saving. A
 cheap model called continuously can still waste money.
 
+## Measured paid run
+
+The fresh real-data workflow on 2026-07-19 used DeepSeek V4 Flash for all eight
+SKAB+CWRU cases with no mock fallback:
+
+- 34 provider requests;
+- 143,044 input tokens and 18,541 output tokens;
+- 161,585 total tokens;
+- **$0.014535 exact OpenRouter-returned cost**;
+- 32.17 seconds mean case latency.
+
+The earlier 24-case synthetic DeepSeek run predates report-level cost capture,
+so its exact spend is not claimed. That missing number is why the evaluator now
+writes `paid_usage` into every live report.
+
 ## Why the old cap was misleading
 
 The old cap counted completed `TriageCase` rows with `llm_mode=live`. One case
@@ -56,6 +71,8 @@ sequenceDiagram
 
 The ledger stores timestamp, model, status, prompt tokens, completion tokens,
 total tokens, exact OpenRouter `usage.cost`, and an error summary.
+Malformed tool-call arguments are not repaired or guessed. The agent returns a
+structured error to the model and permits a retry inside the eight-turn bound.
 
 A secondary in-process counter enforces the same limits across the evaluation
 harness's intentionally isolated per-trial databases. Otherwise every fresh

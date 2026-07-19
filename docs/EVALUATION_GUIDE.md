@@ -75,6 +75,8 @@ The report groups cases into confidence bands. For each band:
 ECE combines the absolute gaps, weighted by how many cases are in each band.
 ECE 0.239 means an average absolute confidence/accuracy mismatch of about 23.9
 percentage points on that tiny run. It does not mean 76.1% accuracy.
+The paid DeepSeek real run's ECE was 0.148: about a 14.8-point average mismatch,
+still based on only eight cases.
 
 ## Current interpretation
 
@@ -85,8 +87,10 @@ percentage points on that tiny run. It does not mean 76.1% accuracy.
 - Full mock system after abstention: 79.2% coverage and 89.5% selective accuracy.
 - ECE: 0.207.
 
-The classifier is useful on the clean simulated signatures, but the full system
-is conservative and sends over half the cases to the human uncertainty path.
+The classifier is useful on the clean simulated signatures. The paid DeepSeek
+run on the same 24 cases produced 75.0% raw top-1, 75.0% coverage, 94.4%
+selective accuracy, ECE 0.319, and no agent errors. Exact spend was not included
+in that first report version; this gap caused paid-usage fields to be added.
 
 ### Real replay, n=8 across two testbeds
 
@@ -96,6 +100,11 @@ is conservative and sends over half the cases to the human uncertainty path.
 - Full mock system: 87.5% raw top-1, 87.5% operational coverage, and 100%
   selective accuracy.
 - ECE: 0.239.
+- Live DeepSeek: 87.5% raw top-1 (7/8), 75.0% operational coverage (6/8),
+  100% selective accuracy (6/6), 25.0% abstention, and ECE 0.148.
+- Live execution: all 8 rows used `deepseek/deepseek-v4-flash`; 0 errors, 0
+  mock fallbacks, 34 provider requests, 161,585 tokens, 32.17 seconds mean
+  latency, and $0.014535 exact returned cost.
 
 This shows that the narrow trained layer resolved the frozen restriction pair
 without forcing an answer on the remaining cavitation ambiguity. It does not
@@ -103,10 +112,10 @@ solve cross-plant predictive maintenance.
 
 ## What not to quote
 
-The repository's committed live Sonnet reports were generated before the latest
-classifier, calibration, replay-coverage, and scorer changes. Keep them as
-historical evidence only. A current live DeepSeek number does not exist until a
-deliberate paid workflow is run.
+Do not quote historical Sonnet numbers as current, do not turn 6/6 selective
+accuracy into “100% real-data accuracy,” and do not compare the LLM's 75%
+operational coverage with the classifier's 87.5% without also stating that both
+had 100% selective accuracy on a tiny n=8 suite.
 
 ## Honest evaluation limitations
 

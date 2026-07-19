@@ -31,9 +31,10 @@ maintenance system of record.
 - A trained classifier is complete only for the narrow restriction pair; it is
   not a universal fault model.
 - Eight real replay episodes do not establish production accuracy.
-- Existing committed live Sonnet reports are historical and predate current
-  calibration/classifier/evaluation changes.
-- Current free-mode evidence is in `docs/CURRENT_STATUS.md`.
+- Existing Sonnet reports are historical. The current paid DeepSeek real replay
+  is n=8: 87.5% raw top-1, 75% operational coverage, 100% selective accuracy
+  (6/6), ECE 0.148, 0 errors, and $0.014535 returned cost.
+- Current mock and live evidence is in `docs/CURRENT_STATUS.md`.
 - The first four-class model was rejected after a high-confidence holdout error.
   The replacement trains 510 windows grouped into 17 physical episodes, tunes
   only on leave-one-episode-out predictions, and passes the frozen 3/3

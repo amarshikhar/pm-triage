@@ -6,7 +6,7 @@
 - Repository: https://github.com/amarshikhar/pm-triage
 - Released version: unversioned assessment artifact
 - Last verified: 2026-07-19
-- Release stage: design-partner ready locally; publish/live-eval pending
+- Release stage: design-partner ready on a published review branch; merge/redeploy pending
 
 ## Shared understanding
 
@@ -31,13 +31,13 @@
 - Observed capabilities: full telemetry→case→human→CMMS→audit flow; SKAB and
   CWRU replay; trained restriction classifier; learned OOD gate; persistent
   request/cost cap.
-- Tests/demos: 99 backend tests pass; Next.js production build passes; free-mode
-  synthetic n=24 and eight-episode/two-testbed evaluation reproduced 2026-07-19.
+- Tests/demos: 102 backend tests pass; Next.js production build passes; free-mode
+  synthetic n=24 and real n=8 plus paid DeepSeek real n=8 reproduced 2026-07-19.
 - Demand signals: challenge artifact and interview/demo need; no paid customer
   demand signal recorded.
 - Known limitations: real n=8 remains tiny; trained ML covers one fault pair;
   CWRU transitions are constructed and its commercial rights need confirmation;
-  mock CMMS shares deployment/database; fresh live DeepSeek eval and deployment pending.
+  mock CMMS shares deployment/database; deployment of the review branch is pending.
 
 ## Open alignment questions
 
@@ -49,7 +49,7 @@
 | Date | Decision | Reason/evidence |
 |---|---|---|
 | 2026-07-19 | Production defaults to free mock even with a key | Credentials are not spending authorization. |
-| 2026-07-19 | DeepSeek V4 Flash is live default; GPT-4o mini fallback | Current cost-first OpenRouter choice; live accuracy not yet measured. |
+| 2026-07-19 | DeepSeek V4 Flash is live default; GPT-4o mini fallback | Paid real run: 7/8 raw, 6/6 selective at 75% coverage, $0.014535. |
 | 2026-07-19 | Count provider requests and exact returned cost | One case makes several completion calls. |
 | 2026-07-19 | Signature abstention forces the human uncertainty path | Five-episode replay exposed overconfidence when retrieval found a precedent for overlapping signals. |
 | 2026-07-19 | Do not claim universal trained ML | Production ML is complete only for the narrow suction/discharge restriction pair. |
@@ -63,11 +63,11 @@
 | Gate | Status | Evidence | Blocking item |
 |---|---|---|---|
 | Alignment and demand | partial | Product promise/non-goals are documented. | No external paid/design-partner demand recorded. |
-| Core outcome and reliability | partial-pass | 99 tests, frontend build, full mock E2E, grouped ML evidence, fixed eval sets. | Fresh live-model regression and external customer labels. |
+| Core outcome and reliability | partial-pass | 102 tests, frontend build, full mock E2E, grouped ML evidence, fixed eval sets, paid DeepSeek replay. | External customer labels. |
 | Safety, privacy, cost, and compliance | partial-pass | Mandatory human gate, no control tool, auth, request/USD caps, SKAB license documented. | Customer retention/privacy policy and independent security review. |
 | Installation and operations | partial | `.env.example`, Render/Vercel/Supabase paths documented. | Commit/push/redeploy and verify current production state; backup/restore runbook. |
 | Onboarding and documentation | pass for assisted demo | Current status, architecture, eval, cost, defense, and economics guides. | Stranger-install usability not independently tested. |
-| Proof and demo | partial-pass | Reproducible synthetic n=24 and real n=8 eval; full workflow. | Live DeepSeek proof pending; real n is tiny. |
+| Proof and demo | partial-pass | Reproducible synthetic n=24, real n=8, and paid DeepSeek n=8; full workflow. | Real n is tiny and not a customer-site validation. |
 | Offer and delivery | not ready | Assisted model hypothesized. | No price, terms, support SLA, or delivery agreement. |
 | Launch and learning | not ready | Public repo/app exists. | Commercial funnel, feedback loop, success metric, review date. |
 
@@ -93,12 +93,12 @@
 
 ## Next action
 
-- Action: commit/push the verified ML/OOD/data/cost/docs release, then run the
-  manually capped DeepSeek workflow and redeploy.
+- Action: review and merge PR #1, redeploy, then verify the published SHA and
+  one manual mock case before any intentional live demo.
 - Completion evidence: production health reports mock mode + DeepSeek model;
   UI budget shows provider calls/USD; spontaneous faults do not appear; one
   manual mock case completes; deployed commit SHA is recorded.
-- Blocking question: user authorization to publish/deploy this local release.
+- Blocking question: user authorization to merge/redeploy the review branch.
 
 ## Work log
 
@@ -106,3 +106,4 @@
 |---|---|---|---|
 | 2026-07-19 | Cost controls, eval honesty, replay episode coverage, and docs implemented | 94 pytest pass; Next.js build pass; synthetic n=24 and SKAB n=5 mock eval | Train narrow classifier and add OOD/second testbed |
 | 2026-07-19 | Narrow ML, learned OOD, and CWRU development replay implemented | 99 pytest pass; Next build; synthetic n=24; real n=8; restriction holdout 3/3 | Publish, then run capped live DeepSeek eval |
+| 2026-07-19 | Paid DeepSeek real replay and provider hardening completed | 102 pytest pass; 8/8 live rows; 0 errors; 34 calls; $0.014535; run 29692423022 | Review PR, merge, redeploy, verify |
