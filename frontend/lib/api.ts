@@ -55,10 +55,14 @@ export type Machine = {
  *  breached, because the fault is identified by the pattern across them. */
 export type SignalStats = {
   mean: number; drift: number; volatility_pct: number; range: number; n: number;
+  first_mean?: number; last_mean?: number; delta?: number; delta_pct?: number;
+  slope?: number; median?: number; mad?: number; derivative_std?: number;
 };
 export type SignatureAnalysis = {
   predicted: string | null; confidence: number; ranked: [string, number][];
   evidence: string[]; abstain: boolean; agent_agreement?: boolean | null;
+  layer?: "deterministic_signature" | "trained_restriction_classifier";
+  ml_analysis?: { model: string; ood: boolean; ood_score?: number; ood_threshold?: number; ood_reason: string } | null;
 };
 export type Case = {
   id: number; anomaly_id: number; machine_id: string; created_ts: string; status: string;
@@ -86,23 +90,32 @@ export type AuditEvent = {
 export type EvalModeReport = {
   n_trials: number; n_scored: number; n_detector_missed: number; n_agent_errors: number;
   llm_mode: string; llm_model: string; detection_rate_pct: number;
-  accuracy: { top1_text_pct: number; top1_citation_pct: number; classifier_top1_pct?: number; hit_any_pct: number; hedged_pct: number; unclassifiable_pct: number; abstained_pct?: number };
+  accuracy: { top1_text_pct: number; top1_citation_pct: number; classifier_top1_pct?: number; hit_any_pct: number; hedged_pct: number; unclassifiable_pct: number; abstained_pct?: number; textual_abstained_pct?: number };
   scorer_agreement_pct: number; scorer_agreement_n: number;
+  scorer_coverage_pct?: number; scorer_uncovered_n?: number;
   per_class: Record<string, { n: number; top1_text_pct: number; classifier_top1_pct?: number; hit_any_pct: number; mean_confidence: number; mean_ticks_to_detect: number }>;
   confusion: Record<string, Record<string, number>>;
   classifier_confusion?: Record<string, Record<string, number>>;
+  operational_confusion?: Record<string, Record<string, number>>;
+  agent_selection?: { coverage_pct: number; selective_accuracy_pct: number | null; abstained_pct: number };
   classifier?: {
     top1_accuracy_pct: number; coverage_pct: number;
     selective_accuracy_pct: number | null; abstained_pct: number;
+    trained_layer_used_n?: number; trained_layer_used_pct?: number; narrow_model_ood_n?: number;
     per_class: Record<string, { n: number; top1_pct: number; coverage_pct: number; abstained_pct: number }>;
   };
   comparison?: { agent_top1_pct: number; classifier_top1_pct: number; mock_top1_pct: number | null };
   calibration: { bucket: string; n: number; mean_confidence_pct: number; accuracy_pct: number; gap_pct: number }[];
   ece: number; latency_s: { mean: number; p50: number; max: number } | any;
   replay?: { detection_rate_pct: number; in_labelled_window_pct: number };
+  paid_usage?: {
+    provider_requests: number; returned_cost_usd: number;
+    prompt_tokens: number; completion_tokens: number; total_tokens: number;
+    model: string; cost_source: string; request_cap: number; returned_cost_stop_usd: number;
+  };
 };
 export type EvalReport = {
-  generated_at: string; seed: number; trials_requested: number;
+  generated_at: string; pipeline_version?: string; seed: number; trials_requested: number;
   reports: { mock?: EvalModeReport; live?: EvalModeReport };
 };
 export type EvalBundle = { synthetic?: EvalReport; real?: EvalReport };
@@ -110,7 +123,10 @@ export type EvalBundle = { synthetic?: EvalReport; real?: EvalReport };
 export type LlmStatus = {
   mode: "live" | "mock"; model: string; runtime_override: string | null;
   key_configured: boolean;
-  budget: { daily_cap: number; used_today: number; remaining: number };
+  budget: {
+    unit: "provider_requests"; daily_cap: number; used_today: number; remaining: number;
+    daily_usd_cap: number; cost_usd_today: number; usd_remaining: number; cap_reached: boolean;
+  };
 };
 
 // --- calls ------------------------------------------------------------------

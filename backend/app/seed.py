@@ -165,6 +165,10 @@ LOGS = [
      "slightly elevated drip rate at stuffing box, within pump spec but trending",
      "packing bedding in after last repack",
      "adjusted gland nuts evenly, drip rate back to spec", 0.0, 0, "routine"),
+    ("WO-1032", "BRG-01", "motor", "2025-02-18", "bearing defect",
+     "drive-end vibration RMS and impulsiveness rose sharply while motor speed held",
+     "localized rolling-element bearing damage confirmed by vibration spectrum",
+     "isolated motor, replaced drive-end bearing, aligned and baseline-tested", 3.0, 0),
 ]
 
 
@@ -190,26 +194,58 @@ def _skab_machine() -> Machine | None:
     )
 
 
+def _cwru_machine() -> Machine | None:
+    """Independent bearing-testbed replay used for cross-domain evaluation."""
+    descriptor_path = EPISODES_DIR / "cwru_bearing.json"
+    if not descriptor_path.exists():
+        return None
+    meta = json.loads(descriptor_path.read_text())
+    return Machine(
+        id="BRG-01", name="Motor Bearing Rig (CWRU testbed)", type="motor",
+        location="Independent Bearing Test Stand", criticality=2,
+        hourly_downtime_cost=500, source="replay",
+        signals_json=json.dumps(meta["signals"]), limits_json="{}",
+        dataset_json=json.dumps({
+            "episode_set": "cwru_bearing", "dataset": meta["dataset"],
+            "url": meta["url"], "license": meta["license"],
+            "description": meta["description"],
+            "use_restriction": meta.get("use_restriction"),
+        }),
+    )
+
+
 def seed_if_empty(db: Session) -> bool:
-    if db.query(Machine).count() > 0:
-        return False
+    """Add missing reference rows without replacing operational/user data.
+
+    The original demo seeded only when the whole machine table was empty. That
+    meant a newly shipped replay testbed never appeared in an established
+    Supabase database. This additive form is safe on every startup: primary keys
+    make it idempotent, and existing rows are never overwritten.
+    """
+    changed = False
     for mid, name, mtype, loc, crit, cost in MACHINES:
-        db.add(Machine(id=mid, name=name, type=mtype, location=loc, criticality=crit,
-                       hourly_downtime_cost=cost,
-                       source="simulated",
-                       signals_json=json.dumps(SIM_SIGNALS),
-                       limits_json=json.dumps(SIM_LIMITS.get(mtype, {}))))
-    skab = _skab_machine()
-    if skab:
-        db.add(skab)
+        if db.get(Machine, mid) is None:
+            db.add(Machine(id=mid, name=name, type=mtype, location=loc, criticality=crit,
+                           hourly_downtime_cost=cost,
+                           source="simulated",
+                           signals_json=json.dumps(SIM_SIGNALS),
+                           limits_json=json.dumps(SIM_LIMITS.get(mtype, {}))))
+            changed = True
+    for replay_machine in (_skab_machine(), _cwru_machine()):
+        if replay_machine and db.get(Machine, replay_machine.id) is None:
+            db.add(replay_machine)
+            changed = True
     for row in LOGS:
-        db.add(
-            MaintenanceLog(
-                id=row[0], machine_id=row[1], machine_type=row[2], date=row[3],
-                failure_mode=row[4], symptoms=row[5], root_cause=row[6],
-                action_taken=row[7], downtime_hours=row[8], safety_related=row[9],
-                record_type=row[10] if len(row) > 10 else "corrective",
+        if db.get(MaintenanceLog, row[0]) is None:
+            db.add(
+                MaintenanceLog(
+                    id=row[0], machine_id=row[1], machine_type=row[2], date=row[3],
+                    failure_mode=row[4], symptoms=row[5], root_cause=row[6],
+                    action_taken=row[7], downtime_hours=row[8], safety_related=row[9],
+                    record_type=row[10] if len(row) > 10 else "corrective",
+                )
             )
-        )
-    db.commit()
-    return True
+            changed = True
+    if changed:
+        db.commit()
+    return changed

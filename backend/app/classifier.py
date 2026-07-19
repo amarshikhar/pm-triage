@@ -16,10 +16,13 @@ import math
 import re
 from typing import Any
 
+from .ml_classifier import classify_restriction
+
 
 ROLE_BY_SIGNAL = {
     "vibration_mm_s": "vibration",
     "vibration_g": "vibration",
+    "vibration_rms_g": "vibration",
     "flow_lpm": "flow",
     "pressure_kpa": "pressure",
     "pressure_bar": "pressure",
@@ -149,7 +152,6 @@ def classify_signature(signal_context: dict, signals: list[dict], machine_type: 
     disambiguation is still made from observable roles (especially ``flow``),
     not from a hidden dataset label.
     """
-    del source  # provenance never acts as a proxy for the answer
     f = _features(signal_context, signals)
     vibration, flow = f.get("vibration"), f.get("flow")
     pressure, load, temp = f.get("pressure"), f.get("load"), f.get("temp")
@@ -253,13 +255,59 @@ def classify_signature(signal_context: dict, signals: list[dict], machine_type: 
                 "evidence floor; the classifier abstained."
             )
 
-    return {
+    result = {
         "predicted": predicted,
         "confidence": round(_clamp(confidence), 2),
         "ranked": [(name, round(_clamp(score), 3)) for name, score in ranked],
         "evidence": evidence,
         "abstain": abstain,
+        "layer": "deterministic_signature",
+        "ml_analysis": None,
     }
+
+    # The trained layer is intentionally narrower than the taxonomy. It may
+    # resolve only the suction/discharge pair, and only on the exact real SKAB
+    # signal contract it was trained on. Source is a routing guard, never an
+    # answer proxy; the model still decides entirely from observed features.
+    # On this testbed the hand-built scores can put rotor/cavitation above the
+    # restriction pair even when flow is the breached metric. The learned OOD
+    # gate is what decides whether the context belongs to its narrow family;
+    # requiring the same weak ranking first would prevent the ML layer from
+    # ever seeing the hard cases it was built for.
+    if source == "replay":
+        ml = classify_restriction(signal_context)
+        result["ml_analysis"] = ml
+        if not abstain:
+            # The rules already own a clear non-restriction class. Retain the
+            # OOD result as auditable routing evidence without allowing the
+            # narrow model to compete outside its job.
+            return result
+        if ml["abstain"]:
+            result["evidence"].append(
+                "Trained restriction classifier also abstained: " + ml["ood_reason"]
+            )
+        else:
+            other = ({"suction_restriction", "discharge_restriction"}
+                     - {ml["predicted"]}).pop()
+            result.update({
+                "predicted": ml["predicted"],
+                "confidence": round(_clamp(ml["confidence"]), 2),
+                "ranked": [
+                    (ml["predicted"], round(_clamp(ml["confidence"]), 3)),
+                    (other, round(_clamp(1.0 - ml["confidence"]), 3)),
+                    *[(name, score) for name, score in result["ranked"]
+                      if name not in {"suction_restriction", "discharge_restriction"}],
+                ],
+                "abstain": False,
+                "layer": "trained_restriction_classifier",
+                "evidence": [
+                    f"Trained grouped SKAB classifier resolved the restriction family as "
+                    f"{ml['predicted'].replace('_', ' ')} at {ml['confidence']:.1%}; "
+                    f"OOD check: {ml['ood_reason']}.",
+                    *result["evidence"][:3],
+                ],
+            })
+    return result
 
 
 _CLASS_TEXT = {

@@ -66,12 +66,17 @@ class TrialResult:
     classifier_pred: str | None = None
     classifier_correct: bool = False
     classifier_abstained: bool = True
+    classifier_layer: str = ""
+    classifier_ood: bool = False
     llm_mode: str = ""
     llm_model: str = ""
     latency_s: float = 0.0
     error: str = ""
     data_source: str = "simulated"  # simulated | replay (real dataset episode)
+    dataset: str = ""              # named source corpus/testbed
+    episode_name: str = ""          # exact physical recording used for replay
     in_labelled_window: bool = True  # replay only: anomaly inside dataset markup
+    textual_abstained: bool = False  # root-cause wording explicitly declined a class
 
     def as_dict(self) -> dict:
         return asdict(self)
@@ -110,6 +115,8 @@ def _record_classifier(result: TrialResult, anomaly: Anomaly, machine: Machine) 
     result.classifier_pred = analysis["predicted"]
     result.classifier_abstained = analysis["abstain"]
     result.classifier_correct = analysis["predicted"] == result.fault
+    result.classifier_layer = analysis.get("layer", "")
+    result.classifier_ood = bool((analysis.get("ml_analysis") or {}).get("ood", False))
 
 
 def run_trial(machine_id: str, fault: str, seed: int) -> TrialResult:
@@ -179,7 +186,9 @@ def run_trial(machine_id: str, fault: str, seed: int) -> TrialResult:
         # a long explanation mentions many things, and crediting that would
         # inflate accuracy for free.
         result.predicted_text, result.hedged = classify_text(case.root_cause)
-        result.abstained = is_abstention(case.root_cause)
+        result.textual_abstained = is_abstention(case.root_cause)
+        result.abstained = bool(
+            evidence.get("confidence_calibration", {}).get("abstain", False))
         result.predicted_citation = classify_citations(cited)
         result.hit_any = mentions_class(case.root_cause, fault)
         result.correct_text = result.predicted_text == fault
@@ -192,7 +201,8 @@ def run_trial(machine_id: str, fault: str, seed: int) -> TrialResult:
 REPLAY_MAX_TICKS = 400  # an episode is ~1100 rows; the jump leaves ~45 + window
 
 
-def run_replay_trial(fault: str) -> TrialResult:
+def run_replay_trial(fault: str, episode_name: str | None = None,
+                     machine_id: str | None = None) -> TrialResult:
     """Cue a real recorded fault episode, let the pipeline react, score it.
 
     Ground truth is the dataset authors' markup, not our simulator: the trial's
@@ -206,12 +216,21 @@ def run_replay_trial(fault: str) -> TrialResult:
     db = _fresh_db()
     try:
         seed_if_empty(db)
-        machine = next(m for m in db.query(Machine).all() if m.source == "replay")
+        replay_machines = [m for m in db.query(Machine).all() if m.source == "replay"]
+        machine = (
+            next(m for m in replay_machines if m.id == machine_id)
+            if machine_id else next(m for m in replay_machines if m.id == "PMP-03")
+        )
+        dataset = json.loads(machine.dataset_json or "{}").get("dataset", "")
         result = TrialResult(machine_id=machine.id, machine_type=machine.type,
-                             fault=fault, data_source="replay")
+                             fault=fault, data_source="replay",
+                             episode_name=episode_name or "", dataset=dataset)
 
         replayer = DatasetReplayer()
-        replayer.jump_to_fault(machine, fault)
+        result.episode_name = (
+            replayer.jump_to_episode(machine, episode_name)
+            if episode_name else replayer.jump_to_fault(machine, fault)
+        )
 
         anomaly_id = None
         for tick in range(1, REPLAY_MAX_TICKS + 1):
@@ -256,7 +275,9 @@ def run_replay_trial(fault: str) -> TrialResult:
         result.llm_model = case.llm_model
 
         result.predicted_text, result.hedged = classify_text(case.root_cause)
-        result.abstained = is_abstention(case.root_cause)
+        result.textual_abstained = is_abstention(case.root_cause)
+        result.abstained = bool(
+            evidence.get("confidence_calibration", {}).get("abstain", False))
         result.predicted_citation = classify_citations(cited)
         result.hit_any = mentions_class(case.root_cause, fault)
         result.correct_text = result.predicted_text == fault
@@ -267,30 +288,55 @@ def run_replay_trial(fault: str) -> TrialResult:
 
 
 def replay_faults() -> list[str]:
-    """The fault classes available from the replay machine's episode set."""
+    """Fault classes available across every configured replay testbed."""
     from ..replay import DatasetReplayer
 
     db = _fresh_db()
     try:
         seed_if_empty(db)
-        machine = next((m for m in db.query(Machine).all() if m.source == "replay"), None)
-        if machine is None:
-            return []
-        return DatasetReplayer().available_faults(machine)
+        replayer = DatasetReplayer()
+        return sorted({fault for machine in db.query(Machine).all()
+                       if machine.source == "replay"
+                       for fault in replayer.available_faults(machine)})
     finally:
         db.close()
 
 
-def run_replay_suite(rounds: int = 1, on_result=None) -> list[TrialResult]:
-    """Every real fault class, `rounds` times. The replayer is deterministic
-    (same episode, same rows), so rounds > 1 only measures agent variance."""
+def replay_episodes() -> list[tuple[str, str, str]]:
+    """(machine id, fault, episode name) for every distinct recording."""
+    from ..replay import DatasetReplayer
+
+    db = _fresh_db()
+    try:
+        seed_if_empty(db)
+        replayer = DatasetReplayer()
+        return [
+            (machine.id, item["fault"], item["name"])
+            for machine in db.query(Machine).all() if machine.source == "replay"
+            for item in replayer.available_episodes(machine)
+        ]
+    finally:
+        db.close()
+
+
+def run_replay_suite(trials: int | None = None, on_result=None) -> list[TrialResult]:
+    """Replay exact recordings, not only the first episode of each class.
+
+    With no count, each physical episode runs once. A larger requested count
+    cycles the complete episode list; repeated rows are explicit in each
+    result's ``episode_name`` rather than silently pretending to be new data.
+    """
+    episodes = replay_episodes()
+    if not episodes:
+        return []
+    n = len(episodes) if trials is None else max(0, trials)
     results = []
-    for _ in range(rounds):
-        for fault in replay_faults():
-            result = run_replay_trial(fault)
-            results.append(result)
-            if on_result:
-                on_result(result)
+    for i in range(n):
+        machine_id, fault, episode_name = episodes[i % len(episodes)]
+        result = run_replay_trial(fault, episode_name, machine_id)
+        results.append(result)
+        if on_result:
+            on_result(result)
     return results
 
 

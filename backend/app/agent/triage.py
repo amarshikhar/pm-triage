@@ -35,11 +35,26 @@ The signal context reports what every metric was doing, not just the one that
 breached. A failure is identified by the pattern across signals — which are
 drifting, which are erratic, which are steady — so weigh all of them against
 the symptoms recorded in past work orders before choosing a cause.
-You may also receive a deterministic signature prior. Treat a concrete verdict
-as physics-based evidence to verify against history; if it abstains, do not turn
-its weak ranking into certainty."""
+You may also receive a classifier verdict. A concrete verdict owns fault
+classification; your job is to retrieve the matching precedent, explain the
+evidence, and recommend actions. Do not replace it with another class merely
+because keyword retrieval ranked a different work order. If the classifier
+abstains, do not turn its weak ranking into certainty."""
 
 MAX_STEPS = 8
+
+_CLASSIFIER_ACTIONS = {
+    "suction_restriction": [
+        "Inspect inlet valve position and suction-side blockage",
+        "Verify available NPSH and flow with an independent measurement",
+        "Have the planner confirm findings before changing the valve lineup",
+    ],
+    "discharge_restriction": [
+        "Inspect outlet valve position and discharge-side blockage",
+        "Verify flow and pressure with an independent measurement",
+        "Have the planner confirm findings before changing the valve lineup",
+    ],
+}
 
 _FENCED_JSON = re.compile(r"```(?:json)?\s*(\{.*?\})\s*```", re.DOTALL)
 
@@ -93,15 +108,11 @@ def _dispatch_tool(db: Session, name: str, args: dict) -> dict:
 
 
 def run_triage(db: Session, anomaly_id: int) -> TriageCase:
-    from ..llm_budget import live_allowed
+    from ..llm_budget import finish_live_call, reserve_live_call
 
     anomaly = db.get(Anomaly, anomaly_id)
     machine = db.get(Machine, anomaly.machine_id)
     mode, model = llm_mode(), llm_model()
-    if mode == "live" and not live_allowed(db):
-        # Hard daily spend cap: degrade to the deterministic policy rather than
-        # stall the queue. The case is honestly marked mock.
-        mode = "mock"
 
     ctx = {
         "machine_id": machine.id, "machine_type": machine.type,
@@ -110,6 +121,7 @@ def run_triage(db: Session, anomaly_id: int) -> TriageCase:
     signal_stats = json.loads(anomaly.context_json or "{}")
     signature_analysis = classify_signature(
         signal_stats, machine.signals, machine.type, machine.source)
+    ctx["signature_prediction"] = signature_analysis["predicted"]
     context_block = render_context(signal_stats, anomaly.metric)
     if signature_analysis["abstain"]:
         leaders = ", ".join(name.replace("_", " ")
@@ -147,21 +159,32 @@ def run_triage(db: Session, anomaly_id: int) -> TriageCase:
         if mock:
             msg = mock.chat(messages, T.TOOL_SCHEMAS)
         else:
-            try:
-                msg = chat(messages, T.TOOL_SCHEMAS)
-            except Exception as exc:
-                # A live-model failure (bad key, provider outage, timeout) must
-                # not lose the case: fall back to the deterministic policy and
-                # say so in the trace. Silently raising here meant no case, no
-                # budget movement, and nothing for the planner to review.
-                trace.append({"step": "llm_fallback", "ts": utcnow().isoformat(),
-                              "detail": f"live LLM call failed ({type(exc).__name__}: "
-                                        f"{str(exc)[:120]}) — continuing with the "
-                                        f"deterministic mock policy"})
+            call_row = reserve_live_call(db, model)
+            if call_row is None:
+                trace.append({"step": "llm_budget_fallback", "ts": utcnow().isoformat(),
+                              "detail": "paid request or dollar cap reached — continuing "
+                                        "with the deterministic mock policy"})
                 mode = "mock"
                 mock = MockLLM(ctx)
-                messages = messages[:2]  # restart cleanly from system+user
+                messages = messages[:2]
                 msg = mock.chat(messages, T.TOOL_SCHEMAS)
+            else:
+                try:
+                    msg, usage = chat(messages, T.TOOL_SCHEMAS)
+                    finish_live_call(db, call_row, usage)
+                except Exception as exc:
+                    finish_live_call(db, call_row, error=f"{type(exc).__name__}: {exc}")
+                    # A live-model failure (bad key, provider outage, timeout)
+                    # must not lose the case: fall back to the deterministic
+                    # policy and say so in the trace.
+                    trace.append({"step": "llm_fallback", "ts": utcnow().isoformat(),
+                                  "detail": f"live LLM call failed ({type(exc).__name__}: "
+                                            f"{str(exc)[:120]}) — continuing with the "
+                                            f"deterministic mock policy"})
+                    mode = "mock"
+                    mock = MockLLM(ctx)
+                    messages = messages[:2]  # restart cleanly from system+user
+                    msg = mock.chat(messages, T.TOOL_SCHEMAS)
         messages.append(msg)
 
         tool_calls = msg.get("tool_calls")
@@ -177,7 +200,26 @@ def run_triage(db: Session, anomaly_id: int) -> TriageCase:
 
         for tc in tool_calls:
             name = tc["function"]["name"]
-            args = json.loads(tc["function"]["arguments"] or "{}")
+            raw_args = tc["function"].get("arguments") or "{}"
+            try:
+                args = json.loads(raw_args)
+                if not isinstance(args, dict):
+                    raise ValueError("tool arguments must be a JSON object")
+            except (json.JSONDecodeError, ValueError) as exc:
+                # Providers occasionally stream/truncate an otherwise valid
+                # tool call. Do not lose the case and do not guess at the
+                # intended arguments: return a structured tool error so the
+                # model can retry on its next bounded turn.
+                detail = f"invalid JSON arguments for {name}: {type(exc).__name__}"
+                trace.append({"step": "invalid_tool_arguments", "tool": name,
+                              "detail": detail, "ts": utcnow().isoformat()})
+                messages.append({"role": "tool", "tool_call_id": tc["id"],
+                                 "name": name,
+                                 "content": json.dumps({
+                                     "error": detail,
+                                     "instruction": "Retry this tool call with one valid JSON object.",
+                                 })})
+                continue
             result = _dispatch_tool(db, name, args)
             if name == "search_maintenance_history":
                 cited_history = result.get("matches", [])
@@ -191,6 +233,39 @@ def run_triage(db: Session, anomaly_id: int) -> TriageCase:
                   "explanation": "Escalate to a human planner for manual triage.",
                   "recommended_actions": ["Manual triage required"], "cited_work_orders": [],
                   "priority_adjustment": 0, "adjustment_justification": ""}
+
+    # Classification is owned by the dedicated rules/ML layer when it has a
+    # concrete, in-distribution verdict. The LLM still owns retrieval,
+    # explanation and suggested work, but it cannot silently replace the class
+    # with a superficially similar work order. Preserve any violation in the
+    # trace and route it safely if the supporting citations are inconsistent.
+    draft_root_cause = str(answer.get("root_cause", ""))
+    draft_cited_work_orders = [
+        str(work_order) for work_order in (answer.get("cited_work_orders") or [])
+    ]
+    draft_agreement = signature_agrees(
+        draft_root_cause, signature_analysis["predicted"])
+    if signature_analysis["predicted"] and draft_agreement is False:
+        fault = signature_analysis["predicted"]
+        display = fault.replace("_", " ")
+        trace.append({
+            "step": "classification_guard", "ts": utcnow().isoformat(),
+            "detail": (
+                f"LLM draft '{draft_root_cause}' conflicted with the concrete "
+                f"{signature_analysis['layer']} verdict '{display}'; classifier verdict retained"
+            ),
+        })
+        answer["root_cause"] = f"{display} (classifier verdict)"
+        answer["confidence"] = signature_analysis["confidence"]
+        answer["explanation"] = (
+            f"The dedicated classifier identified {display} from the signal window. "
+            "The language-model draft disagreed, so its diagnosis and citations were not "
+            "used; a planner should verify the class before intervention."
+        )
+        answer["recommended_actions"] = _CLASSIFIER_ACTIONS.get(
+            fault, ["Inspect the named fault family and verify with an independent measurement"])
+        answer["cited_work_orders"] = []
+        cited_history = []
 
     recurrence = T.count_recurrences(db, machine.id, anomaly.metric)
     safety = any(m.get("safety_related") for m in cited_history[:3])
@@ -221,9 +296,16 @@ def run_triage(db: Session, anomaly_id: int) -> TriageCase:
         answer.get("confidence"), str(answer.get("root_cause", "")), cited_history,
         signature_agreement=agreement,
         signature_confidence=signature_analysis["confidence"],
+        signature_abstained=signature_analysis["abstain"],
     )
 
-    signature_for_case = {**signature_analysis, "agent_agreement": agreement}
+    signature_for_case = {
+        **signature_analysis,
+        "agent_agreement": agreement,
+        "agent_draft_root_cause": draft_root_cause,
+        "agent_draft_agreement": draft_agreement,
+        "operational_agreement": agreement,
+    }
 
     cited_ids = set(answer.get("cited_work_orders") or [])
     evidence = {
@@ -241,6 +323,7 @@ def run_triage(db: Session, anomaly_id: int) -> TriageCase:
         # "which precedent did the agent lead with" — the agent's ordering is
         # a distinct signal and reconstructing it later is impossible.
         "cited_work_orders": [str(w) for w in (answer.get("cited_work_orders") or [])],
+        "agent_draft_cited_work_orders": draft_cited_work_orders,
         "recurrence_count": recurrence,
         "confidence_calibration": calibration.as_dict(),
     }

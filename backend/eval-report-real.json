@@ -1,945 +1,275 @@
 {
-  "generated_at": "2026-07-18T17:27:45.026965+00:00",
+  "generated_at": "2026-07-19T15:18:48.715133+00:00",
+  "pipeline_version": "2026-07-19-trained-ml-ood-v3",
   "seed": 7,
-  "trials_requested": 16,
+  "trials_requested": 8,
   "reports": {
     "mock": {
-      "n_trials": 16,
-      "n_scored": 16,
+      "n_trials": 8,
+      "n_scored": 8,
       "n_detector_missed": 0,
       "n_agent_errors": 0,
       "llm_mode": "mock",
       "llm_model": "deterministic-mock",
       "detection_rate_pct": 100.0,
       "accuracy": {
-        "top1_text_pct": 50.0,
-        "top1_citation_pct": 50.0,
-        "hit_any_pct": 75.0,
+        "top1_text_pct": 87.5,
+        "top1_citation_pct": 87.5,
+        "classifier_top1_pct": 87.5,
+        "hit_any_pct": 100.0,
         "hedged_pct": 0.0,
-        "unclassifiable_pct": 0.0
+        "unclassifiable_pct": 0.0,
+        "abstained_pct": 12.5,
+        "textual_abstained_pct": 0.0
       },
       "scorer_agreement_pct": 100.0,
-      "scorer_agreement_n": 16,
+      "scorer_agreement_n": 8,
+      "scorer_coverage_pct": 100.0,
+      "scorer_uncovered_n": 0,
       "per_class": {
-        "cavitation": {
-          "n": 4,
-          "top1_text_pct": 0.0,
+        "bearing_wear": {
+          "n": 3,
+          "top1_text_pct": 100.0,
+          "classifier_top1_pct": 100.0,
           "hit_any_pct": 100.0,
-          "mean_confidence": 0.75,
+          "mean_confidence": 0.79,
+          "mean_ticks_to_detect": 48.0
+        },
+        "cavitation": {
+          "n": 1,
+          "top1_text_pct": 0.0,
+          "classifier_top1_pct": 0.0,
+          "hit_any_pct": 100.0,
+          "mean_confidence": 0.44,
           "mean_ticks_to_detect": 42.0
         },
         "rotor_imbalance": {
-          "n": 4,
+          "n": 1,
           "top1_text_pct": 100.0,
+          "classifier_top1_pct": 100.0,
           "hit_any_pct": 100.0,
-          "mean_confidence": 0.75,
+          "mean_confidence": 0.79,
           "mean_ticks_to_detect": 48.0
         },
         "suction_restriction": {
-          "n": 4,
+          "n": 1,
           "top1_text_pct": 100.0,
+          "classifier_top1_pct": 100.0,
           "hit_any_pct": 100.0,
-          "mean_confidence": 0.75,
+          "mean_confidence": 0.79,
           "mean_ticks_to_detect": 48.0
         },
         "discharge_restriction": {
-          "n": 4,
-          "top1_text_pct": 0.0,
-          "hit_any_pct": 0.0,
-          "mean_confidence": 0.75,
-          "mean_ticks_to_detect": 99.0
+          "n": 2,
+          "top1_text_pct": 100.0,
+          "classifier_top1_pct": 100.0,
+          "hit_any_pct": 100.0,
+          "mean_confidence": 0.79,
+          "mean_ticks_to_detect": 90.0
         }
       },
       "confusion": {
+        "rotor_imbalance": {
+          "rotor_imbalance": 1
+        },
         "cavitation": {
-          "suction_restriction": 4
+          "suction_restriction": 1
         },
         "discharge_restriction": {
-          "rotor_imbalance": 4
-        },
-        "rotor_imbalance": {
-          "rotor_imbalance": 4
+          "discharge_restriction": 2
         },
         "suction_restriction": {
-          "suction_restriction": 4
+          "suction_restriction": 1
+        },
+        "bearing_wear": {
+          "bearing_wear": 3
         }
       },
-      "calibration": [
-        {
-          "bucket": "0.70-0.85",
-          "n": 16,
-          "mean_confidence_pct": 75.0,
-          "accuracy_pct": 50.0,
-          "gap_pct": -25.0
-        }
-      ],
-      "ece": 0.25,
-      "latency_s": {
-        "mean": 0.01,
-        "p50": 0.01,
-        "max": 0.01
-      },
-      "trials_detail": [
-        {
-          "machine_id": "PMP-03",
-          "machine_type": "pump",
-          "fault": "cavitation",
-          "detected": true,
-          "detected_metric": "temp_fluid_c",
-          "severity": "low",
-          "ticks_to_detect": 42,
-          "case_id": 1,
-          "root_cause": "inlet-side valve found partially closed after maintenance on the loop, starving suction",
-          "confidence": 0.75,
-          "priority": "P4",
-          "cited_work_orders": [
-            "WO-1016",
-            "WO-1018",
-            "WO-1017"
-          ],
-          "predicted_text": "suction_restriction",
-          "predicted_citation": "suction_restriction",
-          "hedged": false,
-          "hit_any": true,
-          "correct_text": false,
-          "correct_citation": false,
-          "llm_mode": "mock",
-          "llm_model": "deterministic-mock",
-          "latency_s": 0.01,
-          "error": "",
-          "data_source": "replay",
-          "in_labelled_window": false
+      "operational_confusion": {
+        "rotor_imbalance": {
+          "rotor_imbalance": 1
         },
-        {
-          "machine_id": "PMP-03",
-          "machine_type": "pump",
-          "fault": "discharge_restriction",
-          "detected": true,
-          "detected_metric": "flow_lpm",
-          "severity": "high",
-          "ticks_to_detect": 99,
-          "case_id": 1,
-          "root_cause": "imbalance mass on the rotor (blade fouling); confirmed by runout check",
-          "confidence": 0.75,
-          "priority": "P3",
-          "cited_work_orders": [
-            "WO-1018",
-            "WO-1017",
-            "WO-1016"
-          ],
-          "predicted_text": "rotor_imbalance",
-          "predicted_citation": "rotor_imbalance",
-          "hedged": false,
-          "hit_any": false,
-          "correct_text": false,
-          "correct_citation": false,
-          "llm_mode": "mock",
-          "llm_model": "deterministic-mock",
-          "latency_s": 0.01,
-          "error": "",
-          "data_source": "replay",
-          "in_labelled_window": true
-        },
-        {
-          "machine_id": "PMP-03",
-          "machine_type": "pump",
-          "fault": "rotor_imbalance",
-          "detected": true,
-          "detected_metric": "vibration_g",
-          "severity": "high",
-          "ticks_to_detect": 48,
-          "case_id": 1,
-          "root_cause": "imbalance mass on the rotor (blade fouling); confirmed by runout check",
-          "confidence": 0.75,
-          "priority": "P3",
-          "cited_work_orders": [
-            "WO-1018",
-            "WO-1016",
-            "WO-1019"
-          ],
-          "predicted_text": "rotor_imbalance",
-          "predicted_citation": "rotor_imbalance",
-          "hedged": false,
-          "hit_any": true,
-          "correct_text": true,
-          "correct_citation": true,
-          "llm_mode": "mock",
-          "llm_model": "deterministic-mock",
-          "latency_s": 0.01,
-          "error": "",
-          "data_source": "replay",
-          "in_labelled_window": true
-        },
-        {
-          "machine_id": "PMP-03",
-          "machine_type": "pump",
-          "fault": "suction_restriction",
-          "detected": true,
-          "detected_metric": "temp_motor_c",
-          "severity": "low",
-          "ticks_to_detect": 48,
-          "case_id": 1,
-          "root_cause": "inlet-side valve found partially closed after maintenance on the loop, starving suction",
-          "confidence": 0.75,
-          "priority": "P4",
-          "cited_work_orders": [
-            "WO-1016",
-            "WO-1018",
-            "WO-1017"
-          ],
-          "predicted_text": "suction_restriction",
-          "predicted_citation": "suction_restriction",
-          "hedged": false,
-          "hit_any": true,
-          "correct_text": true,
-          "correct_citation": true,
-          "llm_mode": "mock",
-          "llm_model": "deterministic-mock",
-          "latency_s": 0.01,
-          "error": "",
-          "data_source": "replay",
-          "in_labelled_window": true
-        },
-        {
-          "machine_id": "PMP-03",
-          "machine_type": "pump",
-          "fault": "cavitation",
-          "detected": true,
-          "detected_metric": "temp_fluid_c",
-          "severity": "low",
-          "ticks_to_detect": 42,
-          "case_id": 1,
-          "root_cause": "inlet-side valve found partially closed after maintenance on the loop, starving suction",
-          "confidence": 0.75,
-          "priority": "P4",
-          "cited_work_orders": [
-            "WO-1016",
-            "WO-1018",
-            "WO-1017"
-          ],
-          "predicted_text": "suction_restriction",
-          "predicted_citation": "suction_restriction",
-          "hedged": false,
-          "hit_any": true,
-          "correct_text": false,
-          "correct_citation": false,
-          "llm_mode": "mock",
-          "llm_model": "deterministic-mock",
-          "latency_s": 0.01,
-          "error": "",
-          "data_source": "replay",
-          "in_labelled_window": false
-        },
-        {
-          "machine_id": "PMP-03",
-          "machine_type": "pump",
-          "fault": "discharge_restriction",
-          "detected": true,
-          "detected_metric": "flow_lpm",
-          "severity": "high",
-          "ticks_to_detect": 99,
-          "case_id": 1,
-          "root_cause": "imbalance mass on the rotor (blade fouling); confirmed by runout check",
-          "confidence": 0.75,
-          "priority": "P3",
-          "cited_work_orders": [
-            "WO-1018",
-            "WO-1017",
-            "WO-1016"
-          ],
-          "predicted_text": "rotor_imbalance",
-          "predicted_citation": "rotor_imbalance",
-          "hedged": false,
-          "hit_any": false,
-          "correct_text": false,
-          "correct_citation": false,
-          "llm_mode": "mock",
-          "llm_model": "deterministic-mock",
-          "latency_s": 0.01,
-          "error": "",
-          "data_source": "replay",
-          "in_labelled_window": true
-        },
-        {
-          "machine_id": "PMP-03",
-          "machine_type": "pump",
-          "fault": "rotor_imbalance",
-          "detected": true,
-          "detected_metric": "vibration_g",
-          "severity": "high",
-          "ticks_to_detect": 48,
-          "case_id": 1,
-          "root_cause": "imbalance mass on the rotor (blade fouling); confirmed by runout check",
-          "confidence": 0.75,
-          "priority": "P3",
-          "cited_work_orders": [
-            "WO-1018",
-            "WO-1016",
-            "WO-1019"
-          ],
-          "predicted_text": "rotor_imbalance",
-          "predicted_citation": "rotor_imbalance",
-          "hedged": false,
-          "hit_any": true,
-          "correct_text": true,
-          "correct_citation": true,
-          "llm_mode": "mock",
-          "llm_model": "deterministic-mock",
-          "latency_s": 0.01,
-          "error": "",
-          "data_source": "replay",
-          "in_labelled_window": true
-        },
-        {
-          "machine_id": "PMP-03",
-          "machine_type": "pump",
-          "fault": "suction_restriction",
-          "detected": true,
-          "detected_metric": "temp_motor_c",
-          "severity": "low",
-          "ticks_to_detect": 48,
-          "case_id": 1,
-          "root_cause": "inlet-side valve found partially closed after maintenance on the loop, starving suction",
-          "confidence": 0.75,
-          "priority": "P4",
-          "cited_work_orders": [
-            "WO-1016",
-            "WO-1018",
-            "WO-1017"
-          ],
-          "predicted_text": "suction_restriction",
-          "predicted_citation": "suction_restriction",
-          "hedged": false,
-          "hit_any": true,
-          "correct_text": true,
-          "correct_citation": true,
-          "llm_mode": "mock",
-          "llm_model": "deterministic-mock",
-          "latency_s": 0.01,
-          "error": "",
-          "data_source": "replay",
-          "in_labelled_window": true
-        },
-        {
-          "machine_id": "PMP-03",
-          "machine_type": "pump",
-          "fault": "cavitation",
-          "detected": true,
-          "detected_metric": "temp_fluid_c",
-          "severity": "low",
-          "ticks_to_detect": 42,
-          "case_id": 1,
-          "root_cause": "inlet-side valve found partially closed after maintenance on the loop, starving suction",
-          "confidence": 0.75,
-          "priority": "P4",
-          "cited_work_orders": [
-            "WO-1016",
-            "WO-1018",
-            "WO-1017"
-          ],
-          "predicted_text": "suction_restriction",
-          "predicted_citation": "suction_restriction",
-          "hedged": false,
-          "hit_any": true,
-          "correct_text": false,
-          "correct_citation": false,
-          "llm_mode": "mock",
-          "llm_model": "deterministic-mock",
-          "latency_s": 0.01,
-          "error": "",
-          "data_source": "replay",
-          "in_labelled_window": false
-        },
-        {
-          "machine_id": "PMP-03",
-          "machine_type": "pump",
-          "fault": "discharge_restriction",
-          "detected": true,
-          "detected_metric": "flow_lpm",
-          "severity": "high",
-          "ticks_to_detect": 99,
-          "case_id": 1,
-          "root_cause": "imbalance mass on the rotor (blade fouling); confirmed by runout check",
-          "confidence": 0.75,
-          "priority": "P3",
-          "cited_work_orders": [
-            "WO-1018",
-            "WO-1017",
-            "WO-1016"
-          ],
-          "predicted_text": "rotor_imbalance",
-          "predicted_citation": "rotor_imbalance",
-          "hedged": false,
-          "hit_any": false,
-          "correct_text": false,
-          "correct_citation": false,
-          "llm_mode": "mock",
-          "llm_model": "deterministic-mock",
-          "latency_s": 0.01,
-          "error": "",
-          "data_source": "replay",
-          "in_labelled_window": true
-        },
-        {
-          "machine_id": "PMP-03",
-          "machine_type": "pump",
-          "fault": "rotor_imbalance",
-          "detected": true,
-          "detected_metric": "vibration_g",
-          "severity": "high",
-          "ticks_to_detect": 48,
-          "case_id": 1,
-          "root_cause": "imbalance mass on the rotor (blade fouling); confirmed by runout check",
-          "confidence": 0.75,
-          "priority": "P3",
-          "cited_work_orders": [
-            "WO-1018",
-            "WO-1016",
-            "WO-1019"
-          ],
-          "predicted_text": "rotor_imbalance",
-          "predicted_citation": "rotor_imbalance",
-          "hedged": false,
-          "hit_any": true,
-          "correct_text": true,
-          "correct_citation": true,
-          "llm_mode": "mock",
-          "llm_model": "deterministic-mock",
-          "latency_s": 0.01,
-          "error": "",
-          "data_source": "replay",
-          "in_labelled_window": true
-        },
-        {
-          "machine_id": "PMP-03",
-          "machine_type": "pump",
-          "fault": "suction_restriction",
-          "detected": true,
-          "detected_metric": "temp_motor_c",
-          "severity": "low",
-          "ticks_to_detect": 48,
-          "case_id": 1,
-          "root_cause": "inlet-side valve found partially closed after maintenance on the loop, starving suction",
-          "confidence": 0.75,
-          "priority": "P4",
-          "cited_work_orders": [
-            "WO-1016",
-            "WO-1018",
-            "WO-1017"
-          ],
-          "predicted_text": "suction_restriction",
-          "predicted_citation": "suction_restriction",
-          "hedged": false,
-          "hit_any": true,
-          "correct_text": true,
-          "correct_citation": true,
-          "llm_mode": "mock",
-          "llm_model": "deterministic-mock",
-          "latency_s": 0.01,
-          "error": "",
-          "data_source": "replay",
-          "in_labelled_window": true
-        },
-        {
-          "machine_id": "PMP-03",
-          "machine_type": "pump",
-          "fault": "cavitation",
-          "detected": true,
-          "detected_metric": "temp_fluid_c",
-          "severity": "low",
-          "ticks_to_detect": 42,
-          "case_id": 1,
-          "root_cause": "inlet-side valve found partially closed after maintenance on the loop, starving suction",
-          "confidence": 0.75,
-          "priority": "P4",
-          "cited_work_orders": [
-            "WO-1016",
-            "WO-1018",
-            "WO-1017"
-          ],
-          "predicted_text": "suction_restriction",
-          "predicted_citation": "suction_restriction",
-          "hedged": false,
-          "hit_any": true,
-          "correct_text": false,
-          "correct_citation": false,
-          "llm_mode": "mock",
-          "llm_model": "deterministic-mock",
-          "latency_s": 0.01,
-          "error": "",
-          "data_source": "replay",
-          "in_labelled_window": false
-        },
-        {
-          "machine_id": "PMP-03",
-          "machine_type": "pump",
-          "fault": "discharge_restriction",
-          "detected": true,
-          "detected_metric": "flow_lpm",
-          "severity": "high",
-          "ticks_to_detect": 99,
-          "case_id": 1,
-          "root_cause": "imbalance mass on the rotor (blade fouling); confirmed by runout check",
-          "confidence": 0.75,
-          "priority": "P3",
-          "cited_work_orders": [
-            "WO-1018",
-            "WO-1017",
-            "WO-1016"
-          ],
-          "predicted_text": "rotor_imbalance",
-          "predicted_citation": "rotor_imbalance",
-          "hedged": false,
-          "hit_any": false,
-          "correct_text": false,
-          "correct_citation": false,
-          "llm_mode": "mock",
-          "llm_model": "deterministic-mock",
-          "latency_s": 0.01,
-          "error": "",
-          "data_source": "replay",
-          "in_labelled_window": true
-        },
-        {
-          "machine_id": "PMP-03",
-          "machine_type": "pump",
-          "fault": "rotor_imbalance",
-          "detected": true,
-          "detected_metric": "vibration_g",
-          "severity": "high",
-          "ticks_to_detect": 48,
-          "case_id": 1,
-          "root_cause": "imbalance mass on the rotor (blade fouling); confirmed by runout check",
-          "confidence": 0.75,
-          "priority": "P3",
-          "cited_work_orders": [
-            "WO-1018",
-            "WO-1016",
-            "WO-1019"
-          ],
-          "predicted_text": "rotor_imbalance",
-          "predicted_citation": "rotor_imbalance",
-          "hedged": false,
-          "hit_any": true,
-          "correct_text": true,
-          "correct_citation": true,
-          "llm_mode": "mock",
-          "llm_model": "deterministic-mock",
-          "latency_s": 0.01,
-          "error": "",
-          "data_source": "replay",
-          "in_labelled_window": true
-        },
-        {
-          "machine_id": "PMP-03",
-          "machine_type": "pump",
-          "fault": "suction_restriction",
-          "detected": true,
-          "detected_metric": "temp_motor_c",
-          "severity": "low",
-          "ticks_to_detect": 48,
-          "case_id": 1,
-          "root_cause": "inlet-side valve found partially closed after maintenance on the loop, starving suction",
-          "confidence": 0.75,
-          "priority": "P4",
-          "cited_work_orders": [
-            "WO-1016",
-            "WO-1018",
-            "WO-1017"
-          ],
-          "predicted_text": "suction_restriction",
-          "predicted_citation": "suction_restriction",
-          "hedged": false,
-          "hit_any": true,
-          "correct_text": true,
-          "correct_citation": true,
-          "llm_mode": "mock",
-          "llm_model": "deterministic-mock",
-          "latency_s": 0.01,
-          "error": "",
-          "data_source": "replay",
-          "in_labelled_window": true
-        }
-      ],
-      "replay": {
-        "detection_rate_pct": 100.0,
-        "in_labelled_window_pct": 75.0
-      }
-    },
-    "live": {
-      "n_trials": 16,
-      "n_scored": 16,
-      "n_detector_missed": 0,
-      "n_agent_errors": 0,
-      "llm_mode": "live",
-      "llm_model": "anthropic/claude-sonnet-4.5",
-      "detection_rate_pct": 100.0,
-      "accuracy": {
-        "top1_text_pct": 31.2,
-        "top1_citation_pct": 56.2,
-        "hit_any_pct": 31.2,
-        "hedged_pct": 0.0,
-        "unclassifiable_pct": 37.5
-      },
-      "scorer_agreement_pct": 100.0,
-      "scorer_agreement_n": 10,
-      "per_class": {
         "cavitation": {
-          "n": 4,
-          "top1_text_pct": 75.0,
-          "hit_any_pct": 75.0,
-          "mean_confidence": 0.68,
-          "mean_ticks_to_detect": 42.0
-        },
-        "rotor_imbalance": {
-          "n": 4,
-          "top1_text_pct": 50.0,
-          "hit_any_pct": 50.0,
-          "mean_confidence": 0.78,
-          "mean_ticks_to_detect": 48.0
-        },
-        "suction_restriction": {
-          "n": 4,
-          "top1_text_pct": 0.0,
-          "hit_any_pct": 0.0,
-          "mean_confidence": 0.6,
-          "mean_ticks_to_detect": 48.0
+          "abstained": 1
         },
         "discharge_restriction": {
-          "n": 4,
-          "top1_text_pct": 0.0,
-          "hit_any_pct": 0.0,
-          "mean_confidence": 0.78,
-          "mean_ticks_to_detect": 99.0
-        }
-      },
-      "confusion": {
-        "cavitation": {
-          "unclassified": 1,
-          "cavitation": 3
-        },
-        "discharge_restriction": {
-          "cavitation": 3,
-          "unclassified": 1
-        },
-        "rotor_imbalance": {
-          "cavitation": 2,
-          "rotor_imbalance": 2
+          "discharge_restriction": 2
         },
         "suction_restriction": {
-          "unclassified": 4
+          "suction_restriction": 1
+        },
+        "bearing_wear": {
+          "bearing_wear": 3
         }
+      },
+      "agent_selection": {
+        "coverage_pct": 87.5,
+        "selective_accuracy_pct": 100.0,
+        "abstained_pct": 12.5
+      },
+      "classifier_confusion": {
+        "rotor_imbalance": {
+          "rotor_imbalance": 1
+        },
+        "cavitation": {
+          "abstained": 1
+        },
+        "discharge_restriction": {
+          "discharge_restriction": 2
+        },
+        "suction_restriction": {
+          "suction_restriction": 1
+        },
+        "bearing_wear": {
+          "bearing_wear": 3
+        }
+      },
+      "classifier": {
+        "top1_accuracy_pct": 87.5,
+        "coverage_pct": 87.5,
+        "selective_accuracy_pct": 100.0,
+        "abstained_pct": 12.5,
+        "trained_layer_used_n": 3,
+        "trained_layer_used_pct": 37.5,
+        "narrow_model_ood_n": 5,
+        "per_class": {
+          "bearing_wear": {
+            "n": 3,
+            "top1_pct": 100.0,
+            "coverage_pct": 100.0,
+            "abstained_pct": 0.0
+          },
+          "cavitation": {
+            "n": 1,
+            "top1_pct": 0.0,
+            "coverage_pct": 0.0,
+            "abstained_pct": 100.0
+          },
+          "rotor_imbalance": {
+            "n": 1,
+            "top1_pct": 100.0,
+            "coverage_pct": 100.0,
+            "abstained_pct": 0.0
+          },
+          "suction_restriction": {
+            "n": 1,
+            "top1_pct": 100.0,
+            "coverage_pct": 100.0,
+            "abstained_pct": 0.0
+          },
+          "discharge_restriction": {
+            "n": 2,
+            "top1_pct": 100.0,
+            "coverage_pct": 100.0,
+            "abstained_pct": 0.0
+          }
+        }
+      },
+      "comparison": {
+        "agent_top1_pct": 87.5,
+        "classifier_top1_pct": 87.5,
+        "mock_top1_pct": 87.5
       },
       "calibration": [
         {
           "bucket": "0.00-0.50",
           "n": 1,
-          "mean_confidence_pct": 45.0,
+          "mean_confidence_pct": 44.0,
           "accuracy_pct": 0.0,
-          "gap_pct": -45.0
-        },
-        {
-          "bucket": "0.50-0.70",
-          "n": 6,
-          "mean_confidence_pct": 63.3,
-          "accuracy_pct": 16.7,
-          "gap_pct": -46.6
+          "gap_pct": -44.0
         },
         {
           "bucket": "0.70-0.85",
-          "n": 8,
-          "mean_confidence_pct": 78.4,
-          "accuracy_pct": 50.0,
-          "gap_pct": -28.4
-        },
-        {
-          "bucket": "0.85-1.00",
-          "n": 1,
-          "mean_confidence_pct": 85.0,
-          "accuracy_pct": 0.0,
-          "gap_pct": -85.0
+          "n": 7,
+          "mean_confidence_pct": 79.0,
+          "accuracy_pct": 100.0,
+          "gap_pct": 21.0
         }
       ],
-      "ece": 0.398,
+      "ece": 0.239,
       "latency_s": {
-        "mean": 28.84,
-        "p50": 29.1,
-        "max": 33.79
+        "mean": 0.05,
+        "p50": 0.08,
+        "max": 0.09
       },
       "trials_detail": [
         {
           "machine_id": "PMP-03",
           "machine_type": "pump",
-          "fault": "cavitation",
+          "fault": "rotor_imbalance",
           "detected": true,
-          "detected_metric": "temp_fluid_c",
-          "severity": "low",
-          "ticks_to_detect": 42,
-          "case_id": 1,
-          "root_cause": "Pressure sensor malfunction or electrical noise interference",
-          "confidence": 0.65,
-          "priority": "P1",
-          "cited_work_orders": [
-            "WO-1019",
-            "WO-1007"
-          ],
-          "predicted_text": null,
-          "predicted_citation": "cavitation",
-          "hedged": false,
-          "hit_any": false,
-          "correct_text": false,
-          "correct_citation": true,
-          "llm_mode": "live",
-          "llm_model": "anthropic/claude-sonnet-4.5",
-          "latency_s": 33.79,
-          "error": "",
-          "data_source": "replay",
-          "in_labelled_window": false
-        },
-        {
-          "machine_id": "PMP-03",
-          "machine_type": "pump",
-          "fault": "discharge_restriction",
-          "detected": true,
-          "detected_metric": "flow_lpm",
+          "detected_metric": "vibration_g",
           "severity": "high",
-          "ticks_to_detect": 99,
+          "ticks_to_detect": 48,
           "case_id": 1,
-          "root_cause": "Air entrainment at pump inlet causing intermittent cavitation",
-          "confidence": 0.82,
+          "root_cause": "imbalance mass on the rotor (blade fouling); confirmed by runout check",
+          "confidence": 0.79,
           "priority": "P3",
           "cited_work_orders": [
-            "WO-1019",
-            "WO-1007"
-          ],
-          "predicted_text": "cavitation",
-          "predicted_citation": "cavitation",
-          "hedged": false,
-          "hit_any": false,
-          "correct_text": false,
-          "correct_citation": false,
-          "llm_mode": "live",
-          "llm_model": "anthropic/claude-sonnet-4.5",
-          "latency_s": 29.1,
-          "error": "",
-          "data_source": "replay",
-          "in_labelled_window": true
-        },
-        {
-          "machine_id": "PMP-03",
-          "machine_type": "pump",
-          "fault": "rotor_imbalance",
-          "detected": true,
-          "detected_metric": "vibration_g",
-          "severity": "high",
-          "ticks_to_detect": 48,
-          "case_id": 1,
-          "root_cause": "Cavitation due to air entrainment or suction-side restriction",
-          "confidence": 0.78,
-          "priority": "P1",
-          "cited_work_orders": [
-            "WO-1019",
-            "WO-1007",
             "WO-1018",
-            "WO-1009",
-            "WO-1016"
-          ],
-          "predicted_text": "cavitation",
-          "predicted_citation": "cavitation",
-          "hedged": false,
-          "hit_any": false,
-          "correct_text": false,
-          "correct_citation": false,
-          "llm_mode": "live",
-          "llm_model": "anthropic/claude-sonnet-4.5",
-          "latency_s": 22.36,
-          "error": "",
-          "data_source": "replay",
-          "in_labelled_window": true
-        },
-        {
-          "machine_id": "PMP-03",
-          "machine_type": "pump",
-          "fault": "suction_restriction",
-          "detected": true,
-          "detected_metric": "temp_motor_c",
-          "severity": "low",
-          "ticks_to_detect": 48,
-          "case_id": 1,
-          "root_cause": "Test loop operational transient causing temporary motor heating during load cycling",
-          "confidence": 0.65,
-          "priority": "P4",
-          "cited_work_orders": [
-            "WO-1017",
             "WO-1016",
-            "WO-1019",
-            "WO-1008",
-            "WO-1018"
-          ],
-          "predicted_text": null,
-          "predicted_citation": "discharge_restriction",
-          "hedged": false,
-          "hit_any": false,
-          "correct_text": false,
-          "correct_citation": false,
-          "llm_mode": "live",
-          "llm_model": "anthropic/claude-sonnet-4.5",
-          "latency_s": 30.84,
-          "error": "",
-          "data_source": "replay",
-          "in_labelled_window": true
-        },
-        {
-          "machine_id": "PMP-03",
-          "machine_type": "pump",
-          "fault": "cavitation",
-          "detected": true,
-          "detected_metric": "temp_fluid_c",
-          "severity": "low",
-          "ticks_to_detect": 42,
-          "case_id": 1,
-          "root_cause": "Cavitation or air entrainment at pump inlet causing two-phase flow",
-          "confidence": 0.78,
-          "priority": "P1",
-          "cited_work_orders": [
-            "WO-1019",
-            "WO-1007",
-            "WO-1016"
-          ],
-          "predicted_text": "cavitation",
-          "predicted_citation": "cavitation",
-          "hedged": false,
-          "hit_any": true,
-          "correct_text": true,
-          "correct_citation": true,
-          "llm_mode": "live",
-          "llm_model": "anthropic/claude-sonnet-4.5",
-          "latency_s": 25.71,
-          "error": "",
-          "data_source": "replay",
-          "in_labelled_window": false
-        },
-        {
-          "machine_id": "PMP-03",
-          "machine_type": "pump",
-          "fault": "discharge_restriction",
-          "detected": true,
-          "detected_metric": "flow_lpm",
-          "severity": "high",
-          "ticks_to_detect": 99,
-          "case_id": 1,
-          "root_cause": "Instrumentation malfunction or control system oscillation",
-          "confidence": 0.65,
-          "priority": "P4",
-          "cited_work_orders": [
-            "WO-1019",
-            "WO-1016",
-            "WO-1017",
-            "WO-1018"
-          ],
-          "predicted_text": null,
-          "predicted_citation": "cavitation",
-          "hedged": false,
-          "hit_any": false,
-          "correct_text": false,
-          "correct_citation": false,
-          "llm_mode": "live",
-          "llm_model": "anthropic/claude-sonnet-4.5",
-          "latency_s": 29.74,
-          "error": "",
-          "data_source": "replay",
-          "in_labelled_window": true
-        },
-        {
-          "machine_id": "PMP-03",
-          "machine_type": "pump",
-          "fault": "rotor_imbalance",
-          "detected": true,
-          "detected_metric": "vibration_g",
-          "severity": "high",
-          "ticks_to_detect": 48,
-          "case_id": 1,
-          "root_cause": "Rotor imbalance - likely fouling or debris accumulation on impeller blades",
-          "confidence": 0.82,
-          "priority": "P1",
-          "cited_work_orders": [
-            "WO-1018",
-            "WO-1009",
-            "WO-1016"
+            "WO-1019"
           ],
           "predicted_text": "rotor_imbalance",
           "predicted_citation": "rotor_imbalance",
           "hedged": false,
+          "abstained": false,
           "hit_any": true,
           "correct_text": true,
           "correct_citation": true,
-          "llm_mode": "live",
-          "llm_model": "anthropic/claude-sonnet-4.5",
-          "latency_s": 23.76,
+          "classifier_pred": "rotor_imbalance",
+          "classifier_correct": true,
+          "classifier_abstained": false,
+          "classifier_layer": "deterministic_signature",
+          "classifier_ood": true,
+          "llm_mode": "mock",
+          "llm_model": "deterministic-mock",
+          "latency_s": 0.08,
           "error": "",
           "data_source": "replay",
-          "in_labelled_window": true
+          "dataset": "SKAB v0.9 (Skoltech Anomaly Benchmark)",
+          "episode_name": "skab-imbalance-linear",
+          "in_labelled_window": true,
+          "textual_abstained": false
         },
         {
           "machine_id": "PMP-03",
           "machine_type": "pump",
-          "fault": "suction_restriction",
+          "fault": "cavitation",
           "detected": true,
-          "detected_metric": "temp_motor_c",
+          "detected_metric": "temp_fluid_c",
           "severity": "low",
-          "ticks_to_detect": 48,
+          "ticks_to_detect": 42,
           "case_id": 1,
-          "root_cause": "Test loop operating condition change causing transient hydraulic instability",
-          "confidence": 0.65,
-          "priority": "P1",
+          "root_cause": "inlet-side valve found partially closed after maintenance on the loop, starving suction",
+          "confidence": 0.44,
+          "priority": "P4",
           "cited_work_orders": [
             "WO-1016",
-            "WO-1017",
             "WO-1018",
-            "WO-1007"
+            "WO-1017"
           ],
-          "predicted_text": null,
+          "predicted_text": "suction_restriction",
           "predicted_citation": "suction_restriction",
           "hedged": false,
-          "hit_any": false,
-          "correct_text": false,
-          "correct_citation": true,
-          "llm_mode": "live",
-          "llm_model": "anthropic/claude-sonnet-4.5",
-          "latency_s": 32.39,
-          "error": "",
-          "data_source": "replay",
-          "in_labelled_window": true
-        },
-        {
-          "machine_id": "PMP-03",
-          "machine_type": "pump",
-          "fault": "cavitation",
-          "detected": true,
-          "detected_metric": "temp_fluid_c",
-          "severity": "low",
-          "ticks_to_detect": 42,
-          "case_id": 1,
-          "root_cause": "Pressure sensor electrical noise or intermittent connection causing erratic readings; possible early cavitation or air entrainment (less likely given stable vibration and flow)",
-          "confidence": 0.55,
-          "priority": "P1",
-          "cited_work_orders": [
-            "WO-1019",
-            "WO-1017",
-            "WO-1007"
-          ],
-          "predicted_text": "cavitation",
-          "predicted_citation": "cavitation",
-          "hedged": false,
+          "abstained": true,
           "hit_any": true,
-          "correct_text": true,
-          "correct_citation": true,
-          "llm_mode": "live",
-          "llm_model": "anthropic/claude-sonnet-4.5",
-          "latency_s": 30.93,
+          "correct_text": false,
+          "correct_citation": false,
+          "classifier_pred": null,
+          "classifier_correct": false,
+          "classifier_abstained": true,
+          "classifier_layer": "deterministic_signature",
+          "classifier_ood": true,
+          "llm_mode": "mock",
+          "llm_model": "deterministic-mock",
+          "latency_s": 0.09,
           "error": "",
           "data_source": "replay",
-          "in_labelled_window": false
+          "dataset": "SKAB v0.9 (Skoltech Anomaly Benchmark)",
+          "episode_name": "skab-cavitation-two-phase",
+          "in_labelled_window": false,
+          "textual_abstained": false
         },
         {
           "machine_id": "PMP-03",
@@ -950,55 +280,74 @@
           "severity": "high",
           "ticks_to_detect": 99,
           "case_id": 1,
-          "root_cause": "Air ingress at pump suction causing intermittent two-phase flow and incipient cavitation",
-          "confidence": 0.85,
+          "root_cause": "outlet valve throttled against procedure, pump running back on its curve",
+          "confidence": 0.79,
           "priority": "P3",
           "cited_work_orders": [
-            "WO-1019",
-            "WO-1007"
+            "WO-1017",
+            "WO-1016",
+            "WO-1018"
           ],
-          "predicted_text": "cavitation",
-          "predicted_citation": "cavitation",
+          "predicted_text": "discharge_restriction",
+          "predicted_citation": "discharge_restriction",
           "hedged": false,
-          "hit_any": false,
-          "correct_text": false,
-          "correct_citation": false,
-          "llm_mode": "live",
-          "llm_model": "anthropic/claude-sonnet-4.5",
-          "latency_s": 31.86,
+          "abstained": false,
+          "hit_any": true,
+          "correct_text": true,
+          "correct_citation": true,
+          "classifier_pred": "discharge_restriction",
+          "classifier_correct": true,
+          "classifier_abstained": false,
+          "classifier_layer": "trained_restriction_classifier",
+          "classifier_ood": false,
+          "llm_mode": "mock",
+          "llm_model": "deterministic-mock",
+          "latency_s": 0.09,
           "error": "",
           "data_source": "replay",
-          "in_labelled_window": true
+          "dataset": "SKAB v0.9 (Skoltech Anomaly Benchmark)",
+          "episode_name": "skab-discharge-restriction-a",
+          "in_labelled_window": true,
+          "textual_abstained": false
         },
         {
           "machine_id": "PMP-03",
           "machine_type": "pump",
-          "fault": "rotor_imbalance",
+          "fault": "discharge_restriction",
           "detected": true,
-          "detected_metric": "vibration_g",
+          "detected_metric": "flow_lpm",
           "severity": "high",
-          "ticks_to_detect": 48,
+          "ticks_to_detect": 81,
           "case_id": 1,
-          "root_cause": "Rotor imbalance (likely blade fouling or debris accumulation)",
-          "confidence": 0.75,
+          "root_cause": "outlet valve throttled against procedure, pump running back on its curve",
+          "confidence": 0.79,
           "priority": "P3",
           "cited_work_orders": [
-            "WO-1018",
-            "WO-1009",
-            "WO-1028"
+            "WO-1017",
+            "WO-1016",
+            "WO-1018"
           ],
-          "predicted_text": "rotor_imbalance",
-          "predicted_citation": "rotor_imbalance",
+          "predicted_text": "discharge_restriction",
+          "predicted_citation": "discharge_restriction",
           "hedged": false,
+          "abstained": false,
           "hit_any": true,
           "correct_text": true,
           "correct_citation": true,
-          "llm_mode": "live",
-          "llm_model": "anthropic/claude-sonnet-4.5",
-          "latency_s": 28.62,
+          "classifier_pred": "discharge_restriction",
+          "classifier_correct": true,
+          "classifier_abstained": false,
+          "classifier_layer": "trained_restriction_classifier",
+          "classifier_ood": false,
+          "llm_mode": "mock",
+          "llm_model": "deterministic-mock",
+          "latency_s": 0.08,
           "error": "",
           "data_source": "replay",
-          "in_labelled_window": true
+          "dataset": "SKAB v0.9 (Skoltech Anomaly Benchmark)",
+          "episode_name": "skab-discharge-restriction-b",
+          "in_labelled_window": true,
+          "textual_abstained": false
         },
         {
           "machine_id": "PMP-03",
@@ -1009,26 +358,404 @@
           "severity": "low",
           "ticks_to_detect": 48,
           "case_id": 1,
-          "root_cause": "Transient load cycling or test-loop operating condition change",
-          "confidence": 0.45,
-          "priority": "P1",
+          "root_cause": "inlet-side valve found partially closed after maintenance on the loop, starving suction",
+          "confidence": 0.79,
+          "priority": "P4",
           "cited_work_orders": [
             "WO-1016",
             "WO-1017",
             "WO-1019"
           ],
-          "predicted_text": null,
+          "predicted_text": "suction_restriction",
           "predicted_citation": "suction_restriction",
           "hedged": false,
-          "hit_any": false,
-          "correct_text": false,
+          "abstained": false,
+          "hit_any": true,
+          "correct_text": true,
           "correct_citation": true,
-          "llm_mode": "live",
-          "llm_model": "anthropic/claude-sonnet-4.5",
-          "latency_s": 27.83,
+          "classifier_pred": "suction_restriction",
+          "classifier_correct": true,
+          "classifier_abstained": false,
+          "classifier_layer": "trained_restriction_classifier",
+          "classifier_ood": false,
+          "llm_mode": "mock",
+          "llm_model": "deterministic-mock",
+          "latency_s": 0.07,
           "error": "",
           "data_source": "replay",
-          "in_labelled_window": true
+          "dataset": "SKAB v0.9 (Skoltech Anomaly Benchmark)",
+          "episode_name": "skab-suction-restriction",
+          "in_labelled_window": true,
+          "textual_abstained": false
+        },
+        {
+          "machine_id": "BRG-01",
+          "machine_type": "motor",
+          "fault": "bearing_wear",
+          "detected": true,
+          "detected_metric": "vibration_rms_g",
+          "severity": "high",
+          "ticks_to_detect": 48,
+          "case_id": 1,
+          "root_cause": "localized rolling-element bearing damage confirmed by vibration spectrum",
+          "confidence": 0.79,
+          "priority": "P3",
+          "cited_work_orders": [
+            "WO-1032"
+          ],
+          "predicted_text": "bearing_wear",
+          "predicted_citation": "bearing_wear",
+          "hedged": false,
+          "abstained": false,
+          "hit_any": true,
+          "correct_text": true,
+          "correct_citation": true,
+          "classifier_pred": "bearing_wear",
+          "classifier_correct": true,
+          "classifier_abstained": false,
+          "classifier_layer": "deterministic_signature",
+          "classifier_ood": true,
+          "llm_mode": "mock",
+          "llm_model": "deterministic-mock",
+          "latency_s": 0.01,
+          "error": "",
+          "data_source": "replay",
+          "dataset": "Case Western Reserve University Bearing Data Center",
+          "episode_name": "cwru-inner-race-007",
+          "in_labelled_window": true,
+          "textual_abstained": false
+        },
+        {
+          "machine_id": "BRG-01",
+          "machine_type": "motor",
+          "fault": "bearing_wear",
+          "detected": true,
+          "detected_metric": "vibration_rms_g",
+          "severity": "high",
+          "ticks_to_detect": 48,
+          "case_id": 1,
+          "root_cause": "localized rolling-element bearing damage confirmed by vibration spectrum",
+          "confidence": 0.79,
+          "priority": "P3",
+          "cited_work_orders": [
+            "WO-1032"
+          ],
+          "predicted_text": "bearing_wear",
+          "predicted_citation": "bearing_wear",
+          "hedged": false,
+          "abstained": false,
+          "hit_any": true,
+          "correct_text": true,
+          "correct_citation": true,
+          "classifier_pred": "bearing_wear",
+          "classifier_correct": true,
+          "classifier_abstained": false,
+          "classifier_layer": "deterministic_signature",
+          "classifier_ood": true,
+          "llm_mode": "mock",
+          "llm_model": "deterministic-mock",
+          "latency_s": 0.01,
+          "error": "",
+          "data_source": "replay",
+          "dataset": "Case Western Reserve University Bearing Data Center",
+          "episode_name": "cwru-ball-007",
+          "in_labelled_window": true,
+          "textual_abstained": false
+        },
+        {
+          "machine_id": "BRG-01",
+          "machine_type": "motor",
+          "fault": "bearing_wear",
+          "detected": true,
+          "detected_metric": "vibration_rms_g",
+          "severity": "high",
+          "ticks_to_detect": 48,
+          "case_id": 1,
+          "root_cause": "localized rolling-element bearing damage confirmed by vibration spectrum",
+          "confidence": 0.79,
+          "priority": "P3",
+          "cited_work_orders": [
+            "WO-1032"
+          ],
+          "predicted_text": "bearing_wear",
+          "predicted_citation": "bearing_wear",
+          "hedged": false,
+          "abstained": false,
+          "hit_any": true,
+          "correct_text": true,
+          "correct_citation": true,
+          "classifier_pred": "bearing_wear",
+          "classifier_correct": true,
+          "classifier_abstained": false,
+          "classifier_layer": "deterministic_signature",
+          "classifier_ood": true,
+          "llm_mode": "mock",
+          "llm_model": "deterministic-mock",
+          "latency_s": 0.01,
+          "error": "",
+          "data_source": "replay",
+          "dataset": "Case Western Reserve University Bearing Data Center",
+          "episode_name": "cwru-outer-race-007",
+          "in_labelled_window": true,
+          "textual_abstained": false
+        }
+      ],
+      "replay": {
+        "detection_rate_pct": 100.0,
+        "in_labelled_window_pct": 87.5
+      }
+    },
+    "live": {
+      "n_trials": 8,
+      "n_scored": 8,
+      "n_detector_missed": 0,
+      "n_agent_errors": 0,
+      "llm_mode": "live",
+      "llm_model": "deepseek/deepseek-v4-flash",
+      "detection_rate_pct": 100.0,
+      "accuracy": {
+        "top1_text_pct": 87.5,
+        "top1_citation_pct": 62.5,
+        "classifier_top1_pct": 87.5,
+        "hit_any_pct": 100.0,
+        "hedged_pct": 0.0,
+        "unclassifiable_pct": 0.0,
+        "abstained_pct": 25.0,
+        "textual_abstained_pct": 0.0
+      },
+      "scorer_agreement_pct": 100.0,
+      "scorer_agreement_n": 6,
+      "scorer_coverage_pct": 75.0,
+      "scorer_uncovered_n": 2,
+      "per_class": {
+        "bearing_wear": {
+          "n": 3,
+          "top1_text_pct": 100.0,
+          "classifier_top1_pct": 100.0,
+          "hit_any_pct": 100.0,
+          "mean_confidence": 0.95,
+          "mean_ticks_to_detect": 48.0
+        },
+        "cavitation": {
+          "n": 1,
+          "top1_text_pct": 0.0,
+          "classifier_top1_pct": 0.0,
+          "hit_any_pct": 100.0,
+          "mean_confidence": 0.41,
+          "mean_ticks_to_detect": 42.0
+        },
+        "rotor_imbalance": {
+          "n": 1,
+          "top1_text_pct": 100.0,
+          "classifier_top1_pct": 100.0,
+          "hit_any_pct": 100.0,
+          "mean_confidence": 0.79,
+          "mean_ticks_to_detect": 48.0
+        },
+        "suction_restriction": {
+          "n": 1,
+          "top1_text_pct": 100.0,
+          "classifier_top1_pct": 100.0,
+          "hit_any_pct": 100.0,
+          "mean_confidence": 0.53,
+          "mean_ticks_to_detect": 48.0
+        },
+        "discharge_restriction": {
+          "n": 2,
+          "top1_text_pct": 100.0,
+          "classifier_top1_pct": 100.0,
+          "hit_any_pct": 100.0,
+          "mean_confidence": 0.62,
+          "mean_ticks_to_detect": 90.0
+        }
+      },
+      "confusion": {
+        "rotor_imbalance": {
+          "rotor_imbalance": 1
+        },
+        "cavitation": {
+          "suction_restriction": 1
+        },
+        "discharge_restriction": {
+          "discharge_restriction": 2
+        },
+        "suction_restriction": {
+          "suction_restriction": 1
+        },
+        "bearing_wear": {
+          "bearing_wear": 3
+        }
+      },
+      "operational_confusion": {
+        "rotor_imbalance": {
+          "rotor_imbalance": 1
+        },
+        "cavitation": {
+          "abstained": 1
+        },
+        "discharge_restriction": {
+          "abstained": 1,
+          "discharge_restriction": 1
+        },
+        "suction_restriction": {
+          "suction_restriction": 1
+        },
+        "bearing_wear": {
+          "bearing_wear": 3
+        }
+      },
+      "agent_selection": {
+        "coverage_pct": 75.0,
+        "selective_accuracy_pct": 100.0,
+        "abstained_pct": 25.0
+      },
+      "classifier_confusion": {
+        "rotor_imbalance": {
+          "rotor_imbalance": 1
+        },
+        "cavitation": {
+          "abstained": 1
+        },
+        "discharge_restriction": {
+          "discharge_restriction": 2
+        },
+        "suction_restriction": {
+          "suction_restriction": 1
+        },
+        "bearing_wear": {
+          "bearing_wear": 3
+        }
+      },
+      "classifier": {
+        "top1_accuracy_pct": 87.5,
+        "coverage_pct": 87.5,
+        "selective_accuracy_pct": 100.0,
+        "abstained_pct": 12.5,
+        "trained_layer_used_n": 3,
+        "trained_layer_used_pct": 37.5,
+        "narrow_model_ood_n": 5,
+        "per_class": {
+          "bearing_wear": {
+            "n": 3,
+            "top1_pct": 100.0,
+            "coverage_pct": 100.0,
+            "abstained_pct": 0.0
+          },
+          "cavitation": {
+            "n": 1,
+            "top1_pct": 0.0,
+            "coverage_pct": 0.0,
+            "abstained_pct": 100.0
+          },
+          "rotor_imbalance": {
+            "n": 1,
+            "top1_pct": 100.0,
+            "coverage_pct": 100.0,
+            "abstained_pct": 0.0
+          },
+          "suction_restriction": {
+            "n": 1,
+            "top1_pct": 100.0,
+            "coverage_pct": 100.0,
+            "abstained_pct": 0.0
+          },
+          "discharge_restriction": {
+            "n": 2,
+            "top1_pct": 100.0,
+            "coverage_pct": 100.0,
+            "abstained_pct": 0.0
+          }
+        }
+      },
+      "comparison": {
+        "agent_top1_pct": 87.5,
+        "classifier_top1_pct": 87.5,
+        "mock_top1_pct": null
+      },
+      "calibration": [
+        {
+          "bucket": "0.00-0.50",
+          "n": 2,
+          "mean_confidence_pct": 35.0,
+          "accuracy_pct": 50.0,
+          "gap_pct": 15.0
+        },
+        {
+          "bucket": "0.50-0.70",
+          "n": 1,
+          "mean_confidence_pct": 53.0,
+          "accuracy_pct": 100.0,
+          "gap_pct": 47.0
+        },
+        {
+          "bucket": "0.70-0.85",
+          "n": 1,
+          "mean_confidence_pct": 79.0,
+          "accuracy_pct": 100.0,
+          "gap_pct": 21.0
+        },
+        {
+          "bucket": "0.85-1.00",
+          "n": 4,
+          "mean_confidence_pct": 95.0,
+          "accuracy_pct": 100.0,
+          "gap_pct": 5.0
+        }
+      ],
+      "ece": 0.148,
+      "latency_s": {
+        "mean": 32.17,
+        "p50": 30.41,
+        "max": 56.25
+      },
+      "paid_usage": {
+        "provider_requests": 34,
+        "returned_cost_usd": 0.014535,
+        "prompt_tokens": 143044,
+        "completion_tokens": 18541,
+        "total_tokens": 161585,
+        "model": "deepseek/deepseek-v4-flash",
+        "cost_source": "OpenRouter response usage.cost",
+        "request_cap": 50,
+        "returned_cost_stop_usd": 0.05
+      },
+      "trials_detail": [
+        {
+          "machine_id": "PMP-03",
+          "machine_type": "pump",
+          "fault": "rotor_imbalance",
+          "detected": true,
+          "detected_metric": "vibration_g",
+          "severity": "high",
+          "ticks_to_detect": 48,
+          "case_id": 1,
+          "root_cause": "Rotor imbalance due to blade fouling",
+          "confidence": 0.79,
+          "priority": "P3",
+          "cited_work_orders": [
+            "WO-1018"
+          ],
+          "predicted_text": "rotor_imbalance",
+          "predicted_citation": "rotor_imbalance",
+          "hedged": false,
+          "abstained": false,
+          "hit_any": true,
+          "correct_text": true,
+          "correct_citation": true,
+          "classifier_pred": "rotor_imbalance",
+          "classifier_correct": true,
+          "classifier_abstained": false,
+          "classifier_layer": "deterministic_signature",
+          "classifier_ood": true,
+          "llm_mode": "live",
+          "llm_model": "deepseek/deepseek-v4-flash",
+          "latency_s": 44.93,
+          "error": "",
+          "data_source": "replay",
+          "dataset": "SKAB v0.9 (Skoltech Anomaly Benchmark)",
+          "episode_name": "skab-imbalance-linear",
+          "in_labelled_window": true,
+          "textual_abstained": false
         },
         {
           "machine_id": "PMP-03",
@@ -1039,27 +766,33 @@
           "severity": "low",
           "ticks_to_detect": 42,
           "case_id": 1,
-          "root_cause": "Early-stage cavitation or air entrainment at pump inlet",
-          "confidence": 0.72,
-          "priority": "P4",
+          "root_cause": "Suction line restriction (partial blockage or partially closed inlet valve) causing the pump to operate in an unstable region of its performance curve",
+          "confidence": 0.41,
+          "priority": "P3",
           "cited_work_orders": [
-            "WO-1007",
-            "WO-1019",
-            "WO-1016",
-            "WO-1017"
+            "WO-1016"
           ],
-          "predicted_text": "cavitation",
-          "predicted_citation": "cavitation",
+          "predicted_text": "suction_restriction",
+          "predicted_citation": "suction_restriction",
           "hedged": false,
+          "abstained": true,
           "hit_any": true,
-          "correct_text": true,
-          "correct_citation": true,
+          "correct_text": false,
+          "correct_citation": false,
+          "classifier_pred": null,
+          "classifier_correct": false,
+          "classifier_abstained": true,
+          "classifier_layer": "deterministic_signature",
+          "classifier_ood": true,
           "llm_mode": "live",
-          "llm_model": "anthropic/claude-sonnet-4.5",
-          "latency_s": 28.88,
+          "llm_model": "deepseek/deepseek-v4-flash",
+          "latency_s": 56.25,
           "error": "",
           "data_source": "replay",
-          "in_labelled_window": false
+          "dataset": "SKAB v0.9 (Skoltech Anomaly Benchmark)",
+          "episode_name": "skab-cavitation-two-phase",
+          "in_labelled_window": false,
+          "textual_abstained": false
         },
         {
           "machine_id": "PMP-03",
@@ -1070,57 +803,68 @@
           "severity": "high",
           "ticks_to_detect": 99,
           "case_id": 1,
-          "root_cause": "Air entrainment at pump inlet causing incipient cavitation",
-          "confidence": 0.82,
-          "priority": "P2",
-          "cited_work_orders": [
-            "WO-1019",
-            "WO-1007",
-            "WO-1017"
-          ],
-          "predicted_text": "cavitation",
-          "predicted_citation": "cavitation",
+          "root_cause": "discharge restriction (classifier verdict)",
+          "confidence": 0.29,
+          "priority": "P3",
+          "cited_work_orders": [],
+          "predicted_text": "discharge_restriction",
+          "predicted_citation": null,
           "hedged": false,
-          "hit_any": false,
-          "correct_text": false,
+          "abstained": true,
+          "hit_any": true,
+          "correct_text": true,
           "correct_citation": false,
+          "classifier_pred": "discharge_restriction",
+          "classifier_correct": true,
+          "classifier_abstained": false,
+          "classifier_layer": "trained_restriction_classifier",
+          "classifier_ood": false,
           "llm_mode": "live",
-          "llm_model": "anthropic/claude-sonnet-4.5",
-          "latency_s": 27.95,
+          "llm_model": "deepseek/deepseek-v4-flash",
+          "latency_s": 24.41,
           "error": "",
           "data_source": "replay",
-          "in_labelled_window": true
+          "dataset": "SKAB v0.9 (Skoltech Anomaly Benchmark)",
+          "episode_name": "skab-discharge-restriction-a",
+          "in_labelled_window": true,
+          "textual_abstained": false
         },
         {
           "machine_id": "PMP-03",
           "machine_type": "pump",
-          "fault": "rotor_imbalance",
+          "fault": "discharge_restriction",
           "detected": true,
-          "detected_metric": "vibration_g",
+          "detected_metric": "flow_lpm",
           "severity": "high",
-          "ticks_to_detect": 48,
+          "ticks_to_detect": 81,
           "case_id": 1,
-          "root_cause": "Cavitation due to air entrainment or suction-side flow disturbance",
-          "confidence": 0.78,
-          "priority": "P2",
+          "root_cause": "Discharge-side flow restriction \u2014 most likely a partially closed or throttled outlet valve, causing the pump to operate back on its curve (reduced flow, elevated back-pressure).",
+          "confidence": 0.95,
+          "priority": "P1",
           "cited_work_orders": [
-            "WO-1019",
-            "WO-1007",
-            "WO-1018",
-            "WO-1016"
+            "WO-1017"
           ],
-          "predicted_text": "cavitation",
-          "predicted_citation": "cavitation",
+          "predicted_text": "discharge_restriction",
+          "predicted_citation": "discharge_restriction",
           "hedged": false,
-          "hit_any": false,
-          "correct_text": false,
-          "correct_citation": false,
+          "abstained": false,
+          "hit_any": true,
+          "correct_text": true,
+          "correct_citation": true,
+          "classifier_pred": "discharge_restriction",
+          "classifier_correct": true,
+          "classifier_abstained": false,
+          "classifier_layer": "trained_restriction_classifier",
+          "classifier_ood": false,
           "llm_mode": "live",
-          "llm_model": "anthropic/claude-sonnet-4.5",
-          "latency_s": 25.43,
+          "llm_model": "deepseek/deepseek-v4-flash",
+          "latency_s": 24.77,
           "error": "",
           "data_source": "replay",
-          "in_labelled_window": true
+          "dataset": "SKAB v0.9 (Skoltech Anomaly Benchmark)",
+          "episode_name": "skab-discharge-restriction-b",
+          "in_labelled_window": true,
+          "textual_abstained": false
         },
         {
           "machine_id": "PMP-03",
@@ -1131,34 +875,147 @@
           "severity": "low",
           "ticks_to_detect": 48,
           "case_id": 1,
-          "root_cause": "Test loop transient operation causing temporary motor temperature elevation during dynamic pressure/flow cycling",
-          "confidence": 0.65,
-          "priority": "P1",
-          "cited_work_orders": [
-            "WO-1016",
-            "WO-1017",
-            "WO-1019",
-            "WO-1007",
-            "WO-1009",
-            "WO-1008"
-          ],
-          "predicted_text": null,
-          "predicted_citation": "suction_restriction",
+          "root_cause": "suction restriction (classifier verdict)",
+          "confidence": 0.53,
+          "priority": "P4",
+          "cited_work_orders": [],
+          "predicted_text": "suction_restriction",
+          "predicted_citation": null,
           "hedged": false,
-          "hit_any": false,
-          "correct_text": false,
-          "correct_citation": true,
+          "abstained": false,
+          "hit_any": true,
+          "correct_text": true,
+          "correct_citation": false,
+          "classifier_pred": "suction_restriction",
+          "classifier_correct": true,
+          "classifier_abstained": false,
+          "classifier_layer": "trained_restriction_classifier",
+          "classifier_ood": false,
           "llm_mode": "live",
-          "llm_model": "anthropic/claude-sonnet-4.5",
-          "latency_s": 32.3,
+          "llm_model": "deepseek/deepseek-v4-flash",
+          "latency_s": 23.99,
           "error": "",
           "data_source": "replay",
-          "in_labelled_window": true
+          "dataset": "SKAB v0.9 (Skoltech Anomaly Benchmark)",
+          "episode_name": "skab-suction-restriction",
+          "in_labelled_window": true,
+          "textual_abstained": false
+        },
+        {
+          "machine_id": "BRG-01",
+          "machine_type": "motor",
+          "fault": "bearing_wear",
+          "detected": true,
+          "detected_metric": "vibration_rms_g",
+          "severity": "high",
+          "ticks_to_detect": 48,
+          "case_id": 1,
+          "root_cause": "Localized rolling-element bearing damage (drive-end bearing defect)",
+          "confidence": 0.95,
+          "priority": "P2",
+          "cited_work_orders": [
+            "WO-1032"
+          ],
+          "predicted_text": "bearing_wear",
+          "predicted_citation": "bearing_wear",
+          "hedged": false,
+          "abstained": false,
+          "hit_any": true,
+          "correct_text": true,
+          "correct_citation": true,
+          "classifier_pred": "bearing_wear",
+          "classifier_correct": true,
+          "classifier_abstained": false,
+          "classifier_layer": "deterministic_signature",
+          "classifier_ood": true,
+          "llm_mode": "live",
+          "llm_model": "deepseek/deepseek-v4-flash",
+          "latency_s": 21.85,
+          "error": "",
+          "data_source": "replay",
+          "dataset": "Case Western Reserve University Bearing Data Center",
+          "episode_name": "cwru-inner-race-007",
+          "in_labelled_window": true,
+          "textual_abstained": false
+        },
+        {
+          "machine_id": "BRG-01",
+          "machine_type": "motor",
+          "fault": "bearing_wear",
+          "detected": true,
+          "detected_metric": "vibration_rms_g",
+          "severity": "high",
+          "ticks_to_detect": 48,
+          "case_id": 1,
+          "root_cause": "Localized rolling-element bearing damage (drive-end) \u2014 same failure mode as prior incident WO-1032",
+          "confidence": 0.95,
+          "priority": "P3",
+          "cited_work_orders": [
+            "WO-1032"
+          ],
+          "predicted_text": "bearing_wear",
+          "predicted_citation": "bearing_wear",
+          "hedged": false,
+          "abstained": false,
+          "hit_any": true,
+          "correct_text": true,
+          "correct_citation": true,
+          "classifier_pred": "bearing_wear",
+          "classifier_correct": true,
+          "classifier_abstained": false,
+          "classifier_layer": "deterministic_signature",
+          "classifier_ood": true,
+          "llm_mode": "live",
+          "llm_model": "deepseek/deepseek-v4-flash",
+          "latency_s": 30.76,
+          "error": "",
+          "data_source": "replay",
+          "dataset": "Case Western Reserve University Bearing Data Center",
+          "episode_name": "cwru-ball-007",
+          "in_labelled_window": true,
+          "textual_abstained": false
+        },
+        {
+          "machine_id": "BRG-01",
+          "machine_type": "motor",
+          "fault": "bearing_wear",
+          "detected": true,
+          "detected_metric": "vibration_rms_g",
+          "severity": "high",
+          "ticks_to_detect": 48,
+          "case_id": 1,
+          "root_cause": "Localized rolling-element bearing defect (drive-end bearing) \u2014 recurrence of the same failure mode documented in WO-1032. The vibration RMS spiked 10\u00d7 above baseline (0.07g \u2192 0.70g), kurtosis jumped to 7.8 (highly impulsive, indicating metal-on-metal impacts), and crest factor rose to 4.8, while motor speed held perfectly steady at 1796 RPM. This exact pattern \u2014 sharp rise in RMS and impulsiveness with steady speed \u2014 was previously diagnosed as a localized bearing defect on this same machine in February 2025.",
+          "confidence": 0.95,
+          "priority": "P2",
+          "cited_work_orders": [
+            "WO-1032"
+          ],
+          "predicted_text": "bearing_wear",
+          "predicted_citation": "bearing_wear",
+          "hedged": false,
+          "abstained": false,
+          "hit_any": true,
+          "correct_text": true,
+          "correct_citation": true,
+          "classifier_pred": "bearing_wear",
+          "classifier_correct": true,
+          "classifier_abstained": false,
+          "classifier_layer": "deterministic_signature",
+          "classifier_ood": true,
+          "llm_mode": "live",
+          "llm_model": "deepseek/deepseek-v4-flash",
+          "latency_s": 30.41,
+          "error": "",
+          "data_source": "replay",
+          "dataset": "Case Western Reserve University Bearing Data Center",
+          "episode_name": "cwru-outer-race-007",
+          "in_labelled_window": true,
+          "textual_abstained": false
         }
       ],
       "replay": {
         "detection_rate_pct": 100.0,
-        "in_labelled_window_pct": 75.0
+        "in_labelled_window_pct": 87.5
       }
     }
   }

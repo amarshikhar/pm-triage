@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { EvalBundle, EvalModeReport, EvalReport, getEvalReport } from "@/lib/api";
+import { EvalBundle, EvalReport, getEvalReport } from "@/lib/api";
 import syntheticStatic from "./reports/synthetic.json";
 import realStatic from "./reports/real.json";
 
@@ -47,7 +47,7 @@ export default function EvalPage() {
     <main className="page narrow">
       <div className="section-title">Evaluation — does the agent actually work?</div>
       <p className="eval-intro">
-        The simulator and the SKAB dataset already know which fault is present, so every anomaly is a
+        The simulator and the SKAB/CWRU datasets already know which fault is present, so every anomaly is a
         free labelled test. This harness replays them through the <b>real</b> pipeline (real detector,
         real agent tool-loop) and scores the case that comes out — never a reimplementation.
       </p>
@@ -58,28 +58,25 @@ export default function EvalPage() {
         </button>
         <button className={`tab ${which === "real" ? "active" : ""}`} onClick={() => setWhich("real")}
                 disabled={!hasReports(bundle.real)}>
-          Real SKAB data
+          Real testbeds
         </button>
       </div>
 
       {which === "real" && (
         <div className="eval-note">
-          <b>Why does the agent score lower here than on synthetic faults?</b> Not because the maths
-          stops working — the same detector statistics (drift, mean, volatility, range) are computed
-          on this real pump exactly as on the simulated fleet, and the signal charts prove they read
-          cleanly. It scores lower because this is a <i>harder problem</i>, not a broken one:
+          <b>What does this real-data result now prove?</b> The suite contains five SKAB pump
+          recordings plus three CWRU bearing recordings. Detection sees all eight. A trained Extra
+          Trees layer is used only for the overlapping SKAB suction/discharge pair; learned novelty
+          detection or an unsupported signal roster makes that narrow model abstain.
           <ul>
-            <li><b>The faults genuinely overlap.</b> The synthetic classes are engineered so each one
-              drives a different signal (wear→vibration, overheat→temperature, leak→pressure), which
-              makes them easy to tell apart. The four SKAB faults are all flow/pressure disturbances on
-              the <i>same</i> pump loop — suction vs discharge restriction look alike over a short
-              window even to an expert, and the confusion matrix below shows exactly that mix-up.</li>
-            <li><b>The precedent it leans on barely exists.</b> The agent&rsquo;s edge comes from
-              retrieving a close past work order; the simulated fleet has 15 of them, the real pump has
-              4 — one per fault. Less to cite means less to be right with.</li>
+            <li><b>Result:</b> the hybrid classifier is correct on 7/8 overall, speaks on 7/8,
+              and is 7/7 correct when it speaks. It abstains on the remaining cavitation run.</li>
+            <li><b>Limit:</b> n=8 across two laboratory testbeds is still small. The three CWRU
+              sequences concatenate real healthy and faulty steady-state frames; they are not natural
+              run-to-failure transitions. CWRU commercial/redistribution terms also need confirmation.</li>
           </ul>
-          A model doesn&rsquo;t automatically do <i>better</i> on real data — it does as well as the
-          data is separable. Surfacing that honest drop, rather than hiding it, is the point of this page.
+          So the correct claim is “safe improvement on a frozen development benchmark,” not
+          “production accuracy is solved.”
         </div>
       )}
 
@@ -89,15 +86,16 @@ export default function EvalPage() {
         <>
           <div className="stat-row">
             <Stat n={`${primary.detection_rate_pct}%`} l="detection rate" good />
-            {primary.classifier && <Stat n={`${primary.classifier.top1_accuracy_pct}%`} l="signature classifier top-1" />}
+            {primary.classifier && <Stat n={`${primary.classifier.top1_accuracy_pct}%`} l="hybrid classifier top-1" />}
             {mock && <Stat n={`${mock.accuracy.top1_text_pct}%`} l="mock top-1 accuracy" />}
             {live && <Stat n={`${live.accuracy.top1_text_pct}%`} l={`live top-1 (${live.llm_model || "LLM"})`} accent />}
             {live && <Stat n={live.ece.toFixed(3)} l="calibration error (ECE)" accent />}
+            {live?.paid_usage && <Stat n={`$${live.paid_usage.returned_cost_usd.toFixed(5)}`} l="exact live eval cost" accent />}
             {primary.replay && <Stat n={`${primary.replay.in_labelled_window_pct}%`} l="fired in labelled window" />}
           </div>
 
           {primary.classifier && (
-            <Panel title="Agent vs deterministic signature vs mock">
+            <Panel title="Agent vs rules + trained classifier">
               <p className="hint" style={{ marginTop: 0 }}>
                 Classifier top-1 counts abstentions as not correct. Coverage and selective accuracy show
                 how often it speaks, and how often it is right when it does.
@@ -107,10 +105,12 @@ export default function EvalPage() {
                 <tbody>
                   <tr>
                     <td>agent ({primary.llm_mode})</td>
-                    <td className="tnum">{primary.accuracy.top1_text_pct}%</td><td className="tnum">100%</td><td>—</td>
+                    <td className="tnum">{primary.accuracy.top1_text_pct}%</td>
+                    <td className="tnum">{primary.agent_selection?.coverage_pct ?? 100}%</td>
+                    <td className="tnum">{primary.agent_selection?.selective_accuracy_pct ?? "—"}{primary.agent_selection?.selective_accuracy_pct != null ? "%" : ""}</td>
                   </tr>
                   <tr>
-                    <td><b>deterministic signature</b></td>
+                    <td><b>rules + trained hard-fault layer</b></td>
                     <td className="tnum"><b>{primary.classifier.top1_accuracy_pct}%</b></td>
                     <td className="tnum">{primary.classifier.coverage_pct}%</td>
                     <td className="tnum">{primary.classifier.selective_accuracy_pct ?? "—"}{primary.classifier.selective_accuracy_pct != null ? "%" : ""}</td>
@@ -118,7 +118,8 @@ export default function EvalPage() {
                   <tr>
                     <td>mock (scripted baseline)</td>
                     <td className="tnum">{mock?.accuracy.top1_text_pct ?? primary.comparison?.mock_top1_pct ?? "—"}{mock || primary.comparison?.mock_top1_pct != null ? "%" : ""}</td>
-                    <td className="tnum">100%</td><td>—</td>
+                    <td className="tnum">{mock?.agent_selection?.coverage_pct ?? "—"}{mock?.agent_selection?.coverage_pct != null ? "%" : ""}</td>
+                    <td className="tnum">{mock?.agent_selection?.selective_accuracy_pct ?? "—"}{mock?.agent_selection?.selective_accuracy_pct != null ? "%" : ""}</td>
                   </tr>
                 </tbody>
               </table></div>
@@ -131,6 +132,8 @@ export default function EvalPage() {
                 <thead><tr><th>metric</th><th>mock (scripted)</th><th>live ({live.llm_model || "LLM"})</th><th>delta</th></tr></thead>
                 <tbody>
                   <Row label="top-1 accuracy" a={mock.accuracy.top1_text_pct} b={live.accuracy.top1_text_pct} pct />
+                  <Row label="operational coverage" a={mock.agent_selection?.coverage_pct ?? 100} b={live.agent_selection?.coverage_pct ?? 100} pct />
+                  <Row label="selective accuracy" a={mock.agent_selection?.selective_accuracy_pct ?? 0} b={live.agent_selection?.selective_accuracy_pct ?? 0} pct />
                   <Row label="hit@any" a={mock.accuracy.hit_any_pct} b={live.accuracy.hit_any_pct} pct />
                   <Row label="ECE (lower better)" a={mock.ece} b={live.ece} invert />
                 </tbody>
@@ -138,17 +141,25 @@ export default function EvalPage() {
             </Panel>
           )}
 
-          <Panel title={`Confusion matrix — ${primary.llm_mode} (truth → predicted)`}>
+          {live?.paid_usage && (
+            <Panel title="Paid live execution">
+              <p className="hint" style={{ marginTop: 0, marginBottom: 0 }}>
+                {live.paid_usage.provider_requests} provider requests · {live.paid_usage.prompt_tokens.toLocaleString()} input tokens · {live.paid_usage.completion_tokens.toLocaleString()} output tokens · {live.paid_usage.total_tokens.toLocaleString()} total · ${live.paid_usage.returned_cost_usd.toFixed(6)} exact OpenRouter-returned cost · {live.latency_s.mean}s mean latency per case. The run used {live.paid_usage.model} with no hidden cost estimate.
+              </p>
+            </Panel>
+          )}
+
+          <Panel title={`Operational confusion — ${primary.llm_mode} (truth → prediction or abstention)`}>
             <p className="hint" style={{ marginTop: 0 }}>
-              Diagonal = correct. Off-diagonal shows <i>which</i> mistakes it makes — the story lives here.
+              This applies the confidence gate: an uncertain case is shown as “abstained” even if its draft named a cause.
             </p>
-            <Confusion c={primary.confusion} />
+            <Confusion c={primary.operational_confusion || primary.confusion} />
           </Panel>
 
           {primary.classifier_confusion && (
-            <Panel title="Signature classifier confusion (truth → predicted)">
+            <Panel title="Hybrid classifier confusion (truth → predicted)">
               <p className="hint" style={{ marginTop: 0 }}>
-                “Abstained” is deliberate: the deterministic rules did not see enough separation to name a class.
+                “Abstained” is deliberate: rules and the trained/OOD gates did not have enough supported evidence.
               </p>
               <Confusion c={primary.classifier_confusion} />
             </Panel>
@@ -195,7 +206,8 @@ export default function EvalPage() {
 
           <p className="hint">
             The measuring tape is itself checked: two independent scorers (free-text vs cited work-order ids)
-            share no code and agree {primary.scorer_agreement_pct}% of the time (n={primary.scorer_agreement_n}).
+            share no code and agree {primary.scorer_agreement_pct}% of the time when both return a class
+            (coverage {primary.scorer_coverage_pct ?? "—"}%, n={primary.scorer_agreement_n}).
             {report && <> Report seed {report.seed}, generated {reportTimestamp(report.generated_at)}.</>}
           </p>
         </>

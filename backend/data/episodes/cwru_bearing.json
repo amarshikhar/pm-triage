@@ -1,0 +1,70 @@
+{
+  "dataset": "Case Western Reserve University Bearing Data Center",
+  "url": "https://engineering.case.edu/bearingdatacenter/download-data-file",
+  "license": "No explicit dataset license found on the official source pages",
+  "description": "Real accelerometer recordings from a 2 hp motor bearing test stand; single-point faults were introduced by EDM.",
+  "use_restriction": "Research/evaluation only until redistribution and commercial terms are confirmed.",
+  "signals": [
+    {
+      "key": "vibration_rms_g",
+      "name": "Drive-end vibration RMS",
+      "unit": "g"
+    },
+    {
+      "key": "vibration_kurtosis",
+      "name": "Vibration kurtosis",
+      "unit": "ratio"
+    },
+    {
+      "key": "vibration_crest_factor",
+      "name": "Vibration crest factor",
+      "unit": "ratio"
+    },
+    {
+      "key": "rpm",
+      "name": "Motor speed",
+      "unit": "rpm"
+    }
+  ],
+  "episodes": [
+    {
+      "file": "cwru-inner-race-007.csv",
+      "fault": "bearing_wear",
+      "fault_detail": "inner-race fault, 0.007 inch EDM defect",
+      "rows": 150,
+      "labelled_rows": 80,
+      "first_labelled_row": 70,
+      "source_files": [
+        "97.mat",
+        "105.mat"
+      ],
+      "construction": "healthy and fault steady-state feature frames concatenated"
+    },
+    {
+      "file": "cwru-ball-007.csv",
+      "fault": "bearing_wear",
+      "fault_detail": "ball fault, 0.007 inch EDM defect",
+      "rows": 150,
+      "labelled_rows": 80,
+      "first_labelled_row": 70,
+      "source_files": [
+        "97.mat",
+        "118.mat"
+      ],
+      "construction": "healthy and fault steady-state feature frames concatenated"
+    },
+    {
+      "file": "cwru-outer-race-007.csv",
+      "fault": "bearing_wear",
+      "fault_detail": "outer-race fault at 6 o'clock, 0.007 inch EDM defect",
+      "rows": 150,
+      "labelled_rows": 80,
+      "first_labelled_row": 70,
+      "source_files": [
+        "97.mat",
+        "130.mat"
+      ],
+      "construction": "healthy and fault steady-state feature frames concatenated"
+    }
+  ]
+}

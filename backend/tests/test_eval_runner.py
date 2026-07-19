@@ -7,10 +7,14 @@ it would fail silently and look like a great result.
 
 import json
 
+import pytest
+
 from app.agent import tools as T
 from app.detector import run_detection
 from app.eval.metrics import summarize
-from app.eval.runner import FAULT_MACHINE_TYPES, build_plan, eligible_machines, run_trial
+from app.eval.runner import (
+    FAULT_MACHINE_TYPES, build_plan, eligible_machines, replay_episodes, run_trial,
+)
 from app.models import Anomaly, Machine, TelemetryReading, utcnow
 from app.simulator import FAULTS, FleetSimulator
 
@@ -157,6 +161,15 @@ def test_plan_respects_eligibility():
         assert expected in FAULT_MACHINE_TYPES[fault]
 
 
+def test_replay_plan_includes_every_physical_episode():
+    episodes = replay_episodes()
+    assert len(episodes) == 8
+    assert len({name for _machine, _fault, name in episodes}) == 8
+    assert sum(fault == "discharge_restriction"
+               for _machine, fault, _name in episodes) == 2
+    assert sum(machine == "BRG-01" for machine, _fault, _name in episodes) == 3
+
+
 # --- end-to-end trial -------------------------------------------------------
 
 def test_trial_runs_the_real_pipeline_and_scores_it():
@@ -175,6 +188,33 @@ def test_trial_runs_the_real_pipeline_and_scores_it():
     assert not r.classifier_abstained
 
 
+@pytest.mark.parametrize("fault,episode", [
+    ("suction_restriction", "skab-suction-restriction"),
+    ("discharge_restriction", "skab-discharge-restriction-a"),
+    ("discharge_restriction", "skab-discharge-restriction-b"),
+])
+def test_trained_restriction_layer_passes_frozen_real_holdout(fault, episode):
+    from app.eval.runner import run_replay_trial
+
+    result = run_replay_trial(fault, episode, "PMP-03")
+    assert result.detected and not result.error
+    assert result.classifier_pred == fault
+    assert result.classifier_correct
+    assert result.classifier_layer == "trained_restriction_classifier"
+    assert not result.classifier_ood
+
+
+def test_second_real_testbed_is_detected_but_restriction_model_marks_schema_ood():
+    from app.eval.runner import run_replay_trial
+
+    result = run_replay_trial("bearing_wear", "cwru-inner-race-007", "BRG-01")
+    assert result.detected and result.in_labelled_window
+    assert result.classifier_pred == "bearing_wear"
+    assert result.classifier_correct
+    assert result.classifier_layer == "deterministic_signature"
+    assert result.classifier_ood
+
+
 def test_case_preserves_the_agents_own_citation_order(db):
     """The citation scorer's whole premise is that the agent leads with its
     primary analogue. evidence.historical_matches is sorted by CMMS match_score,
@@ -189,7 +229,9 @@ def test_case_preserves_the_agents_own_citation_order(db):
 
     case = run_triage(db, anomaly_id)
     evidence = case.as_dict(full=True)["evidence"]
-    agent_list = evidence["cited_work_orders"]
+    # A classification conflict can invalidate citations operationally, but the
+    # draft ordering must remain auditable even when the guard clears it.
+    agent_list = evidence["agent_draft_cited_work_orders"]
     assert agent_list, "the agent cited nothing; scorer would have no input"
 
     trace_cites = [t for t in case.as_dict(full=True)["trace"]
@@ -225,9 +267,12 @@ def test_summary_shape_and_arithmetic():
     assert 0 <= report["accuracy"]["top1_text_pct"] <= 100
     assert report["ece"] is not None
     assert sum(sum(p.values()) for p in report["confusion"].values()) == report["n_scored"]
+    assert sum(sum(p.values()) for p in report["operational_confusion"].values()) == report["n_scored"]
     assert report["accuracy"]["classifier_top1_pct"] == report["classifier"]["top1_accuracy_pct"]
     assert 0 <= report["classifier"]["coverage_pct"] <= 100
     assert report["comparison"]["mock_top1_pct"] == report["accuracy"]["top1_text_pct"]
+    assert 0 <= report["scorer_coverage_pct"] <= 100
+    assert 0 <= report["agent_selection"]["coverage_pct"] <= 100
     assert sum(sum(p.values()) for p in report["classifier_confusion"].values()) == report["n_scored"]
     for bucket in report["calibration"]:
         assert bucket["n"] > 0

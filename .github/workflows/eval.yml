@@ -8,15 +8,24 @@ on:
   workflow_dispatch:
     inputs:
       trials:
-        description: "Synthetic trials per mode (live cost ~ trials x a few cents)"
+        description: "Synthetic trials per mode (live cost is capped below)"
         default: "24"
       mode:
         description: "mock | live | both"
+        default: "both"
+      data:
+        description: "synthetic | real | both"
         default: "both"
       commit:
         description: "Commit refreshed reports back to main?"
         type: boolean
         default: true
+      max_live_calls:
+        description: "Hard provider-request ceiling for each eval process"
+        default: "120"
+      max_live_usd:
+        description: "Stop new calls after returned spend reaches this USD amount per process"
+        default: "0.10"
 permissions:
   contents: write
 jobs:
@@ -32,13 +41,21 @@ jobs:
           python-version: "3.11"
       - run: pip install -r requirements.txt
       - name: Synthetic eval
+        if: ${{ inputs.data != 'real' }}
         env:
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
-        run: python -m app.eval --trials ${{ inputs.trials }} --mode ${{ inputs.mode }} --out eval-report.json
-      - name: Real SKAB replay eval
+          LLM_DAILY_CALL_CAP: ${{ inputs.max_live_calls }}
+          LLM_DAILY_USD_CAP: ${{ inputs.max_live_usd }}
+        run: python -m app.eval --trials ${{ inputs.trials }} --mode ${{ inputs.mode }} --out eval-report.json --merge-existing
+      - name: Real multi-testbed replay eval
+        if: ${{ inputs.data != 'synthetic' }}
         env:
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
-        run: python -m app.eval --data replay --mode ${{ inputs.mode }} --out eval-report-real.json
+          LLM_DAILY_CALL_CAP: ${{ inputs.max_live_calls }}
+          LLM_DAILY_USD_CAP: ${{ inputs.max_live_usd }}
+        # Eight = one pass over five SKAB and three CWRU episodes. Repeating the
+        # same deterministic rows would increase n without adding evidence.
+        run: python -m app.eval --data replay --trials 8 --mode ${{ inputs.mode }} --out eval-report-real.json --merge-existing
       - name: Sync static copies into the frontend
         # The Evaluation page falls back to these bundled copies when the
         # backend is asleep/stale, so they must track the freshly measured
@@ -54,7 +71,7 @@ jobs:
               for r in d.get("reports", {}).values():
                   if r:
                       if "classifier" not in r or "classifier_confusion" not in r:
-                          raise RuntimeError(f"{src} is missing deterministic classifier metrics")
+                          raise RuntimeError(f"{src} is missing hybrid classifier metrics")
                       r.pop("trials_detail", None)
               json.dump(d, open(dst, "w"), indent=2)
           PY
@@ -70,5 +87,5 @@ jobs:
           git config user.email "amar.shikhar007@gmail.com"
           git add backend/eval-report.json backend/eval-report-real.json \
                   frontend/app/eval/reports/synthetic.json frontend/app/eval/reports/real.json
-          git commit -m "chore(eval): refresh reports from CI run (${{ inputs.mode }}, ${{ inputs.trials }} trials)" || echo "no changes"
+          git commit -m "chore(eval): refresh ${{ inputs.data }} reports (${{ inputs.mode }})" || echo "no changes"
           git push

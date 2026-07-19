@@ -1,0 +1,388 @@
+{
+  "generated_at": "2026-07-19T14:33:39.063571+00:00",
+  "source": {
+    "dataset": "SKAB v0.9",
+    "source_commit": "b2c0d46c2971dcbfe71e26087b6d231998bb91c2"
+  },
+  "split_policy": "physical experiment groups; frozen five replay files never tune model or thresholds",
+  "training": {
+    "n_windows": 510,
+    "n_physical_episodes": 17,
+    "class_episode_counts": {
+      "suction_restriction": 15,
+      "discharge_restriction": 2
+    }
+  },
+  "model_selection_oof": {
+    "extra_trees": {
+      "balanced_accuracy": 1.0,
+      "predictions": {
+        "valve1/0.csv": {
+          "truth": "suction_restriction",
+          "prediction": "suction_restriction",
+          "raw_discharge_probability": 0.0
+        },
+        "valve1/1.csv": {
+          "truth": "suction_restriction",
+          "prediction": "suction_restriction",
+          "raw_discharge_probability": 0.0
+        },
+        "valve1/10.csv": {
+          "truth": "suction_restriction",
+          "prediction": "suction_restriction",
+          "raw_discharge_probability": 0.0
+        },
+        "valve1/11.csv": {
+          "truth": "suction_restriction",
+          "prediction": "suction_restriction",
+          "raw_discharge_probability": 0.0
+        },
+        "valve1/12.csv": {
+          "truth": "suction_restriction",
+          "prediction": "suction_restriction",
+          "raw_discharge_probability": 0.0015
+        },
+        "valve1/13.csv": {
+          "truth": "suction_restriction",
+          "prediction": "suction_restriction",
+          "raw_discharge_probability": 0.0
+        },
+        "valve1/14.csv": {
+          "truth": "suction_restriction",
+          "prediction": "suction_restriction",
+          "raw_discharge_probability": 0.01
+        },
+        "valve1/15.csv": {
+          "truth": "suction_restriction",
+          "prediction": "suction_restriction",
+          "raw_discharge_probability": 0.013
+        },
+        "valve1/3.csv": {
+          "truth": "suction_restriction",
+          "prediction": "suction_restriction",
+          "raw_discharge_probability": 0.0
+        },
+        "valve1/4.csv": {
+          "truth": "suction_restriction",
+          "prediction": "suction_restriction",
+          "raw_discharge_probability": 0.0
+        },
+        "valve1/5.csv": {
+          "truth": "suction_restriction",
+          "prediction": "suction_restriction",
+          "raw_discharge_probability": 0.0
+        },
+        "valve1/6.csv": {
+          "truth": "suction_restriction",
+          "prediction": "suction_restriction",
+          "raw_discharge_probability": 0.0
+        },
+        "valve1/7.csv": {
+          "truth": "suction_restriction",
+          "prediction": "suction_restriction",
+          "raw_discharge_probability": 0.0
+        },
+        "valve1/8.csv": {
+          "truth": "suction_restriction",
+          "prediction": "suction_restriction",
+          "raw_discharge_probability": 0.0
+        },
+        "valve1/9.csv": {
+          "truth": "suction_restriction",
+          "prediction": "suction_restriction",
+          "raw_discharge_probability": 0.0
+        },
+        "valve2/2.csv": {
+          "truth": "discharge_restriction",
+          "prediction": "discharge_restriction",
+          "raw_discharge_probability": 0.6717
+        },
+        "valve2/3.csv": {
+          "truth": "discharge_restriction",
+          "prediction": "discharge_restriction",
+          "raw_discharge_probability": 0.8233
+        }
+      }
+    },
+    "random_forest": {
+      "balanced_accuracy": 1.0,
+      "predictions": {
+        "valve1/0.csv": {
+          "truth": "suction_restriction",
+          "prediction": "suction_restriction",
+          "raw_discharge_probability": 0.0
+        },
+        "valve1/1.csv": {
+          "truth": "suction_restriction",
+          "prediction": "suction_restriction",
+          "raw_discharge_probability": 0.0
+        },
+        "valve1/10.csv": {
+          "truth": "suction_restriction",
+          "prediction": "suction_restriction",
+          "raw_discharge_probability": 0.0
+        },
+        "valve1/11.csv": {
+          "truth": "suction_restriction",
+          "prediction": "suction_restriction",
+          "raw_discharge_probability": 0.0
+        },
+        "valve1/12.csv": {
+          "truth": "suction_restriction",
+          "prediction": "suction_restriction",
+          "raw_discharge_probability": 0.0
+        },
+        "valve1/13.csv": {
+          "truth": "suction_restriction",
+          "prediction": "suction_restriction",
+          "raw_discharge_probability": 0.0
+        },
+        "valve1/14.csv": {
+          "truth": "suction_restriction",
+          "prediction": "suction_restriction",
+          "raw_discharge_probability": 0.0
+        },
+        "valve1/15.csv": {
+          "truth": "suction_restriction",
+          "prediction": "suction_restriction",
+          "raw_discharge_probability": 0.0
+        },
+        "valve1/3.csv": {
+          "truth": "suction_restriction",
+          "prediction": "suction_restriction",
+          "raw_discharge_probability": 0.0
+        },
+        "valve1/4.csv": {
+          "truth": "suction_restriction",
+          "prediction": "suction_restriction",
+          "raw_discharge_probability": 0.0
+        },
+        "valve1/5.csv": {
+          "truth": "suction_restriction",
+          "prediction": "suction_restriction",
+          "raw_discharge_probability": 0.0
+        },
+        "valve1/6.csv": {
+          "truth": "suction_restriction",
+          "prediction": "suction_restriction",
+          "raw_discharge_probability": 0.0
+        },
+        "valve1/7.csv": {
+          "truth": "suction_restriction",
+          "prediction": "suction_restriction",
+          "raw_discharge_probability": 0.0
+        },
+        "valve1/8.csv": {
+          "truth": "suction_restriction",
+          "prediction": "suction_restriction",
+          "raw_discharge_probability": 0.0
+        },
+        "valve1/9.csv": {
+          "truth": "suction_restriction",
+          "prediction": "suction_restriction",
+          "raw_discharge_probability": 0.0
+        },
+        "valve2/2.csv": {
+          "truth": "discharge_restriction",
+          "prediction": "discharge_restriction",
+          "raw_discharge_probability": 0.9933
+        },
+        "valve2/3.csv": {
+          "truth": "discharge_restriction",
+          "prediction": "discharge_restriction",
+          "raw_discharge_probability": 0.9917
+        }
+      }
+    }
+  },
+  "selected_model": "extra_trees",
+  "confidence_calibration": {
+    "threshold": 0.5,
+    "coverage": 1.0,
+    "covered_groups": 17,
+    "n_groups": 17,
+    "selective_accuracy": 1.0
+  },
+  "ood_calibration": {
+    "method": "IsolationForest; 10th percentile leave-one-episode-out ID score",
+    "threshold": 0.024273,
+    "id_group_scores": {
+      "valve1/0.csv": 0.0243,
+      "valve1/1.csv": 0.0506,
+      "valve1/10.csv": 0.0167,
+      "valve1/11.csv": 0.0691,
+      "valve1/12.csv": 0.0293,
+      "valve1/13.csv": 0.0802,
+      "valve1/14.csv": 0.0831,
+      "valve1/15.csv": 0.0269,
+      "valve1/3.csv": 0.0722,
+      "valve1/4.csv": 0.0764,
+      "valve1/5.csv": 0.0924,
+      "valve1/6.csv": 0.09,
+      "valve1/7.csv": 0.0759,
+      "valve1/8.csv": 0.0968,
+      "valve1/9.csv": 0.0866,
+      "valve2/2.csv": 0.0421,
+      "valve2/3.csv": 0.0658
+    }
+  },
+  "frozen_test": {
+    "n": 3,
+    "coverage": 1.0,
+    "selective_accuracy": 1.0,
+    "overall_accuracy": 1.0,
+    "rows": [
+      {
+        "episode": "valve1/2.csv",
+        "truth": "suction_restriction",
+        "candidate": "suction_restriction",
+        "prediction": "suction_restriction",
+        "abstained": false,
+        "correct": true,
+        "raw_discharge_probability": 0.0,
+        "calibrated_discharge_probability": 0.0,
+        "confidence": 1.0,
+        "ood_score": 0.05,
+        "ood": false,
+        "detected_row": 568,
+        "detected_metric": "temp_motor_c"
+      },
+      {
+        "episode": "valve2/0.csv",
+        "truth": "discharge_restriction",
+        "candidate": "discharge_restriction",
+        "prediction": "discharge_restriction",
+        "abstained": false,
+        "correct": true,
+        "raw_discharge_probability": 0.4365,
+        "calibrated_discharge_probability": 0.5534,
+        "confidence": 0.5534,
+        "ood_score": 0.0583,
+        "ood": false,
+        "detected_row": 615,
+        "detected_metric": "flow_lpm"
+      },
+      {
+        "episode": "valve2/1.csv",
+        "truth": "discharge_restriction",
+        "candidate": "discharge_restriction",
+        "prediction": "discharge_restriction",
+        "abstained": false,
+        "correct": true,
+        "raw_discharge_probability": 0.695,
+        "calibrated_discharge_probability": 1.0,
+        "confidence": 1.0,
+        "ood_score": 0.0632,
+        "ood": false,
+        "detected_row": 595,
+        "detected_metric": "flow_lpm"
+      }
+    ]
+  },
+  "same_schema_ood_test": {
+    "n": 14,
+    "auroc_id_vs_ood": 1.0,
+    "rejection_rate": 1.0,
+    "rows": [
+      {
+        "episode": "other/1.csv",
+        "ood_score": -0.0522,
+        "rejected": true,
+        "detected_row": 593,
+        "detected_metric": "flow_lpm"
+      },
+      {
+        "episode": "other/2.csv",
+        "ood_score": -0.0454,
+        "rejected": true,
+        "detected_row": 100,
+        "detected_metric": "current_a"
+      },
+      {
+        "episode": "other/3.csv",
+        "ood_score": -0.0306,
+        "rejected": true,
+        "detected_row": 561,
+        "detected_metric": "flow_lpm"
+      },
+      {
+        "episode": "other/4.csv",
+        "ood_score": -0.0522,
+        "rejected": true,
+        "detected_row": 795,
+        "detected_metric": "flow_lpm"
+      },
+      {
+        "episode": "other/5.csv",
+        "ood_score": -0.0848,
+        "rejected": true,
+        "detected_row": 574,
+        "detected_metric": "vibration_g"
+      },
+      {
+        "episode": "other/6.csv",
+        "ood_score": -0.0963,
+        "rejected": true,
+        "detected_row": 575,
+        "detected_metric": "vibration_g"
+      },
+      {
+        "episode": "other/7.csv",
+        "ood_score": -0.1117,
+        "rejected": true,
+        "detected_row": 575,
+        "detected_metric": "vibration_g"
+      },
+      {
+        "episode": "other/8.csv",
+        "ood_score": -0.1036,
+        "rejected": true,
+        "detected_row": 558,
+        "detected_metric": "vibration_g"
+      },
+      {
+        "episode": "other/9.csv",
+        "ood_score": -0.1129,
+        "rejected": true,
+        "detected_row": 576,
+        "detected_metric": "vibration_g"
+      },
+      {
+        "episode": "other/10.csv",
+        "ood_score": -0.1023,
+        "rejected": true,
+        "detected_row": 593,
+        "detected_metric": "temp_fluid_c"
+      },
+      {
+        "episode": "other/11.csv",
+        "ood_score": -0.119,
+        "rejected": true,
+        "detected_row": 684,
+        "detected_metric": "vibration_g"
+      },
+      {
+        "episode": "other/12.csv",
+        "ood_score": -0.1197,
+        "rejected": true,
+        "detected_row": 573,
+        "detected_metric": "temp_fluid_c"
+      },
+      {
+        "episode": "other/13.csv",
+        "ood_score": -0.0989,
+        "rejected": true,
+        "detected_row": 491,
+        "detected_metric": "temp_fluid_c"
+      },
+      {
+        "episode": "other/14.csv",
+        "ood_score": -0.1116,
+        "rejected": true,
+        "detected_row": 583,
+        "detected_metric": "flow_lpm"
+      }
+    ]
+  },
+  "artifact": "/Users/shikharamar/.codex/.chatgpt-projects/g-p-6a5cc54c7cec819197b4302060206d30/pm-triage/backend/data/models/skab_restriction.joblib"
+}

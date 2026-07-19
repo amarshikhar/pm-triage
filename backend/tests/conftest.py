@@ -19,6 +19,9 @@ from app.seed import seed_if_empty
 
 @pytest.fixture()
 def db():
+    from app.llm_budget import reset_process_budget
+
+    reset_process_budget()
     engine = create_engine(
         "sqlite://", connect_args={"check_same_thread": False}, poolclass=StaticPool
     )

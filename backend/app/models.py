@@ -100,6 +100,27 @@ class Anomaly(Base):
     ground_truth_fault: Mapped[str | None] = mapped_column(String, nullable=True)
 
 
+class LlmCall(Base):
+    """One paid provider request, including tool-call turns within a case.
+
+    A triage case can require several completions.  Keeping this ledger separate
+    from ``triage_cases`` makes the spend cap count what OpenRouter bills rather
+    than pretending one case always equals one request.
+    """
+
+    __tablename__ = "llm_calls"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    ts: Mapped[str] = mapped_column(String, index=True)
+    model: Mapped[str] = mapped_column(String, index=True)
+    status: Mapped[str] = mapped_column(String, default="started")
+    prompt_tokens: Mapped[int] = mapped_column(Integer, default=0)
+    completion_tokens: Mapped[int] = mapped_column(Integer, default=0)
+    total_tokens: Mapped[int] = mapped_column(Integer, default=0)
+    cost_usd: Mapped[float] = mapped_column(Float, default=0.0)
+    error: Mapped[str] = mapped_column(Text, default="")
+
+
 class MaintenanceLog(Base):
     """Historical work orders — the 'legacy CMMS' the agent searches."""
 

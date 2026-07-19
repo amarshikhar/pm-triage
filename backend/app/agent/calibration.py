@@ -63,6 +63,7 @@ class Calibration:
     specificity_factor: float # discount for a non-diagnostic answer (0-1]
     signature_factor: float   # conservative deterministic agreement adjustment
     signature_agreement: bool | None  # None when classifier abstained
+    signature_abstained: bool # signature layer could not separate a class
     calibrated: float         # the confidence the case actually carries
     abstain: bool             # calibrated below threshold, or non-diagnostic
     reason: str               # one-line, human-readable justification
@@ -95,7 +96,8 @@ def _precedent_factor(best_match_score: int) -> float:
 def calibrate(raw_confidence: float, root_cause: str,
               history_matches: list[dict] | None,
               signature_agreement: bool | None = None,
-              signature_confidence: float = 0.0) -> Calibration:
+              signature_confidence: float = 0.0,
+              signature_abstained: bool = False) -> Calibration:
     """Ground the model's confidence in the evidence behind the answer."""
     raw = max(0.0, min(1.0, float(raw_confidence or 0.0)))
     scores = [int(m.get("match_score") or 0) for m in (history_matches or [])]
@@ -112,7 +114,12 @@ def calibrate(raw_confidence: float, root_cause: str,
     # planner on a confident conflict.
     signature_confidence = max(0.0, min(1.0, float(signature_confidence or 0.0)))
     signature_is_confident = signature_agreement is not None and signature_confidence >= 0.56
-    if not signature_is_confident:
+    if signature_abstained:
+        # Retrieval can always find a superficially similar work order. If the
+        # observable signal pattern itself cannot separate the candidates, that
+        # precedent must not turn ambiguity into confidence.
+        signature_factor = 0.75
+    elif not signature_is_confident:
         signature_factor = 1.0
     elif signature_agreement:
         signature_factor = 1.05
@@ -124,13 +131,20 @@ def calibrate(raw_confidence: float, root_cause: str,
             CONF_CEILING,
             raw * precedent_factor * specificity_factor * signature_factor,
         )), 2)
+    if signature_abstained:
+        # Keep the numeric field consistent with the decision: a case explicitly
+        # routed to the uncertainty path must not still display >50% confidence.
+        calibrated = min(calibrated, round(ABSTAIN_THRESHOLD - 0.01, 2))
     signature_conflict = signature_is_confident and signature_agreement is False
-    abstain = non_diagnostic or calibrated < ABSTAIN_THRESHOLD or signature_conflict
+    abstain = (non_diagnostic or calibrated < ABSTAIN_THRESHOLD
+               or signature_conflict or signature_abstained)
 
     if non_diagnostic:
         reason = "named no concrete cause — deferring to the planner"
     elif signature_conflict:
         reason = "confident deterministic signature disagrees — deferring to the planner"
+    elif signature_abstained:
+        reason = "signal signatures overlap — deferring classification to the planner"
     elif best == 0:
         reason = "no historical precedent to anchor the diagnosis"
     elif abstain:
@@ -146,6 +160,7 @@ def calibrate(raw_confidence: float, root_cause: str,
         specificity_factor=specificity_factor,
         signature_factor=signature_factor,
         signature_agreement=signature_agreement if signature_is_confident else None,
+        signature_abstained=signature_abstained,
         calibrated=calibrated,
         abstain=abstain,
         reason=reason,

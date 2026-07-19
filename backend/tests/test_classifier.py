@@ -66,6 +66,8 @@ def test_unknown_signal_roster_abstains():
                                 "pump", "replay")
     assert result["predicted"] is None and result["abstain"]
     assert "No recognized" in result["evidence"][0]
+    assert result["ml_analysis"]["ood"] is True
+    assert "unsupported signal roster" in result["ml_analysis"]["ood_reason"]
 
 
 def test_agreement_matches_physical_cause_language_not_only_class_labels():

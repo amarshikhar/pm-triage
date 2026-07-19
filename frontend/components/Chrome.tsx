@@ -74,13 +74,13 @@ export default function Chrome() {
             title={llm.runtime_override === "live" && !llm.key_configured
               ? "Live was requested but the server has no OPENROUTER_API_KEY — running mock. Set the key in Render → Environment."
               : llm.mode === "live"
-                ? `${llm.model} — ${llm.budget.used_today}/${llm.budget.daily_cap} live triage runs used today. New anomalies use the live model. Click for mock.`
-                : `Deterministic mock policy (free). Click to switch new triage runs to the live LLM (${llm.budget.used_today}/${llm.budget.daily_cap} used today).`}
+                ? `${llm.model} — ${llm.budget.used_today}/${llm.budget.daily_cap} paid provider requests and $${(llm.budget.cost_usd_today ?? 0).toFixed(4)}/$${(llm.budget.daily_usd_cap ?? 0).toFixed(2)} used today. Click for free mock mode.`
+                : `Deterministic mock policy (free). Click to switch new triage runs to the live LLM (${llm.budget.used_today}/${llm.budget.daily_cap} paid requests, $${(llm.budget.cost_usd_today ?? 0).toFixed(4)}/$${(llm.budget.daily_usd_cap ?? 0).toFixed(2)} today).`}
           >
             {llm.runtime_override === "live" && !llm.key_configured
               ? "LIVE unavailable — no key"
               : llm.mode === "live"
-                ? `LIVE · ${llm.budget.used_today}/${llm.budget.daily_cap} used`
+                ? `LIVE · ${llm.budget.used_today}/${llm.budget.daily_cap} calls · $${(llm.budget.cost_usd_today ?? 0).toFixed(4)}`
                 : "LLM: mock"}
           </button>
         )}

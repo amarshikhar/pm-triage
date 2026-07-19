@@ -6,8 +6,10 @@ from fastapi.testclient import TestClient
 
 import app.main as main_mod
 from app.auth import issue_token, verify_token
-from app.llm_budget import budget, live_allowed
-from app.models import Machine, TelemetryReading, TriageCase, utcnow
+from app.agent.llm import llm_mode, set_runtime_mode
+from app.llm_budget import (budget, finish_live_call, live_allowed,
+                            process_budget_snapshot, reserve_live_call)
+from app.models import LlmCall, Machine, TelemetryReading, utcnow
 from app.detector import run_detection
 from app.agent.triage import run_triage
 
@@ -91,20 +93,58 @@ def test_llm_toggle_requires_auth_and_is_audited(db, monkeypatch):
                 headers={"Authorization": f"Bearer {token}"})
 
 
-def test_llm_budget_counts_only_todays_live_cases(db, monkeypatch):
+def test_key_alone_does_not_enable_paid_mode(monkeypatch):
+    set_runtime_mode(None)
+    monkeypatch.setenv("OPENROUTER_API_KEY", "configured-but-not-authorized")
+    monkeypatch.delenv("LLM_MODE", raising=False)
+    assert llm_mode() == "mock"
+    monkeypatch.setenv("LLM_MODE", "live")
+    assert llm_mode() == "live"
+
+
+def test_llm_budget_counts_provider_requests_and_cost(db, monkeypatch):
     monkeypatch.setenv("LLM_DAILY_CALL_CAP", "2")
+    monkeypatch.setenv("LLM_DAILY_USD_CAP", "0.01")
     assert budget(db)["remaining"] == 2
-    db.add(TriageCase(anomaly_id=1, machine_id="CNC-01",
-                      created_ts=utcnow().isoformat(), llm_mode="live"))
-    db.add(TriageCase(anomaly_id=1, machine_id="CNC-01",
-                      created_ts=utcnow().isoformat(), llm_mode="mock"))
-    db.add(TriageCase(anomaly_id=1, machine_id="CNC-01",
-                      created_ts="2020-01-01T00:00:00+00:00", llm_mode="live"))
+    old = LlmCall(ts="2020-01-01T00:00:00+00:00", model="old", status="succeeded")
+    db.add(old)
     db.commit()
+    row = reserve_live_call(db, "cheap/model")
+    assert row is not None
+    finish_live_call(db, row, {"prompt_tokens": 100, "completion_tokens": 20,
+                               "total_tokens": 120, "cost": 0.004})
     b = budget(db)
+    assert b["unit"] == "provider_requests"
     assert b["used_today"] == 1 and b["remaining"] == 1
+    assert b["cost_usd_today"] == 0.004
+    process = process_budget_snapshot()
+    assert process["provider_requests"] == 1
+    assert process["returned_cost_usd"] == 0.004
+    assert process["prompt_tokens"] == 100
+    assert process["completion_tokens"] == 20
+    assert process["total_tokens"] == 120
     assert live_allowed(db)
-    db.add(TriageCase(anomaly_id=1, machine_id="CNC-01",
-                      created_ts=utcnow().isoformat(), llm_mode="live"))
-    db.commit()
+    assert reserve_live_call(db, "cheap/model") is not None
     assert not live_allowed(db)
+
+
+def test_dollar_cap_blocks_even_before_request_cap(db, monkeypatch):
+    monkeypatch.setenv("LLM_DAILY_CALL_CAP", "10")
+    monkeypatch.setenv("LLM_DAILY_USD_CAP", "0.005")
+    row = reserve_live_call(db, "cheap/model")
+    assert row is not None
+    finish_live_call(db, row, {"cost": 0.006})
+    assert budget(db)["cap_reached"]
+    assert reserve_live_call(db, "cheap/model") is None
+
+
+def test_process_guard_survives_an_empty_per_trial_ledger(db, monkeypatch):
+    monkeypatch.setenv("LLM_DAILY_CALL_CAP", "1")
+    monkeypatch.setenv("LLM_DAILY_USD_CAP", "1")
+    row = reserve_live_call(db, "cheap/model")
+    assert row is not None
+    # The eval harness replaces the whole DB each trial. Deleting the persistent
+    # row reproduces the dangerous "new trial sees zero usage" condition.
+    db.delete(row)
+    db.commit()
+    assert reserve_live_call(db, "cheap/model") is None

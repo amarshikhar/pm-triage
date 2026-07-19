@@ -11,6 +11,7 @@ by this module.
 
 import asyncio
 import json
+import os
 import random
 
 from .db import SessionLocal
@@ -114,7 +115,9 @@ class FleetSimulator:
         return created
 
 
-simulator = FleetSimulator()
+simulator = FleetSimulator(
+    spontaneous_fault_prob=float(os.getenv("SPONTANEOUS_FAULT_PROB", "0.012"))
+)
 
 
 async def simulator_loop(interval_s: float, on_anomaly):

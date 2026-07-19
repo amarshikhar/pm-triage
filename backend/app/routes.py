@@ -86,7 +86,7 @@ def list_machines(db: Session = Depends(get_db)):
     latest_ids = (
         db.query(func.max(TelemetryReading.id))
         .group_by(TelemetryReading.machine_id)
-        .subquery()
+        .statement
     )
     latest_by_machine = {
         r.machine_id: r

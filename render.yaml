@@ -14,12 +14,22 @@ services:
         value: "1"
       - key: SIM_INTERVAL_S
         value: "3"
+      - key: SPONTANEOUS_FAULT_PROB
+        value: "0"
       - key: ALLOWED_ORIGINS
         value: "*"
       - key: TELEMETRY_RETENTION_HOURS
         value: "24"
       - key: LLM_DAILY_CALL_CAP
-        value: "40"
+        value: "12"
+      - key: LLM_DAILY_USD_CAP
+        value: "0.25"
+      - key: LLM_MODE
+        value: "mock"
+      - key: OPENROUTER_MODEL
+        value: "deepseek/deepseek-v4-flash"
+      - key: LLM_MAX_OUTPUT_TOKENS
+        value: "700"
       # Set in the Render dashboard (never committed):
       #   DATABASE_URL        - Supabase Postgres pooler DSN (persistence)
       #   APP_ACCESS_PASSWORD - crew password for state-changing actions
