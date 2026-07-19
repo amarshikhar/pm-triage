@@ -45,6 +45,7 @@ def summarize(results: list) -> dict:
         r for r in scored if not getattr(r, "classifier_abstained", True)
         and getattr(r, "classifier_pred", None)
     ]
+    agent_covered = [r for r in scored if not getattr(r, "abstained", False)]
 
     report["accuracy"] = {
         "top1_text_pct": _pct(len(correct_text), len(scored)),
@@ -62,6 +63,9 @@ def summarize(results: list) -> dict:
         # matrix and this number show refusals distinctly from wrong guesses.
         "abstained_pct": _pct(
             len([r for r in scored if getattr(r, "abstained", False)]), len(scored)),
+        "textual_abstained_pct": _pct(
+            len([r for r in scored if getattr(r, "textual_abstained", False)]),
+            len(scored)),
     }
 
     # The two scorers share no logic, so disagreement is a warning about the
@@ -71,6 +75,8 @@ def summarize(results: list) -> dict:
     report["scorer_agreement_pct"] = _pct(
         len([r for r in both if r.predicted_text == r.predicted_citation]), len(both))
     report["scorer_agreement_n"] = len(both)
+    report["scorer_coverage_pct"] = _pct(len(both), len(scored))
+    report["scorer_uncovered_n"] = len(scored) - len(both)
 
     per_class = {}
     classifier_per_class = {}
@@ -111,6 +117,23 @@ def summarize(results: list) -> dict:
         matrix[r.fault][label] += 1
     report["confusion"] = {truth: dict(preds) for truth, preds in matrix.items()}
 
+    operational_matrix = defaultdict(lambda: defaultdict(int))
+    for r in scored:
+        if getattr(r, "abstained", False):
+            label = "abstained"
+        else:
+            label = r.predicted_text or "unclassified"
+        operational_matrix[r.fault][label] += 1
+    report["operational_confusion"] = {
+        truth: dict(preds) for truth, preds in operational_matrix.items()
+    }
+    report["agent_selection"] = {
+        "coverage_pct": _pct(len(agent_covered), len(scored)),
+        "selective_accuracy_pct": _pct(
+            len([r for r in agent_covered if r.correct_text]), len(agent_covered)),
+        "abstained_pct": report["accuracy"]["abstained_pct"],
+    }
+
     classifier_matrix = defaultdict(lambda: defaultdict(int))
     for r in scored:
         if getattr(r, "classifier_abstained", True):
@@ -131,6 +154,17 @@ def summarize(results: list) -> dict:
         "abstained_pct": _pct(
             len([r for r in scored if getattr(r, "classifier_abstained", True)]),
             len(scored)),
+        "trained_layer_used_n": len([
+            r for r in scored
+            if getattr(r, "classifier_layer", "") == "trained_restriction_classifier"
+        ]),
+        "trained_layer_used_pct": _pct(len([
+            r for r in scored
+            if getattr(r, "classifier_layer", "") == "trained_restriction_classifier"
+        ]), len(scored)),
+        "narrow_model_ood_n": len([
+            r for r in scored if getattr(r, "classifier_ood", False)
+        ]),
         "per_class": classifier_per_class,
     }
     report["comparison"] = {
@@ -217,11 +251,20 @@ def format_report(report: dict) -> str:
     L.append(f"  classifier top-1 : {classifier.get('top1_accuracy_pct')}%   "
              f"(coverage {classifier.get('coverage_pct')}%, "
              f"selective accuracy {classifier.get('selective_accuracy_pct')}%)")
-    L.append(f"  scorer agreement  : {report['scorer_agreement_pct']}% (n={report['scorer_agreement_n']})")
+    if classifier.get("trained_layer_used_n"):
+        L.append(f"  trained ML used   : {classifier.get('trained_layer_used_n')} cases   "
+                 f"(narrow-model OOD on {classifier.get('narrow_model_ood_n', 0)})")
+    L.append(f"  scorer agreement  : {report['scorer_agreement_pct']}% "
+             f"(coverage {report.get('scorer_coverage_pct')}%, "
+             f"n={report['scorer_agreement_n']})")
     L.append(f"  hit@any           : {a['hit_any_pct']}%   (true cause named anywhere)")
     L.append(f"  hedged answers    : {a['hedged_pct']}%")
     L.append(f"  unclassifiable    : {a['unclassifiable_pct']}%")
-    L.append(f"  abstained         : {a.get('abstained_pct')}%   (declined to name a cause)")
+    selection = report.get("agent_selection") or {}
+    L.append(f"  agent selection   : coverage {selection.get('coverage_pct')}%, "
+             f"selective accuracy {selection.get('selective_accuracy_pct')}%")
+    L.append(f"  abstained         : {a.get('abstained_pct')}%   "
+             "(calibration routed to human uncertainty path)")
     L.append(f"  ECE               : {report['ece']}  (0 = perfectly calibrated)")
     L.append(f"  latency           : mean {report['latency_s']['mean']}s"
              f"  p50 {report['latency_s']['p50']}s  max {report['latency_s']['max']}s")

@@ -25,7 +25,6 @@ from .runner import run_replay_suite, run_suite  # noqa: E402
 def _run(mode: str, trials: int, seed: int, quiet: bool, data: str) -> dict:
     os.environ["LLM_MODE"] = mode
     if mode == "live":
-        os.environ.pop("LLM_MODE")  # live is the default when a key is present
         if not os.getenv("OPENROUTER_API_KEY"):
             sys.exit("live mode needs OPENROUTER_API_KEY (set it, or use --mode mock)")
 
@@ -41,11 +40,9 @@ def _run(mode: str, trials: int, seed: int, quiet: bool, data: str) -> dict:
         print(mark, end="", flush=True)
 
     if data == "replay":
-        # one deterministic pass per real fault class per round
-        rounds = max(1, trials // 4)
-        print(f"\n[{mode}] replaying real dataset episodes ({rounds} round(s)) ",
+        print(f"\n[{mode}] replaying {trials} real dataset episode(s) ",
               end="", flush=True)
-        results = run_replay_suite(rounds, on_result=progress)
+        results = run_replay_suite(trials, on_result=progress)
     else:
         print(f"\n[{mode}] running {trials} trials ", end="", flush=True)
         results = run_suite(trials, seed, on_result=progress)
@@ -70,7 +67,7 @@ def main() -> None:
     p.add_argument("--mode", choices=("mock", "live", "both"), default="mock")
     p.add_argument("--seed", type=int, default=7, help="same seed = same fault plan")
     p.add_argument("--data", choices=("simulated", "replay"), default="simulated",
-                   help="replay = score against real dataset episodes (SKAB)")
+                   help="replay = score all configured real-data episodes")
     p.add_argument("--out", help="write the JSON report here")
     p.add_argument("--quiet", action="store_true")
     args = p.parse_args()
@@ -99,6 +96,7 @@ def main() -> None:
     if args.out:
         payload = {
             "generated_at": datetime.now(timezone.utc).isoformat(),
+            "pipeline_version": "2026-07-19-trained-ml-ood-v3",
             "seed": args.seed,
             "trials_requested": args.trials,
             "reports": reports,

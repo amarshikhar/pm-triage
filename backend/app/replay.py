@@ -91,6 +91,30 @@ class DatasetReplayer:
             return []
         return sorted({ep.fault for ep in self._load_set(st["set"])})
 
+    def available_episodes(self, machine: Machine) -> list[dict[str, str]]:
+        """Every physical recording, including repeated fault classes."""
+        st = self._state_for(machine)
+        if not st:
+            return []
+        return [{"name": ep.name, "fault": ep.fault}
+                for ep in self._load_set(st["set"])]
+
+    def jump_to_episode(self, machine: Machine, episode_name: str) -> str:
+        """Cue one exact recording rather than the first recording of a class."""
+        st = self._state_for(machine)
+        if not st:
+            raise ValueError(f"{machine.id} is not a replay machine")
+        episodes = self._load_set(st["set"])
+        idx = next((i for i, ep in enumerate(episodes) if ep.name == episode_name), None)
+        if idx is None:
+            raise ValueError(
+                f"no episode '{episode_name}', options: {[ep.name for ep in episodes]}")
+        ep = episodes[idx]
+        st["ep"] = idx
+        st["row"] = max(0, (ep.first_labelled or 0) - JUMP_LEAD_ROWS)
+        st["warmup"] = WINDOW
+        return ep.name
+
     def jump_to_fault(self, machine: Machine, fault: str) -> str:
         """Demo lever: cue up the episode for `fault` just before its labelled
         window. Returns the episode name. Raises ValueError on unknown fault."""
@@ -103,12 +127,7 @@ class DatasetReplayer:
             raise ValueError(
                 f"no episode with fault '{fault}', options: "
                 f"{sorted({ep.fault for ep in episodes})}")
-        idx = candidates[0]
-        ep = episodes[idx]
-        st["ep"] = idx
-        st["row"] = max(0, (ep.first_labelled or 0) - JUMP_LEAD_ROWS)
-        st["warmup"] = WINDOW
-        return ep.name
+        return self.jump_to_episode(machine, episodes[candidates[0]].name)
 
     def tick(self) -> list[int]:
         """Advance every replay machine one row; returns new anomaly ids."""

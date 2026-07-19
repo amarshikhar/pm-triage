@@ -82,6 +82,7 @@ WORK_ORDER_CLASS: dict[str, str | None] = {
     "WO-1029": None,  # condensate drain trap rebuild
     "WO-1030": None,  # spindle chiller refrigerant leak (support system)
     "WO-1031": None,  # packing gland adjustment
+    "WO-1032": "bearing_wear",  # independent bearing-rig rolling-element defect
 }
 
 # (weight, phrase). Multi-word phrases outrank bare words because bare words

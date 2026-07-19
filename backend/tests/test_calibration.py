@@ -69,9 +69,13 @@ def test_confident_classifier_disagreement_lowers_confidence_and_abstains():
     assert "disagrees" in conflicted.reason
 
 
-def test_abstaining_classifier_does_not_move_existing_calibration():
+def test_abstaining_classifier_routes_ambiguous_signal_to_human():
     base = calibrate(0.80, "air ingress causing cavitation", STRONG)
     no_verdict = calibrate(0.80, "air ingress causing cavitation", STRONG,
-                           signature_agreement=None, signature_confidence=0.49)
-    assert no_verdict.calibrated == base.calibrated
-    assert no_verdict.signature_factor == 1.0
+                           signature_agreement=None, signature_confidence=0.49,
+                           signature_abstained=True)
+    assert no_verdict.calibrated < base.calibrated
+    assert no_verdict.calibrated < ABSTAIN_THRESHOLD
+    assert no_verdict.signature_factor == 0.75
+    assert no_verdict.signature_abstained and no_verdict.abstain
+    assert "overlap" in no_verdict.reason

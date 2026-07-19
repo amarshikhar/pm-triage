@@ -19,6 +19,7 @@ Two independent trigger rules, both quotable:
 """
 
 import json
+import math
 import statistics
 from datetime import datetime, timedelta, timezone
 
@@ -106,11 +107,37 @@ def signal_context(signal_keys: list[str], history: list[TelemetryReading],
         half = len(series) // 2
         drift = statistics.fmean(series[half:]) - statistics.fmean(series[:half])
         stdev = statistics.pstdev(series)
+        first_mean = statistics.fmean(series[: max(3, len(series) // 4)])
+        last_mean = statistics.fmean(series[-max(3, len(series) // 4):])
+        x_mean = (len(series) - 1) / 2
+        denominator = sum((i - x_mean) ** 2 for i in range(len(series)))
+        slope = (
+            sum((i - x_mean) * (value - mean) for i, value in enumerate(series))
+            / denominator
+            if denominator else 0.0
+        )
+        med = statistics.median(series)
+        mad = statistics.median(abs(value - med) for value in series)
+        derivatives = [series[i] - series[i - 1] for i in range(1, len(series))]
+        derivative_std = statistics.pstdev(derivatives) if len(derivatives) > 1 else 0.0
+        delta = last_mean - first_mean
         series_by_metric[metric] = {
             "mean": round(mean, 3),
             "drift": round(drift, 3),
             "volatility_pct": round(100 * stdev / abs(mean), 1) if mean else 0.0,
             "range": round(max(series) - min(series), 3),
+            # Richer, still fully auditable window facts for the optional
+            # trained classifier. Existing prompts render only the compact
+            # statistics above, so these do not make the LLM prompt larger.
+            "first_mean": round(first_mean, 6),
+            "last_mean": round(last_mean, 6),
+            "delta": round(delta, 6),
+            "delta_pct": round(100 * delta / abs(first_mean), 3)
+            if not math.isclose(first_mean, 0.0, abs_tol=1e-12) else 0.0,
+            "slope": round(slope, 8),
+            "median": round(med, 6),
+            "mad": round(mad, 6),
+            "derivative_std": round(derivative_std, 8),
             "n": len(series),
         }
     return series_by_metric

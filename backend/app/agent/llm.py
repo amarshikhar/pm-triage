@@ -12,7 +12,7 @@ import os
 import httpx
 
 OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
-DEFAULT_MODEL = "anthropic/claude-sonnet-4.5"
+DEFAULT_MODEL = "deepseek/deepseek-v4-flash"
 
 
 # Runtime override set through POST /api/llm/mode (the demo toggle). None means
@@ -35,18 +35,19 @@ def llm_mode() -> str:
         return "mock"
     if _runtime_mode == "live":
         return "live" if os.getenv("OPENROUTER_API_KEY") else "mock"
-    if os.getenv("LLM_MODE", "").lower() == "mock":
-        return "mock"
-    return "live" if os.getenv("OPENROUTER_API_KEY") else "mock"
+    # A configured key is not permission to spend.  Live mode must be selected
+    # explicitly by environment or by the authenticated runtime toggle.
+    if os.getenv("LLM_MODE", "").lower() == "live":
+        return "live" if os.getenv("OPENROUTER_API_KEY") else "mock"
+    return "mock"
 
 
 def llm_model() -> str:
     return os.getenv("OPENROUTER_MODEL", DEFAULT_MODEL)
 
 
-def chat(messages: list[dict], tools: list[dict]) -> dict:
-    """One completion turn. Returns the assistant message dict
-    (may contain tool_calls). Raises on transport/API errors."""
+def chat(messages: list[dict], tools: list[dict]) -> tuple[dict, dict]:
+    """One completion turn plus OpenRouter's exact usage/cost accounting."""
     resp = httpx.post(
         OPENROUTER_URL,
         headers={
@@ -59,12 +60,13 @@ def chat(messages: list[dict], tools: list[dict]) -> dict:
             "messages": messages,
             "tools": tools,
             "temperature": 0.2,
-            "max_tokens": 1600,
+            "max_tokens": int(os.getenv("LLM_MAX_OUTPUT_TOKENS", "700")),
         },
         timeout=60.0,
     )
     resp.raise_for_status()
-    return resp.json()["choices"][0]["message"]
+    body = resp.json()
+    return body["choices"][0]["message"], body.get("usage") or {}
 
 
 class MockLLM:
@@ -85,7 +87,19 @@ class MockLLM:
         if self.step == 2:
             return _tool_call("get_recent_telemetry", {"machine_id": mid, "n": 20})
         if self.step == 3:
-            keywords = f"{self.ctx['metric'].split('_')[0]} {self.ctx['severity']} rising trend"
+            classifier_fault = self.ctx.get("signature_prediction")
+            if classifier_fault:
+                keywords = {
+                    "suction_restriction": "suction restriction inlet valve starving suction",
+                    "discharge_restriction": "discharge restriction outlet valve throttled",
+                    "rotor_imbalance": "rotor imbalance vibration rebalanced",
+                    "cavitation": "cavitation air entrained suction",
+                    "bearing_wear": "bearing wear vibration",
+                    "overheat": "overheat thermal cooling",
+                    "pressure_loss": "pressure loss leak",
+                }.get(classifier_fault, classifier_fault.replace("_", " "))
+            else:
+                keywords = f"{self.ctx['metric'].split('_')[0]} {self.ctx['severity']} rising trend"
             return _tool_call("search_maintenance_history", {
                 "machine_type": self.ctx["machine_type"], "keywords": keywords, "machine_id": mid})
 
