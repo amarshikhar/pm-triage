@@ -88,7 +88,12 @@ def main() -> int:
                     help="actually call the API; without this it is a dry run")
     args = ap.parse_args()
 
-    files = sorted(p for p in TTS_DIR.glob("*.txt") if args.only in p.name)
+    files = sorted(TTS_DIR.glob("*.txt"))
+    if args.only:
+        # An exact stem wins, so --only ARCHITECTURE cannot also pull in
+        # ARCHITECTURE_AND_INTERVIEW_GUIDE. Otherwise fall back to substring.
+        exact = [p for p in files if p.stem == args.only]
+        files = exact or [p for p in files if args.only in p.name]
     if not files:
         print(f"no .txt files in {TTS_DIR}", file=sys.stderr)
         return 1
