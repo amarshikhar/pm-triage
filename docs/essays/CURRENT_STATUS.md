@@ -1,0 +1,190 @@
+# Current status as of the nineteenth of July 2026, in essay form
+
+## The simple answer
+
+The trained classifier and the genuine out-of-distribution gate are now
+implemented, but narrowly: the machine learning model distinguishes SKAB
+suction-side restriction from discharge-side restriction, and nothing more.
+Rules still own the clear faults. The language model does retrieval,
+explanation, and action drafting; it does not get to overrule a concrete
+classifier verdict. And a human must approve every work order.
+
+The expanded free real-data run covers eight episodes across two laboratory
+testbeds. The hybrid classifier is correct on seven of the eight overall, it
+covers seven of the eight, and it is seven for seven when it does speak. It
+abstains on the one remaining cavitation episode. Stated as percentages, that is
+87.5 percent overall, 87.5 percent coverage, and 100 percent selective accuracy
+— which is not the same thing as universal 100 percent accuracy, and should
+never be quoted that way.
+
+The intentionally paid DeepSeek replay also completed on all eight episodes,
+with seven of eight raw top-one accuracy, six of eight operational coverage
+after abstention, six for six selective accuracy, an ECE of 0.148, zero errors
+and zero fallbacks, and $0.014535 in returned provider cost.
+
+On verification: 105 backend tests pass, and the Next.js production build
+completes successfully.
+
+### The production behaviour correction in this release
+
+The CWRU demonstration on the nineteenth of July exposed two orchestration
+defects — not a clock defect, and not a model accuracy defect. A cue at 21:25:38
+Indian Standard Time was only detected at 21:32:18, because the three-second
+replay loop was waiting synchronously for earlier language model work. Then the
+same bearing episode created four separate cases from four changed signals.
+
+The fix keeps telemetry ticking while a serial worker performs triage, and it
+deduplicates one physical machine event down to one case. The audit view now
+labels the browser timezone and explains the cue, anomaly, and case timestamps,
+and the Fleet page shows cold-start and cue progress rather than sitting in an
+indefinite "Connecting" state.
+
+## What is done, and what is pending
+
+Evidence-grounded confidence and abstention are done. Precedent, specificity,
+classifier agreement and out-of-distribution scoring, and a 0.45 gate together
+control the operational path.
+
+The scorer coverage fix is done. The text scorer and the citation scorer now
+report both their agreement and their joint coverage. Generic restriction
+wording no longer overrides explicit suction or discharge wording, and the
+regression strings from the paid run are covered by tests.
+
+The reframing of the language model's job is done. The concrete classifier class
+owns the root cause field, while the language model owns precedent, explanation,
+actions, and drafting. A conflict guard retains the classifier's verdict and
+records the rejected language model draft alongside it.
+
+The trained hard-fault classifier is done, but narrow. It is an Extra Trees
+model over 510 windows drawn from seventeen training experiments, grouped by
+physical episode, scoring three out of three on the frozen restriction holdout.
+The artifact is `backend/data/models/skab_restriction.joblib`.
+
+The genuine out-of-distribution detector and calibrator are done for that narrow
+model. An IsolationForest provides the novelty score, with the threshold set at
+the tenth percentile of leave-one-episode-out in-distribution scores. On the
+same-roster non-restriction SKAB out-of-distribution test it achieved an AUROC
+of 1.0 with all fourteen rejected. Unsupported sensor rosters abstain before
+inference even runs.
+
+Adding more real datasets is done for the purposes of development evidence. Five
+SKAB episodes plus three CWRU bearing episodes are integrated, and the raw CWRU
+checksums and provenance are documented.
+
+The human-in-the-loop production flow is done. Every case begins as pending
+review; a named planner approves, rejects, or edits it; and only an approval
+creates a CMMS work order.
+
+Cost-safe live mode is done. Mock is the default, DeepSeek V4 Flash is the
+default model, random production faults are off, and there are caps of twelve
+provider requests per day, twenty-five cents per day, and seven hundred output
+tokens per response, all backed by a persistent usage and cost ledger.
+
+The fresh live DeepSeek evaluation is done, recorded as GitHub run
+`29692423022`: eight of eight live rows, zero errors and zero fallbacks,
+thirty-four calls, 161,585 tokens, and $0.014535 in returned cost.
+
+The Vercel frontend deployment is done and verified. The frontend-bearing commit
+`4a17235` completed its production deployment, and both the public root path and
+the evaluation path returned HTTP 200 with the new wake-up, cue, and
+plain-language evaluation content.
+
+The Render backend deployment is likewise done and verified. The health endpoint
+returned HTTP 200 from release `a778c80`, with the simulator running,
+authentication enabled, and mock mode active. The language model endpoint
+confirmed that the key is configured while paid live mode remains off.
+
+## The current mock-mode numbers
+
+Two suites are reported side by side: the synthetic suite of twenty-four trials,
+and the real suite of eight trials across SKAB and CWRU.
+
+Detection is 100 percent on both suites.
+
+The hybrid classifier scores 75.0 percent overall top-one on synthetic and 87.5
+percent, or seven of eight, on real. Its coverage is 79.2 percent on synthetic
+and 87.5 percent, again seven of eight, on real. Its selective accuracy is 94.7
+percent on synthetic and 100 percent, seven for seven, on real.
+
+The full mock system scores 83.3 percent raw top-one on synthetic and 87.5
+percent on real. Its operational coverage is 79.2 percent on synthetic and 87.5
+percent on real. Its selective accuracy is 89.5 percent on synthetic and 100
+percent, seven for seven, on real. Its abstention rate is 20.8 percent on
+synthetic and 12.5 percent, one of eight, on real.
+
+Expected calibration error is 0.207 on synthetic and 0.239 on real. Scorer
+agreement is 100 percent on both, with scorer coverage of 79.2 percent on
+synthetic and 100 percent on real.
+
+## The current paid DeepSeek numbers
+
+The same two suites, now run against the live model.
+
+Detection is again 100 percent on both.
+
+Raw text top-one accuracy is 75.0 percent on synthetic and 87.5 percent, seven
+of eight, on real. Operational coverage after the confidence gate is 75.0
+percent on both — six of eight in the real case. Selective accuracy is 94.4
+percent on synthetic and 100 percent, six for six, on real. The abstention rate
+is 25.0 percent on both, meaning two of eight on the real suite.
+
+Expected calibration error is 0.319 on synthetic and 0.148 on real. Scorer
+agreement is 100 percent on both, but joint coverage differs sharply: only 4.2
+percent on synthetic against 75.0 percent on real.
+
+On timing, mean latency is 26.03 seconds on synthetic against 32.17 seconds on
+real, with maximum latency of 62.88 seconds and 56.25 seconds respectively.
+There were zero agent errors and zero mock fallbacks on both suites. Exact
+returned cost was not captured by the first version of the synthetic report; on
+the real suite it was $0.014535.
+
+The real paid report additionally records thirty-four provider calls, 143,044
+input tokens, 18,541 output tokens, and 161,585 tokens in total. It is worth
+being clear about why scorer joint coverage is lower than fault coverage:
+DeepSeek sometimes gave the correct text class without a mapped work-order
+citation. That is a measurement-quality warning, not a second accuracy
+denominator.
+
+The real result is made up of five SKAB recordings — rotor imbalance,
+cavitation, suction restriction, and two discharge restriction recordings — plus
+three CWRU recordings covering inner-race, ball, and outer-race bearing faults,
+all mapped onto the application's coarser bearing-wear family.
+
+The CWRU sequences concatenate real healthy steady-state feature frames with
+real faulty steady-state frames. They do genuinely test a second sensor roster
+and a second testbed, but they are not natural run-to-failure transitions. The
+official CWRU pages do not state an explicit dataset license, so commercial and
+redistribution terms remain a release constraint.
+
+## Why the first machine learning attempt and the production model differ
+
+The rejected experiment tried to classify four SKAB classes from a single
+first-trigger summary per episode. It scored three out of five, and it made a
+wrong valve decision at roughly ninety-five percent confidence.
+
+The production replacement is deliberately smaller and safer, in six respects.
+Rules retain the easy classes. The model separates only suction from discharge
+restriction. Training uses many fault-window views, but every split holds out the
+complete physical experiment. Probability and acceptance thresholds come from
+leave-one-experiment-out predictions rather than from the frozen test. A learned
+novelty model rejects non-restriction SKAB contexts. And the untouched
+restriction test consists of exactly three recordings: `valve1/2`, `valve2/0`,
+and `valve2/1`.
+
+## Which approach works better for what
+
+For numeric fault classification, use the hybrid of rules plus the trained
+classifier. On this real suite it is seven of eight overall and seven for seven
+when it accepts.
+
+For explanation, precedent retrieval, recommended actions, and work-order prose,
+use the language model. DeepSeek was seven of eight raw and six for six after
+its confidence gate, but it averaged 32.17 seconds and cost $0.014535 for the
+eight-case run. Keep the classifier's class fixed regardless.
+
+For detection, priority, spending controls, work-order authorisation, and
+machine control, do not give the job to the language model at all.
+
+The single sentence that captures production behaviour: rules detect; rules plus
+narrow machine learning classify; out-of-distribution scoring can abstain; the
+language model explains and retrieves; and a human authorises every action.

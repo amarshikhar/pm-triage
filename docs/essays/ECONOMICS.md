@@ -1,0 +1,81 @@
+# Asset economics: where the dollar figures come from, in essay form
+
+Every triage case displays a business exposure, and that exposure is a simple
+product: the expected downtime hours multiplied by the asset's hourly downtime
+cost. Those hourly costs live in the machine catalog, on the
+`hourly_downtime_cost` field of each machine record. This essay explains where
+those numbers came from.
+
+## The published anchors
+
+The primary source is the Siemens and Senseye report "The True Cost of Downtime
+2024", which exists both as a report PDF and as an accompanying analysis post on
+the Siemens blog. Its headline findings are that Fortune Global 500 industrial
+companies lose roughly 1.4 trillion dollars a year to unplanned downtime, which
+is about eleven percent of their revenue; that an automotive plant loses
+roughly 2.3 million dollars for every hour it is down; and that the outages
+surveyed averaged around four hours. Discrete manufacturing sits far below
+automotive on this scale, and is commonly quoted somewhere between ten thousand
+and fifty thousand dollars per plant-hour.
+
+The same programme published a 2022 edition, which carries the previous survey
+wave. It is useful mainly for the trend it establishes: the costs roughly
+doubled between 2019 and the later survey.
+
+The three source URLs, for reference, are the 2024 report PDF and the 2022
+report PDF, both hosted on the Siemens assets domain under long UUID paths, and
+the July 2024 blog post at blog.siemens.com titled "The true cost of an hour's
+downtime: an industry analysis".
+
+## How a plant rate becomes a per-asset rate
+
+The published figures are plant-hour numbers, and a single asset's downtime only
+costs the full plant-hour rate in the case where that asset takes the whole
+line down with it. So the catalog allocates the plant rate across assets in
+three steps.
+
+First, it takes a conservative discrete-manufacturing plant rate of ten
+thousand dollars per hour — the bottom of the published range, because this
+artifact under-claims on purpose. Second, an asset that takes the line down
+with it, meaning criticality five, such as the main conveyor or the plant air
+supply, carries thirty-five to forty percent of that plant rate. Third,
+machines that have redundancy or buffers behind them carry only their marginal
+contribution: parallel CNC capacity, a standby compressor, an off-line test
+loop.
+
+Applying that method produces the following catalog. The main conveyor, CNV-01,
+is criticality five and carries four thousand dollars an hour, because it is a
+single point of failure for Line B. Air Compressor 01, CMP-01, is also
+criticality five and carries three thousand five hundred dollars an hour: it
+supplies plant air, and the receivers give only a brief ride-through before
+everything stops.
+
+At criticality four there are two assets. Mill 01, CNC-01, carries one thousand
+eight hundred dollars an hour as its bottleneck share of Line A throughput.
+Coolant Pump 01, PMP-01, carries one thousand six hundred dollars an hour,
+because when it goes down both mills stop cutting.
+
+At criticality three there are three assets. Mill 02, CNC-02, carries one
+thousand two hundred dollars an hour, lower than its twin because parallel
+capacity absorbs part of the loss. Hydraulic Pump 02, PMP-02, carries one
+thousand one hundred dollars an hour for the Line B auxiliaries. And the SKAB
+circulation pump, PMP-03, carries nine hundred dollars an hour, which reflects
+test-loop availability rather than any production stoppage.
+
+At criticality two there are two more. The packing conveyor, CNV-02, carries
+six hundred dollars an hour, because a manual packing workaround exists. And
+Air Compressor 02, CMP-02, carries only four hundred dollars an hour: it is the
+standby unit, so the exposure when it fails is lost redundancy rather than lost
+production.
+
+## What these numbers are and are not
+
+These are illustrative allocations, not measurements. The method is the point —
+a published plant rate multiplied by a structural share. In a real deployment,
+the finance figures would come from the customer's own cost accounting, and
+only this one catalog would change; nothing else in the system would need to
+move.
+
+The rest of the system treats the cost as an opaque business input. It is
+deliberately displayed next to the P1-through-P4 governance score, and never
+folded into it.

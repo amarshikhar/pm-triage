@@ -1,0 +1,177 @@
+FDE assessment defense master guide, in essay form.
+
+This is the primary study document for the company assessment, and it should be read first. Use the code and data-flow reference when an interviewer asks how a particular screen, endpoint, function, table, or state transition works. Use the production challenge questions for scale, security, failure, and limitation questions. The specialist evaluation, machine learning, cost, and economics documents are evidence appendices rather than presentation script.
+
+What the company asked for.
+
+The Manufacturing challenge asks for a working predictive-maintenance triage assistant that does six things: it ingests simulated IoT telemetry; it correlates anomalies with historical maintenance logs; it suggests a likely root cause and priority; it never controls a machine directly; it explains its recommendations to floor technicians; and it contains a meaningful enterprise interaction.
+
+This artifact implements that slice, and then adds recorded real-data replay, a narrow trained classifier, learned out-of-distribution rejection, confidence abstention, a named human gate, CMMS write-back, an audit trail, cost controls, and evaluation.
+
+Mapping the work onto the rubric.
+
+The rubric has six weighted categories, and it is worth knowing for each one both what to show and what not to claim.
+
+Solution architecture and workflow design carries thirty percent, the largest share. The evidence is clear ownership boundaries, the full telemetry-to-CMMS state machine, and safe fallback paths. What not to overclaim: this is a focused working slice, not a complete plant platform.
+
+Software engineering and the software development lifecycle carries twenty-five percent. The evidence is the FastAPI and Next.js code, typed contracts, 105 backend tests, a production build, deployment, retention policies, and regression fixes. What not to overclaim: there is no formal site-reliability-engineering maturity here, and no exhaustive browser end-to-end testing.
+
+Systems integration and enterprise architecture carries twenty percent. The evidence is the REST APIs, Supabase Postgres, the HTTP CMMS anti-corruption adapter, schema translation, retries, and idempotency. What not to overclaim: the mock CMMS is mounted in the same deployment and shares the database.
+
+Domain-embedded business architecture carries fifteen percent. The evidence is machine criticality, engineering limits, signal features, maintenance precedents, priority, downtime exposure, and the human planner. What not to overclaim: the thresholds, the history, and the economics are demonstration inputs, not customer-validated policy.
+
+Agentic AI and language model engineering carries seven percent, notably, less than any of the four above. The evidence is the bounded tool loop, the three read-only tools, structured output, mock and live parity, evaluation, and provider fallback. What not to overclaim: the language model does not own detection, authorisation, or a concrete classifier verdict.
+
+Governance, observability, and control carries the remaining three percent. The evidence is out-of-distribution abstention, human approval, the audit trail, the case trace, the call and dollar caps, and the absence of any direct control path. What not to overclaim: the demonstration authentication is not enterprise single-sign-on or role-based access control.
+
+Read those weights together and the point becomes obvious. The highest-scoring story is not "I used a language model". It is "I translated the business workflow into explicit owners and failure boundaries, implemented the integration, and used AI only where it added value".
+
+The thirty-second opening.
+
+This system turns condition-monitoring telemetry into an evidence-backed maintenance recommendation without allowing AI to control equipment. Deterministic rules detect abnormal behaviour. Auditable rules plus a narrow trained classifier name only supported faults and abstain on out-of-distribution inputs. A mock or live language model retrieves precedent and drafts the explanation and the actions. And a named planner must approve before an idempotent CMMS adapter creates a work order. The complete path is tested, deployed, audited, cost-capped, and evaluated on generated faults plus eight recorded SKAB and CWRU episodes.
+
+The two-minute architecture answer.
+
+The path is a single chain. A telemetry source produces a reading, which is stored in Postgres. A deterministic detector, engineering limit or robust z-score, fires, producing one anomaly that contains the complete signal window. Physics signature rules run against it. Where eligible, the narrow Extra Trees restriction classifier runs too. The IsolationForest, schema, and confidence gates then decide whether that answer is admissible.
+
+A bounded investigation follows, using either the mock policy or DeepSeek with tool calling. Deterministic confidence calibration and the priority formula are applied. A triage case is created with status pending review. A named planner approves, edits, or rejects it. Only on approval does the CMMS schema adapter run, producing either an idempotent work order or a preserved, retryable synchronisation state. And the whole thing lands in a business audit trail.
+
+Every one of those boundaries is deliberate. Detection is deterministic because it must be cheap, continuous, and explainable. Numeric fault classification belongs to features plus a narrow classifier, not to a language model reading raw numbers. The language model owns the language work: tool selection, precedent synthesis, explanation, recommended actions, and drafting. Priority is a formula, and the model can propose only a clamped one-notch change to it. Every case requires human review, including the high-confidence ones. And approval is committed before downstream CMMS synchronisation, so an outage cannot erase the human decision.
+
+What is real, recorded, simulated, mocked, and illustrative.
+
+It is worth being able to state the status of each element precisely.
+
+The application code and workflow are real production code, running on Vercel and Render. The production database is a real Supabase Postgres instance accessed through SQLAlchemy. The synthetic fleet telemetry is generated, from Gaussian baselines plus deterministic fault ramps. The SKAB and CWRU telemetry is recorded laboratory data, curated into replay episodes, though the CWRU transition specifically is constructed, by concatenating real healthy and real faulty steady-state frames, and is not a natural run-to-failure recording.
+
+The historical maintenance logs are seeded realistic demonstration records, not a customer CMMS export. The CMMS interface is real: a genuine HTTP contract with validation, retries, idempotency, and foreign-schema mapping. The CMMS system behind that interface is a mock FastAPI application mounted in the same deployment and using the same database.
+
+The mock agent is a free deterministic policy that uses the real tool loop and the real case schema. The live agent is DeepSeek V4 Flash through OpenRouter, deliberately enabled and cost-capped. Priority and downtime exposure are executable, transparent rules operating on illustrative business inputs. And the human decision is a real authenticated user action, recorded in both the database and the audit trail.
+
+Presentation preflight.
+
+Ten to fifteen minutes before presenting, work through this list.
+
+Open the backend health endpoint at https: pm triage backend onrender com A P I health. Confirm that ok is true and simulator running is true, and note the seven-character release id. Open the production frontend and wait until the machine cards populate. Confirm the header reads "MOCK, free", do not begin in live mode. Sign in with your own reviewer name so that decisions are attributed to you.
+
+Then identify an existing pending case to use as a backup, in case a new case is slow to arrive. Keep the Evaluation page open in another tab, because it uses bundled static reports and will work even if Render goes to sleep. And keep screenshots or a short recording of the Fleet, Case, CMMS, and Audit path as your backup against network failure.
+
+Do not clear, delete, reset, or manufacture production history before the presentation. The existing audit evidence is what shows the system is actually used.
+
+The seven-minute golden-path demonstration.
+
+From zero to forty seconds: the business problem and the safety boundary.
+
+Open the Fleet screen. Say that the business problem is not merely detecting a high sensor value; it is turning an anomaly into an explainable, prioritised maintenance decision, connected to the system of record, without autonomous machine control.
+
+Point out the simulated versus real-data badges, the machine location and criticality, the live readings and sparklines, and the free mock-versus-live budget indicator. Do not say that the sparkline detects faults, it is visualisation, and Python rules do the detection against database readings.
+
+From forty seconds to one minute twenty: start a controlled scenario.
+
+For the most reliable live demonstration, inject a synthetic fault. A synthetic fault normally crosses a limit in roughly twenty-one to thirty-nine seconds. A real replay cue keeps forty-five pre-fault rows and can take minutes, so cue real data only when time permits.
+
+Say that this button is an assessment and demonstration lever, that production random fault injection is disabled, and that a real plant would receive readings from a historian, a broker, or an IoT gateway through the same ingestion boundary. The interface confirms the cue immediately, and navigating away does not cancel it.
+
+From one minute twenty to two minutes twenty: deterministic detection and signal context.
+
+Open the created case and start with the Detection card on the right-hand side.
+
+Say that detection is not a language model prompt: an engineering limit or a sustained robust-z excursion creates one anomaly, and the anomaly stores statistics for every signal, not only the breached one, because the cross-signal shape is what separates faults such as bearing wear from cavitation.
+
+Then explain the visible numbers. The value is the current reading. The threshold is either the engineering limit or the rolling median. The z-score is the distance from the recent baseline, measured in spread units. The severity is either the percentage beyond a fixed limit or the robust-z magnitude. The mean, drift, volatility, and range are deterministic facts about the window. And one physical event creates one anomaly and one case, even when several signals move together.
+
+From two minutes twenty to three minutes fifteen: classifier, out-of-distribution gate, and the language model's role.
+
+Point to the Signature analysis panel and the investigation trace.
+
+Say that clear signatures are scored with auditable physics rules, and that only the overlapping SKAB suction-versus-discharge pair is routed to Extra Trees. Before accepting that narrow model's answer, the system checks the exact sensor schema, the IsolationForest novelty score, and the calibrated class confidence; unsupported data abstains. The language model then uses only three read-only tools: machine information, recent telemetry, and historical maintenance search.
+
+Explain the difference between the two modes. Mock makes the same three tool calls in a fixed order and is free. Live DeepSeek chooses its calls and its language dynamically. Both use the same dispatcher, the same tools, the same calibration, the same priority formula, the same case schema, the same human gate, and the same CMMS flow. And if live fails or hits a cap, the case restarts through mock and records the fallback.
+
+From three minutes fifteen to four minutes ten: confidence, priority, and business context.
+
+Point to the calibrated confidence and the priority.
+
+Say that raw language model confidence is not trusted: deterministic calibration discounts it for weak precedent, non-diagnostic language, signature conflict, or signature abstention. Below 0.45 the case is visibly marked uncertain. Priority is computed separately, from criticality, severity, recurrence, and safety. And the cost exposure is informational, it does not secretly change the priority.
+
+The formula itself: the score is criticality, plus twice the severity points, plus the recurrence count capped at three, plus four if the case is safety-related and zero otherwise. It is P1 if safety-related or thirteen or above, P2 at ten or above, P3 at seven or above, and P4 otherwise.
+
+From four minutes ten to five minutes fifteen: the human decision and the CMMS integration.
+
+Approve, reject, or approve with edits.
+
+Say that every case is pending review; that the session identity, not an arbitrary request field, signs the decision; that rejection creates nothing downstream; and that approval is committed first, then translated into the CMMS vocabulary and posted with an idempotency key of the form triage case case id, so a retry returns the same order rather than creating a duplicate.
+
+Then open the CMMS screen and show the priority translation from the internal P1 through P4 scale to codes one through four, the equipment and functional location, the M1 notification type, the damage code, the forty-character short text alongside the detailed long text, and the named human approval. State clearly that this is a mock CMMS sitting behind a genuine HTTP and domain boundary.
+
+From five minutes fifteen to five minutes fifty: auditability.
+
+Open the Audit screen and narrate the chain: a human cue or injection, then a system anomaly, then an agent case, then a human decision, then a system work-order success or failure.
+
+The case trace explains one reasoning run; the audit trail explains business state changes and who caused them. Times display in the browser's timezone, while the database stores ISO-8601 UTC throughout.
+
+From five minutes fifty to seven minutes: evaluation and an honest conclusion.
+
+Open the Evaluation screen, then the Real testbeds section.
+
+Say that eight recorded episodes were tested, five SKAB pump episodes and three CWRU bearing episodes. Detection fired on all eight. The hybrid classifier named seven of the eight, and was right on all seven of those accepted answers. The paid live agent was seven of eight raw, accepted six of eight after its confidence gate, and was right on those six. This is encouraging development evidence, not universal plant accuracy; the sample size is only eight laboratory episodes.
+
+Close on the division of labour: rules detect; rules plus narrow machine learning classify; out-of-distribution scoring can abstain; the language model explains and retrieves; a named human authorises; and an idempotent adapter integrates the approved decision. That division is the production design.
+
+The numbers you must be able to translate into counts.
+
+On the synthetic suite of twenty-four generated trials: the detector caught twenty-four of twenty-four. The hybrid classifier was correct on eighteen of twenty-four overall, named a class on nineteen of twenty-four, and was correct on eighteen of those nineteen. The mock agent got twenty of twenty-four raw text top-one, accepted nineteen of twenty-four after the gate, and was correct on seventeen of those nineteen. The paid live agent got eighteen of twenty-four raw, accepted eighteen of twenty-four, and was correct on seventeen of those eighteen. Its ECE of 0.319 means an average confidence-versus-accuracy mismatch of about 31.9 percentage points on this small run, it does not mean 68.1 percent accuracy.
+
+On the real replay of eight recorded episodes: the detector caught eight of eight. The hybrid classifier was seven of eight overall, with coverage of seven of eight and selective accuracy of seven for seven. The mock agent matched that exactly: seven of eight raw, coverage seven of eight, selective accuracy seven for seven. Paid DeepSeek was seven of eight raw, with coverage of six of eight, selective accuracy of six for six, and two abstentions.
+
+Seven of the eight anomalies fired inside the dataset's labelled window. The one that fired before the labelled region is a timing or precursor observation, not a missed detection. The paid real run took thirty-four provider turns and 161,585 total tokens, at a mean case latency of 32.17 seconds, for an exact returned cost of $0.014535, with zero errors and zero fallbacks. Its ECE was 0.148, an average mismatch of about 14.8 points across only eight rows.
+
+Never say "100 percent real accuracy". Say "seven of eight overall, and seven for seven among accepted classifier answers, on eight laboratory episodes".
+
+One sentence on what each screen proves.
+
+The Fleet screen proves that multiple assets with different schemas produce continuously refreshed telemetry, and that controlled demonstration injection and replay are available. The Machine screen proves that a single asset's time-series, cases, work orders, and audit history can be traced together. The Cases screen proves that the operational queue exposes priority, confidence, abstention, classifier state, human status, and CMMS outcome.
+
+The Case detail screen proves that every fact, tool call, calibration decision, priority component, recommendation, and human decision is inspectable. The CMMS screen proves that an approved internal case was translated and written into a foreign system-of-record schema. The Audit screen proves that system, agent, human, and downstream transitions are all attributed and timestamped. And the Evaluation screen proves that detection, classification, abstention, calibration, scoring quality, latency, cost, and limitations are actually measured.
+
+The core design decisions and their trade-offs.
+
+Why polling instead of WebSockets? Polling every three and a half to eight seconds is simple and entirely sufficient for a one-week triage demonstration. It would not be appropriate for high-frequency historian ingestion. Production would use event ingestion with server push or subscriptions, while keeping the same API and the same domain models.
+
+Why JSON signal values? Assets have different sensor rosters, so a values JSON column plus catalog-level signal metadata keeps the prototype flexible. At industrial scale, a time-series store or a narrow tag-and-value table would improve compression, indexing, retention, and analytics.
+
+Why not let the language model classify everything? The live evaluation showed that overlapping numeric signatures are not the model's strongest job. Deterministic features plus narrow machine learning are cheaper, auditable, and much easier to make reject out-of-distribution inputs. The model remains useful for language and retrieval.
+
+Why mandatory review even at high confidence? The assessment prohibits direct autonomous action, and maintenance interventions carry safety and availability consequences. Confidence controls how uncertainty is presented, not who is authorised.
+
+Why a mock CMMS over HTTP? It proves the integration contract, the schema mismatch, status handling, idempotency, and retry behaviour, without requiring SAP credentials. A real deployment replaces the transport, the authentication, and the mapping configuration, not the triage domain.
+
+The limitations to volunteer before being challenged.
+
+Eight real laboratory episodes are development evidence, not customer-site validation. The CWRU episodes are constructed transitions, and the dataset usage rights need confirmation before any commercial redistribution. The maintenance history and the economics are seeded illustrative records. The trained machine learning layer solves only suction versus discharge restriction.
+
+The simulator and replayer cursor, the force-detect flag, the runtime language model override, and the triage queue all live in process memory; a multi-replica production system would need a durable broker and shared state. An anomaly is durable, but an anomaly waiting only in the in-process triage queue can require recovery scanning after a process crash, and that scanner is not implemented.
+
+Database setup uses create all rather than versioned Alembic migrations. Authentication is a signed crew-password session, not single-sign-on with role-based access control. The frontend polls rather than consuming an event stream. The mock CMMS shares the deployment and the database. And Render's free hosting tier is demonstration infrastructure, not a service-level agreement.
+
+Volunteering these limits demonstrates judgment. Hiding them invites the interviewer to conclude that you do not understand production.
+
+If the live demonstration misbehaves.
+
+If Fleet says the backend is waking, open the health endpoint, explain the cold start, and use the Evaluation page or your backup case while it wakes.
+
+If a new case is slow, explain the detector lead-in and the triage latency, and open a prepared case rather than repeatedly injecting faults.
+
+If the live call cap is exhausted, stay in mock mode and explain that this is the designed cost fallback, not a broken AI feature.
+
+If CMMS synchronisation fails, treat it as a valid resilience demonstration: the approval remains committed, and the retry is idempotent.
+
+If the network is unavailable, use the backup recording or screenshots, and then defend the local code and the persisted evaluation artifacts.
+
+And if an interviewer asks you to make an unsupported claim, state the limitation and describe the next validation step instead.
+
+The recommended study order.
+
+Memorise the thirty-second opening and the two-minute architecture answer. Rehearse the seven-minute click path twice without notes. Learn the real and synthetic counts along with the non-claims. Read the code and data-flow reference while following the source files. Practise every question in the production challenge document aloud. Then read the evaluation guide, the machine learning experiment essay, and the cost control essay for specialist follow-ups.
+
+The goal is not verbatim memorisation. The goal is to be able to reconstruct the design from first principles when the interviewer changes the scenario.

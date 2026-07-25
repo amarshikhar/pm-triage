@@ -1,0 +1,137 @@
+name: Generate essay audio
+
+# Manual only. workflow_dispatch can be triggered solely by users with write
+# access, so FISH_API_KEY is never exposed to fork pull requests.
+on:
+  workflow_dispatch:
+    inputs:
+      voice:
+        description: "Fish Audio reference_id (from the voice's fish.audio URL)"
+        required: true
+        type: string
+      model:
+        description: "Model header"
+        required: true
+        default: s1
+        type: choice
+        options:
+          - s1
+          - s2-pro
+          - s2.1-pro-free
+      dry_run:
+        description: "Dry run: print the cost, call nothing, spend nothing"
+        required: true
+        default: true
+        type: boolean
+      max_usd:
+        description: "Hard spend ceiling PER ESSAY (13 jobs run separately)"
+        required: true
+        default: "1.00"
+        type: string
+      only:
+        description: "Optional filter, e.g. CONTEXT to test a single short essay"
+        required: false
+        default: ""
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      # Capped so 13 jobs do not hit the provider concurrently.
+      max-parallel: 3
+      matrix:
+        essay:
+          - ARCHITECTURE
+          - ARCHITECTURE_AND_INTERVIEW_GUIDE
+          - CODE_AND_DATA_FLOW_REFERENCE
+          - CONTEXT
+          - COST_CONTROL
+          - CURRENT_STATUS
+          - DEFENSE_PACK
+          - ECONOMICS
+          - EVALUATION_GUIDE
+          - FDE_DEFENSE_MASTER_GUIDE
+          - ML_EXPERIMENT
+          - PRODUCTION_CHALLENGE_QA
+          - README
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Skip essays filtered out by the "only" input
+        id: filter
+        run: |
+          if [ -n "${{ inputs.only }}" ] && \
+             [[ "${{ matrix.essay }}" != *"${{ inputs.only }}"* ]]; then
+            echo "run=false" >> "$GITHUB_OUTPUT"
+            echo "Filtered out by only=${{ inputs.only }}"
+          else
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Check the API key is present
+        if: steps.filter.outputs.run == 'true' && inputs.dry_run == false
+        env:
+          FISH_API_KEY: ${{ secrets.FISH_API_KEY }}
+        run: |
+          if [ -z "$FISH_API_KEY" ]; then
+            echo "::error::FISH_API_KEY secret is not set on this repository."
+            echo "Add it under Settings > Secrets and variables > Actions."
+            exit 1
+          fi
+          echo "FISH_API_KEY is present (${#FISH_API_KEY} characters)."
+
+      - name: Generate
+        if: steps.filter.outputs.run == 'true'
+        env:
+          FISH_API_KEY: ${{ secrets.FISH_API_KEY }}
+        working-directory: docs/essays
+        run: |
+          python3 fish_tts.py \
+            --voice "${{ inputs.voice }}" \
+            --model "${{ inputs.model }}" \
+            --max-usd "${{ inputs.max_usd }}" \
+            --only "${{ matrix.essay }}" \
+            ${{ inputs.dry_run == false && '--go' || '' }} \
+            | tee run.log
+
+      - name: Summarize
+        if: steps.filter.outputs.run == 'true'
+        working-directory: docs/essays
+        run: |
+          {
+            echo "## ${{ matrix.essay }}"
+            echo ""
+            if [ "${{ inputs.dry_run }}" = "true" ]; then
+              echo "Dry run - nothing was sent and nothing was charged."
+            fi
+            echo ""
+            echo '```'
+            tail -n 20 run.log
+            echo '```'
+            if [ -d audio ]; then
+              echo ""
+              echo "### Files"
+              echo ""
+              ls -lh audio | tail -n +2 | awk '{print "- " $9 " (" $5 ")"}'
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload audio
+        if: steps.filter.outputs.run == 'true' && inputs.dry_run == false
+        uses: actions/upload-artifact@v4
+        with:
+          name: audio-${{ matrix.essay }}
+          path: docs/essays/audio/*
+          retention-days: 30
+          if-no-files-found: error
