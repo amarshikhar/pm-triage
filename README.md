@@ -6,19 +6,10 @@ human decision, CMMS work-order write-back, and a full audit trail.
 
 ## What is actually implemented
 
-```mermaid
-flowchart LR
-  T["Simulated, SKAB, or CWRU telemetry"] --> D["Deterministic detector"]
-  D --> C["Rules plus trained hard-fault classifier"]
-  C --> A["Mock policy or live LLM"]
-  A --> K["Evidence-grounded calibration"]
-  K --> H["Human review: approve, reject, edit"]
-  H -->|"approved only"| W["CMMS work order"]
-  D --> U["Audit"]
-  A --> U
-  H --> U
-  W --> U
-```
+![PM Triage architecture: telemetry is detected by deterministic code, classified by physics rules and a narrow trained model, explained by a language model, then approved by a named human before any CMMS work order exists.](docs/diagrams/architecture-hero.svg)
+
+Who owns which decision, why the boundaries sit there, and what runs where:
+[Architecture](docs/ARCHITECTURE.md).
 
 - Eight simulated assets plus SKAB pump and CWRU bearing testbeds: eight real
   replay episodes in the current suite.
@@ -125,6 +116,7 @@ reviewed, committed, pushed, and the services redeploy.
 
 ## Documentation
 
+- [Architecture: the diagrams and who decides what](docs/ARCHITECTURE.md)
 - [FDE assessment defense master guide](docs/FDE_DEFENSE_MASTER_GUIDE.md)
 - [Complete code and data-flow reference](docs/CODE_AND_DATA_FLOW_REFERENCE.md)
 - [Production challenge questions and answers](docs/PRODUCTION_CHALLENGE_QA.md)
