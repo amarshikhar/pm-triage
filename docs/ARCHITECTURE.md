@@ -79,3 +79,14 @@ Measured numbers live in [Evaluation guide](EVALUATION_GUIDE.md) and
 
 Both diagrams are plain SVG in [`diagrams/`](diagrams) — readable text, edited
 in place, with no build step and no external assets.
+
+## Click through it
+
+[`diagrams/architecture-interactive.html`](diagrams/architecture-interactive.html)
+is the same content as a single self-contained page you step through: four
+flows — fault triage, the human decision, an abstention, and live-model spend —
+with the payload at each step, a mock/live toggle, and a dark/light theme.
+Clone and open it in a browser; GitHub will not render it inline.
+
+Built from the [architecture-diagram
+skill](https://github.com/konraddzbik/architecture-diagram-skill) (MIT).
