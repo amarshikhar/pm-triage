@@ -33,24 +33,21 @@
   --sans:ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
   --mono:ui-monospace,SFMono-Regular,"SF Mono","Cascadia Mono","Roboto Mono",Menlo,Consolas,monospace;
 }
+/* This deck deliberately commits to one light visual world: slides are printed
+   and projected, and the inlined architecture plates are drawn on white. A dark
+   viewer preference — OS-level or the artifact theme toggle — must not repaint
+   them, so both signals resolve back to the same light tokens. */
 @media (prefers-color-scheme: dark){
   :root{
-    --paper:#0D1118; --panel:#141A24; --panel-2:#19212C;
-    --ink:#E9EDF3; --ink-2:#A3AEBF; --ink-3:#718095;
-    --rule:#232C3A; --rule-2:#34414F; --track:#1D2735;
-    --blue:#6E9BFF; --violet:#AE85FF; --amber:#E09A3E; --green:#2FBB8D;
-    --critical:#F2637E;
-    --blue-wash:#16233C; --violet-wash:#231B3A; --amber-wash:#2E2312; --green-wash:#0F2A22;
+    --paper:#FAFBFC; --panel:#FFFFFF; --panel-2:#F4F7FA;
+    --ink:#141821; --ink-2:#4A5567; --ink-3:#7B8797;
+    --rule:#E2E7EE; --rule-2:#CCD5E0; --track:#E6ECF3;
+    --blue:#2563EB; --violet:#7C3AED; --amber:#C2710A; --green:#07845C;
+    --critical:#C2334D;
+    --blue-wash:#EEF3FE; --violet-wash:#F5EFFE; --amber-wash:#FDF3E3; --green-wash:#E7F6EF;
   }
 }
-:root[data-theme="dark"]{
-  --paper:#0D1118; --panel:#141A24; --panel-2:#19212C;
-  --ink:#E9EDF3; --ink-2:#A3AEBF; --ink-3:#718095;
-  --rule:#232C3A; --rule-2:#34414F; --track:#1D2735;
-  --blue:#6E9BFF; --violet:#AE85FF; --amber:#E09A3E; --green:#2FBB8D;
-  --critical:#F2637E;
-  --blue-wash:#16233C; --violet-wash:#231B3A; --amber-wash:#2E2312; --green-wash:#0F2A22;
-}
+:root[data-theme="dark"],
 :root[data-theme="light"]{
   --paper:#FAFBFC; --panel:#FFFFFF; --panel-2:#F4F7FA;
   --ink:#141821; --ink-2:#4A5567; --ink-3:#7B8797;
@@ -59,6 +56,7 @@
   --critical:#C2334D;
   --blue-wash:#EEF3FE; --violet-wash:#F5EFFE; --amber-wash:#FDF3E3; --green-wash:#E7F6EF;
 }
+:root{color-scheme:light}
 
 /* ---------- shell ---------- */
 *{box-sizing:border-box}
