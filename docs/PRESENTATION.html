@@ -1,0 +1,789 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PM Triage — five-slide presentation</title>
+<meta name="description" content="Predictive-maintenance triage: architecture, measured evaluation results, and the rubric this artifact is judged against.">
+<style>*{margin:0}</style>
+</head>
+<body>
+<!--
+  PM Triage — five-slide presentation deck.
+
+  Self-contained: no build step, no external assets, no network. Edit this file
+  directly. Arrow keys / space advance; File > Print gives five landscape pages.
+
+  Slide 2's figure is diagrams/architecture-hero.svg inlined and cropped to
+  viewBox "0 124 1440 236" (the flow only — the deck supplies its own title).
+  If that diagram changes, re-copy its <svg> contents here and keep the crop.
+-->
+
+<title>PM Triage — five-slide presentation</title>
+<style>
+/* ---------- tokens ---------- */
+:root{
+  --paper:#FAFBFC; --panel:#FFFFFF; --panel-2:#F4F7FA;
+  --ink:#141821; --ink-2:#4A5567; --ink-3:#7B8797;
+  --rule:#E2E7EE; --rule-2:#CCD5E0; --track:#E6ECF3;
+  --blue:#2563EB; --violet:#7C3AED; --amber:#C2710A; --green:#07845C;
+  --critical:#C2334D;
+  --blue-wash:#EEF3FE; --violet-wash:#F5EFFE; --amber-wash:#FDF3E3; --green-wash:#E7F6EF;
+  --plate:#FFFFFF; --plate-rule:#DDE4EC;
+  --sans:ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --mono:ui-monospace,SFMono-Regular,"SF Mono","Cascadia Mono","Roboto Mono",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --paper:#0D1118; --panel:#141A24; --panel-2:#19212C;
+    --ink:#E9EDF3; --ink-2:#A3AEBF; --ink-3:#718095;
+    --rule:#232C3A; --rule-2:#34414F; --track:#1D2735;
+    --blue:#6E9BFF; --violet:#AE85FF; --amber:#E09A3E; --green:#2FBB8D;
+    --critical:#F2637E;
+    --blue-wash:#16233C; --violet-wash:#231B3A; --amber-wash:#2E2312; --green-wash:#0F2A22;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#0D1118; --panel:#141A24; --panel-2:#19212C;
+  --ink:#E9EDF3; --ink-2:#A3AEBF; --ink-3:#718095;
+  --rule:#232C3A; --rule-2:#34414F; --track:#1D2735;
+  --blue:#6E9BFF; --violet:#AE85FF; --amber:#E09A3E; --green:#2FBB8D;
+  --critical:#F2637E;
+  --blue-wash:#16233C; --violet-wash:#231B3A; --amber-wash:#2E2312; --green-wash:#0F2A22;
+}
+:root[data-theme="light"]{
+  --paper:#FAFBFC; --panel:#FFFFFF; --panel-2:#F4F7FA;
+  --ink:#141821; --ink-2:#4A5567; --ink-3:#7B8797;
+  --rule:#E2E7EE; --rule-2:#CCD5E0; --track:#E6ECF3;
+  --blue:#2563EB; --violet:#7C3AED; --amber:#C2710A; --green:#07845C;
+  --critical:#C2334D;
+  --blue-wash:#EEF3FE; --violet-wash:#F5EFFE; --amber-wash:#FDF3E3; --green-wash:#E7F6EF;
+}
+
+/* ---------- shell ---------- */
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);
+     -webkit-font-smoothing:antialiased}
+.viewport{min-height:100vh;display:flex;flex-direction:column;align-items:center;
+          justify-content:center;gap:14px;padding:16px}
+.stage{position:relative;overflow:hidden;border-radius:10px}
+.slide{position:absolute;top:0;left:0;width:1440px;height:810px;
+       transform-origin:0 0;background:var(--panel);
+       border:1px solid var(--rule);border-radius:10px;
+       padding:48px 56px 60px;display:none;flex-direction:column}
+.slide.on{display:flex}
+
+/* ---------- slide furniture ---------- */
+.eyebrow{font-family:var(--mono);font-size:10.5px;letter-spacing:.18em;
+         text-transform:uppercase;color:var(--ink-3);display:flex;gap:14px;align-items:center}
+.eyebrow b{color:var(--blue);font-weight:600}
+.eyebrow .sep{width:20px;height:1px;background:var(--rule-2)}
+h1.title{font-size:40px;line-height:1.08;letter-spacing:-.022em;font-weight:700;
+         margin:14px 0 0;text-wrap:balance;max-width:24ch}
+h1.title.wide{max-width:60ch;font-size:34px}
+.lede{font-size:15px;line-height:1.56;color:var(--ink-2);margin:14px 0 0;max-width:66ch}
+.lede strong{color:var(--ink);font-weight:600}
+h2.sec{font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;
+       color:var(--ink-3);font-weight:600;margin:0 0 9px;
+       padding-bottom:6px;border-bottom:1px solid var(--rule)}
+.foot{position:absolute;left:56px;right:56px;bottom:22px;display:flex;
+      justify-content:space-between;align-items:center;
+      font-family:var(--mono);font-size:10px;letter-spacing:.1em;
+      text-transform:uppercase;color:var(--ink-3)}
+
+/* ---------- generic layout ---------- */
+.row{display:flex;gap:28px}
+.col{display:flex;flex-direction:column;gap:14px;min-width:0}
+.grow{flex:1;min-width:0}
+.body{display:flex;flex-direction:column;gap:18px;margin-top:20px;flex:1;min-height:0}
+.body > *{flex:none}   /* a slide never shrinks its own content */
+
+/* ---------- plate (a diagram is a printed plate, in both themes) ---------- */
+.plate{background:var(--plate);border:1px solid var(--plate-rule);border-radius:12px;
+       padding:11px 13px;flex:none}
+.plate svg{display:block;width:100%;height:auto}
+.plate-cap{font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;
+           color:#8B95A5;margin:0 0 8px}
+
+/* ---------- owner chips ---------- */
+.owners{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.owner{border:1px solid var(--rule);border-radius:10px;padding:11px 14px 12px;
+       background:var(--panel-2);display:flex;flex-direction:column;gap:6px}
+.owner .who{display:flex;align-items:center;gap:8px;font-family:var(--mono);
+            font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;font-weight:600;color:var(--ink-2)}
+.swatch{width:10px;height:10px;border-radius:3px;flex:none}
+.owner .what{font-size:13px;line-height:1.45;color:var(--ink)}
+.owner .where{font-family:var(--mono);font-size:10.5px;color:var(--ink-3);line-height:1.5}
+.sw-blue{background:var(--blue)} .sw-violet{background:var(--violet)}
+.sw-amber{background:var(--amber)} .sw-green{background:var(--green)}
+
+/* ---------- tables ---------- */
+table{border-collapse:collapse;width:100%;font-size:12px}
+th,td{text-align:left;padding:6px 9px;border-bottom:1px solid var(--rule);vertical-align:top;
+      line-height:1.42}
+thead th{font-family:var(--mono);font-size:9.5px;letter-spacing:.11em;text-transform:uppercase;
+         color:var(--ink-3);font-weight:600;border-bottom:1px solid var(--rule-2);padding-bottom:8px}
+tbody tr:last-child td{border-bottom:none}
+td.num,th.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabular-nums;
+              font-size:12px;white-space:nowrap}
+td.k{color:var(--ink);font-weight:500;width:38%}
+td.v{color:var(--ink-2)}
+code,.mono{font-family:var(--mono);font-size:11.5px;color:var(--ink-2)}
+tr.band td{background:var(--panel-2)}
+
+/* ---------- stat tiles ---------- */
+.tiles{display:grid;gap:10px}
+.tiles.t4{grid-template-columns:repeat(4,1fr)}
+.tiles.t5{grid-template-columns:repeat(5,1fr)}
+.tile{border:1px solid var(--rule);border-radius:9px;padding:11px 13px;background:var(--panel-2)}
+.tile .lab{font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;
+           color:var(--ink-3);display:block;margin-bottom:5px}
+.tile .val{font-size:21px;font-weight:650;letter-spacing:-.02em;line-height:1.1;display:block}
+.tile .sub{font-size:11px;color:var(--ink-3);display:block;margin-top:3px;line-height:1.4}
+
+/* ---------- unit charts ---------- */
+.units{display:flex;flex-direction:column;gap:13px}
+.unit-row{display:flex;flex-direction:column;gap:6px}
+.unit-head{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.unit-name{font-size:12px;color:var(--ink);font-weight:550}
+.unit-n{font-family:var(--mono);font-size:10.5px;color:var(--ink-3);
+        font-variant-numeric:tabular-nums;white-space:nowrap}
+.cells{display:flex;flex-wrap:wrap;gap:3px}
+.cell{width:15px;height:15px;border-radius:4px;flex:none}
+.cell.correct{background:var(--green)}
+.cell.wrong{background:var(--critical)}
+.cell.abstain{background:var(--track);
+  background-image:repeating-linear-gradient(45deg,transparent 0 3px,var(--rule-2) 3px 4.5px)}
+.legend{display:flex;gap:16px;flex-wrap:wrap;align-items:center;
+        font-family:var(--mono);font-size:10px;letter-spacing:.06em;
+        text-transform:uppercase;color:var(--ink-2)}
+.legend span{display:flex;align-items:center;gap:6px}
+.key{width:11px;height:11px;border-radius:3px;flex:none}
+
+/* ---------- weight meters ---------- */
+.meter{height:7px;background:var(--track);border-radius:4px;overflow:hidden;min-width:70px}
+.meter i{display:block;height:100%;background:var(--blue);border-radius:0 4px 4px 0}
+.wt{display:flex;align-items:center;gap:8px}
+.wt .pct{font-family:var(--mono);font-variant-numeric:tabular-nums;color:var(--ink);
+         font-weight:600;font-size:12px}
+
+/* ---------- callouts ---------- */
+.note{border-left:3px solid var(--blue);background:var(--blue-wash);
+      border-radius:0 8px 8px 0;padding:10px 13px;font-size:12px;line-height:1.5;color:var(--ink-2)}
+.note strong{color:var(--ink);font-weight:600}
+.note.warn{border-left-color:var(--amber);background:var(--amber-wash)}
+.note.gate{border-left-color:var(--green);background:var(--green-wash)}
+.list{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px;
+      font-size:12px;line-height:1.46;color:var(--ink-2)}
+.list li{padding-left:16px;position:relative}
+.list li::before{content:"";position:absolute;left:0;top:8px;width:6px;height:1.5px;
+                 background:var(--rule-2)}
+.list li b{color:var(--ink);font-weight:600}
+
+/* ---------- runtime map (slide 03) ---------- */
+.rail{border:1px solid var(--rule);border-radius:10px;padding:10px 14px;background:var(--panel-2);
+      display:flex;align-items:center;justify-content:space-between;gap:16px}
+.rail .rl{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+          color:var(--ink-3);font-weight:600;white-space:nowrap}
+.rail .rd{font-size:12px;color:var(--ink-2);line-height:1.45}
+.rail .rt{font-family:var(--mono);font-size:10.5px;color:var(--ink-3);white-space:nowrap}
+.hop{font-family:var(--mono);font-size:10px;letter-spacing:.1em;color:var(--ink-3);
+     text-align:center;text-transform:uppercase}
+.mods{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.mod{border:1px solid var(--rule);border-radius:10px;background:var(--panel);overflow:hidden}
+.mod > h3{margin:0;font-family:var(--mono);font-size:9.5px;letter-spacing:.11em;text-transform:uppercase;
+          font-weight:600;padding:8px 12px;border-bottom:1px solid var(--rule);color:#fff}
+.mod-ingest > h3{background:var(--ink-2)}
+.mod-detect > h3{background:var(--blue)}
+.mod-agent  > h3{background:var(--amber)}
+.mod-decide > h3{background:var(--green)}
+.mod ul{margin:0;padding:9px 12px 11px;list-style:none;display:flex;flex-direction:column;gap:8px}
+.mod li{display:flex;flex-direction:column;gap:2px}
+.mod .f{font-family:var(--mono);font-size:10.5px;color:var(--ink);font-weight:550;word-break:break-word}
+.mod .d{font-size:10.5px;line-height:1.4;color:var(--ink-3)}
+
+/* ---------- nav ---------- */
+.controls{display:flex;align-items:center;gap:14px;font-family:var(--mono);font-size:11px;
+          color:var(--ink-3)}
+.controls button{font:inherit;font-size:11px;letter-spacing:.06em;text-transform:uppercase;
+                 background:var(--panel);color:var(--ink-2);border:1px solid var(--rule);
+                 border-radius:7px;padding:6px 12px;cursor:pointer}
+.controls button:hover{border-color:var(--rule-2);color:var(--ink)}
+.controls button:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+.rail-dots{display:flex;gap:5px}
+.rail-dots button{padding:0;border:none;background:var(--track);width:26px;height:5px;
+                  border-radius:3px;cursor:pointer}
+.rail-dots button[aria-current="true"]{background:var(--blue)}
+.counter{font-variant-numeric:tabular-nums;letter-spacing:.1em}
+
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+
+/* ---------- print: five landscape pages ---------- */
+@media print{
+  @page{size:1440px 810px;margin:0}
+  .viewport{display:block;padding:0;min-height:0}
+  .controls{display:none}
+  .stage{width:auto!important;height:auto!important;overflow:visible;border-radius:0}
+  .slide{display:flex!important;position:relative;transform:none!important;
+         border:none;border-radius:0;break-after:page;page-break-after:always}
+  .slide:last-child{break-after:auto;page-break-after:auto}
+}
+</style>
+
+<div class="viewport">
+<div class="stage" id="stage">
+
+<!-- ============================= 01 ============================= -->
+<section class="slide on" aria-label="Slide 1">
+  <div class="eyebrow"><b>01 / 05</b><i class="sep"></i>What it is</div>
+  <h1 class="title wide">Telemetry goes in. A person signs the work order.</h1>
+
+  <div class="body">
+    <div class="row">
+      <div class="col grow">
+        <p class="lede" style="margin-top:0;max-width:none">
+          PM&nbsp;Triage turns condition-monitoring telemetry into an evidence-backed maintenance
+          case. <strong>Deterministic rules detect</strong> the abnormal reading.
+          <strong>Physics rules plus one narrow trained model name the fault — or abstain.</strong>
+          A language model retrieves precedent, explains the evidence and drafts the work order.
+          A <strong>named planner must approve</strong> before an idempotent adapter writes anything
+          to the maintenance system of record. No AI step can move a machine, set a priority,
+          or authorize work. That boundary is structural, not a policy note.
+        </p>
+      </div>
+      <div style="width:330px;flex:none">
+        <h2 class="sec">Verified</h2>
+        <div class="tiles" style="grid-template-columns:1fr 1fr">
+          <div class="tile"><span class="lab">Backend tests</span><span class="val">105</span><span class="sub">all passing</span></div>
+          <div class="tile"><span class="lab">Frontend</span><span class="val">Build ✓</span><span class="sub">Next.js production build</span></div>
+          <div class="tile"><span class="lab">Deployed</span><span class="val">Live</span><span class="sub">Vercel · Render · Supabase</span></div>
+          <div class="tile"><span class="lab">Default run cost</span><span class="val">$0.00</span><span class="sub">mock mode even with a key</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <h2 class="sec">Four owners — and no owner can quietly take another's job</h2>
+      <div class="owners">
+        <div class="owner">
+          <div class="who"><i class="swatch sw-blue"></i>Deterministic code</div>
+          <div class="what">Is this reading abnormal? How urgent is it?</div>
+          <div class="where">detector.py · classifier.py<br>priority.py · calibration.py</div>
+        </div>
+        <div class="owner">
+          <div class="who"><i class="swatch sw-violet"></i>Trained model</div>
+          <div class="what">One job only: suction vs discharge restriction on the SKAB pump.</div>
+          <div class="where">ml_classifier.py<br>Extra Trees + IsolationForest</div>
+        </div>
+        <div class="owner">
+          <div class="who"><i class="swatch sw-amber"></i>Language model</div>
+          <div class="what">Precedent, explanation, recommended actions, work-order prose.</div>
+          <div class="where">agent/triage.py · agent/llm.py<br>three read-only tools</div>
+        </div>
+        <div class="owner">
+          <div class="who"><i class="swatch sw-green"></i>Named human</div>
+          <div class="what">Does any work actually happen? Every case, every time.</div>
+          <div class="where">POST /cases/{id}/decision<br>token + reviewer name</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col grow">
+        <h2 class="sec">What is real</h2>
+        <table>
+          <tbody>
+            <tr><td class="k">Application code and workflow</td><td class="v">Production code running on Vercel and Render</td></tr>
+            <tr><td class="k">Database</td><td class="v">Supabase Postgres via SQLAlchemy; SQLite locally and in tests</td></tr>
+            <tr><td class="k">SKAB / CWRU telemetry</td><td class="v">Recorded laboratory data, curated into eight replay episodes</td></tr>
+            <tr><td class="k">CMMS interface</td><td class="v">Real HTTP contract, schema mapping, retries, idempotency</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="col grow">
+        <h2 class="sec">What is not — say this before you are asked</h2>
+        <table>
+          <tbody>
+            <tr><td class="k">CMMS system</td><td class="v">A mock FastAPI app mounted in the same deployment, sharing the database</td></tr>
+            <tr><td class="k">Fleet telemetry</td><td class="v">Eight simulated assets: Gaussian baselines plus deterministic fault ramps</td></tr>
+            <tr><td class="k">CWRU transition</td><td class="v">Real healthy and faulty steady states concatenated — not a natural run-to-failure</td></tr>
+            <tr><td class="k">Maintenance history</td><td class="v">Seeded realistic demo records, not a customer CMMS export</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="foot"><span>PM Triage — predictive-maintenance triage</span><span>Evidence current as of 2026-07-19</span></div>
+</section>
+
+<!-- ============================= 02 ============================= -->
+<section class="slide" aria-label="Slide 2">
+  <div class="eyebrow"><b>02 / 05</b><i class="sep"></i>Architecture — the flow</div>
+  <h1 class="title wide">One abnormal reading, left to right</h1>
+
+  <div class="body" style="gap:13px">
+    <div class="plate">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 124 1440 236" preserveAspectRatio="xMidYMid meet" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" role="img" aria-label="PM Triage architecture: telemetry is detected by deterministic code, classified by physics rules and a narrow trained model, explained by a language model, then approved by a named human before any CMMS work order exists.">
+<defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 1 L 9 5 L 0 9 z" fill="#9BA7B7"/></marker><filter id="sh" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#1B2434" flood-opacity="0.07"/></filter></defs>
+<rect x="0.0" y="0.0" width="1440.0" height="600.0" rx="0" fill="#FFFFFF" stroke="none" stroke-width="1.2" />
+<text x="48.0" y="56.0" font-size="27" fill="#141821" font-weight="700">PM Triage</text>
+<text x="48.0" y="84.0" font-size="14.5" fill="#606B7B" font-weight="400">How one abnormal sensor reading becomes an approved maintenance work order.</text>
+<rect x="32.0" y="128.0" width="906.0" height="224.0" rx="18" fill="#F7F9FB" stroke="none" stroke-width="1.2" />
+<rect x="958.0" y="128.0" width="450.0" height="224.0" rx="18" fill="#E7F6EF" stroke="none" stroke-width="1.2" />
+<text x="48.0" y="154.0" font-size="10" fill="#8B95A5" font-weight="700" letter-spacing="1.6">MACHINE PROPOSES</text>
+<text x="1392.0" y="154.0" font-size="10" fill="#07845C" font-weight="700" text-anchor="end" letter-spacing="1.6">HUMAN AUTHORIZES</text>
+<path d="M 948.0 140 L 948.0 340" stroke="#07845C" stroke-width="1.6" stroke-dasharray="5 5" opacity="0.75"/>
+<rect x="48.0" y="172.0" width="197.0" height="164.0" rx="14" fill="#FFFFFF" stroke="#E2E7EE" stroke-width="1.1" filter="url(#sh)"/>
+<rect x="64.0" y="190.0" width="54.5" height="19.0" rx="9.5" fill="#F1F4F8" stroke="none" stroke-width="1.2" />
+<text x="73.0" y="202.9" font-size="9.5" fill="#64748B" font-weight="700" letter-spacing="0.9">SOURCE</text>
+<text x="64.0" y="246.0" font-size="17" fill="#141821" font-weight="700">Telemetry</text>
+<text x="64.0" y="272.0" font-size="11.5" fill="#606B7B" font-weight="400">Eight simulated assets, plus real</text>
+<text x="64.0" y="289.0" font-size="11.5" fill="#606B7B" font-weight="400">SKAB pump and CWRU bearing</text>
+<text x="64.0" y="306.0" font-size="11.5" fill="#606B7B" font-weight="400">recordings replayed row by row.</text>
+<rect x="277.0" y="172.0" width="197.0" height="164.0" rx="14" fill="#FFFFFF" stroke="#E2E7EE" stroke-width="1.1" filter="url(#sh)"/>
+<rect x="293.0" y="190.0" width="97.0" height="19.0" rx="9.5" fill="#EEF3FE" stroke="none" stroke-width="1.2" />
+<text x="302.0" y="202.9" font-size="9.5" fill="#2563EB" font-weight="700" letter-spacing="0.9">DETERMINISTIC</text>
+<text x="293.0" y="246.0" font-size="17" fill="#141821" font-weight="700">Detect</text>
+<text x="293.0" y="272.0" font-size="11.5" fill="#606B7B" font-weight="400">Fixed engineering limits and a</text>
+<text x="293.0" y="289.0" font-size="11.5" fill="#606B7B" font-weight="400">robust median/MAD excursion that</text>
+<text x="293.0" y="306.0" font-size="11.5" fill="#606B7B" font-weight="400">must persist before it raises a case.</text>
+<rect x="506.0" y="172.0" width="197.0" height="164.0" rx="14" fill="#FFFFFF" stroke="#E2E7EE" stroke-width="1.1" filter="url(#sh)"/>
+<rect x="522.0" y="190.0" width="97.0" height="19.0" rx="9.5" fill="#F1F4F8" stroke="none" stroke-width="1.2" />
+<text x="531.0" y="202.9" font-size="9.5" fill="#64748B" font-weight="700" letter-spacing="0.9">RULES + MODEL</text>
+<text x="522.0" y="246.0" font-size="17" fill="#141821" font-weight="700">Classify</text>
+<rect x="522.0" y="260.0" width="165.0" height="31.0" rx="8" fill="#EEF3FE" stroke="none" stroke-width="1.2" />
+<rect x="522.0" y="260.0" width="3.5" height="31.0" rx="1.75" fill="#2563EB" stroke="none" stroke-width="1.2" />
+<text x="534.0" y="274.0" font-size="11.5" fill="#2563EB" font-weight="700">Physics rules</text>
+<text x="534.0" y="286.0" font-size="10" fill="#606B7B" font-weight="400">own every clear fault</text>
+<rect x="522.0" y="296.0" width="165.0" height="31.0" rx="8" fill="#F5EFFE" stroke="none" stroke-width="1.2" />
+<rect x="522.0" y="296.0" width="3.5" height="31.0" rx="1.75" fill="#7C3AED" stroke="none" stroke-width="1.2" />
+<text x="534.0" y="310.0" font-size="11.5" fill="#7C3AED" font-weight="700">Trained model</text>
+<text x="534.0" y="322.0" font-size="10" fill="#606B7B" font-weight="400">owns one overlapping pair</text>
+<rect x="735.0" y="172.0" width="197.0" height="164.0" rx="14" fill="#FFFFFF" stroke="#E2E7EE" stroke-width="1.1" filter="url(#sh)"/>
+<rect x="751.0" y="190.0" width="103.1" height="19.0" rx="9.5" fill="#FDF3E3" stroke="none" stroke-width="1.2" />
+<text x="760.0" y="202.9" font-size="9.5" fill="#C2710A" font-weight="700" letter-spacing="0.9">LANGUAGE MODEL</text>
+<text x="751.0" y="246.0" font-size="17" fill="#141821" font-weight="700">Explain</text>
+<text x="751.0" y="272.0" font-size="11.5" fill="#606B7B" font-weight="400">Writes the case: evidence, cited</text>
+<text x="751.0" y="289.0" font-size="11.5" fill="#606B7B" font-weight="400">past work orders, recommended</text>
+<text x="751.0" y="306.0" font-size="11.5" fill="#606B7B" font-weight="400">actions, a drafted work order.</text>
+<rect x="964.0" y="172.0" width="197.0" height="164.0" rx="14" fill="#FFFFFF" stroke="#E2E7EE" stroke-width="1.1" filter="url(#sh)"/>
+<rect x="980.0" y="190.0" width="48.4" height="19.0" rx="9.5" fill="#E7F6EF" stroke="none" stroke-width="1.2" />
+<text x="989.0" y="202.9" font-size="9.5" fill="#07845C" font-weight="700" letter-spacing="0.9">HUMAN</text>
+<text x="980.0" y="246.0" font-size="17" fill="#141821" font-weight="700">Decide</text>
+<text x="980.0" y="272.0" font-size="11.5" fill="#606B7B" font-weight="400">A named planner approves, edits</text>
+<text x="980.0" y="289.0" font-size="11.5" fill="#606B7B" font-weight="400">or rejects. Priority P1–P4 comes</text>
+<text x="980.0" y="306.0" font-size="11.5" fill="#606B7B" font-weight="400">from a formula, not from a model.</text>
+<rect x="1193.0" y="172.0" width="197.0" height="164.0" rx="14" fill="#FFFFFF" stroke="#E2E7EE" stroke-width="1.1" filter="url(#sh)"/>
+<rect x="1209.0" y="190.0" width="115.2" height="19.0" rx="9.5" fill="#E7F6EF" stroke="none" stroke-width="1.2" />
+<text x="1218.0" y="202.9" font-size="9.5" fill="#07845C" font-weight="700" letter-spacing="0.9">SYSTEM OF RECORD</text>
+<text x="1209.0" y="246.0" font-size="17" fill="#141821" font-weight="700">Act</text>
+<text x="1209.0" y="272.0" font-size="11.5" fill="#606B7B" font-weight="400">An idempotent work order lands</text>
+<text x="1209.0" y="289.0" font-size="11.5" fill="#606B7B" font-weight="400">in the CMMS over HTTP, retried</text>
+<text x="1209.0" y="306.0" font-size="11.5" fill="#606B7B" font-weight="400">on failure, never duplicated.</text>
+<path d="M 252.0 254.0 L 270.0 254.0" stroke="#9BA7B7" stroke-width="1.7" marker-end="url(#ah)" fill="none"/>
+<path d="M 481.0 254.0 L 499.0 254.0" stroke="#9BA7B7" stroke-width="1.7" marker-end="url(#ah)" fill="none"/>
+<path d="M 710.0 254.0 L 728.0 254.0" stroke="#9BA7B7" stroke-width="1.7" marker-end="url(#ah)" fill="none"/>
+<path d="M 939.0 254.0 L 932.0 254.0" stroke="#9BA7B7" stroke-width="1.7" marker-end="url(#ah)" fill="none"/>
+<path d="M 964.0 254.0 L 957.0 254.0" stroke="#9BA7B7" stroke-width="1.7" marker-end="url(#ah)" fill="none"/>
+<path d="M 1168.0 254.0 L 1186.0 254.0" stroke="#9BA7B7" stroke-width="1.7" marker-end="url(#ah)" fill="none"/>
+<circle cx="948.0" cy="254.0" r="14" fill="#FFFFFF" stroke="#07845C" stroke-width="1.6"/>
+<rect x="943.0" y="253.0" width="10" height="8" rx="2" fill="#07845C"/>
+<path d="M 945.0 253.0 v -2.5 a 3 3 0 0 1 6 0 v 2.5" stroke="#07845C" stroke-width="1.5" fill="none"/>
+<rect x="48.0" y="386.0" width="432.0" height="44.0" rx="11" fill="#FFFFFF" stroke="#E2E7EE" stroke-width="1.1" />
+<circle cx="68.0" cy="408.0" r="4.5" fill="#2563EB"/>
+<text x="84.0" y="406.0" font-size="12.5" fill="#141821" font-weight="600">It abstains below 0.45 confidence</text>
+<text x="84.0" y="421.0" font-size="12.5" fill="#606B7B" font-weight="400">instead of guessing</text>
+<rect x="504.0" y="386.0" width="432.0" height="44.0" rx="11" fill="#FFFFFF" stroke="#E2E7EE" stroke-width="1.1" />
+<circle cx="524.0" cy="408.0" r="4.5" fill="#C2710A"/>
+<text x="540.0" y="406.0" font-size="12.5" fill="#141821" font-weight="600">The model never sets the fault class,</text>
+<text x="540.0" y="421.0" font-size="12.5" fill="#606B7B" font-weight="400">the priority or the work order</text>
+<rect x="960.0" y="386.0" width="432.0" height="44.0" rx="11" fill="#FFFFFF" stroke="#E2E7EE" stroke-width="1.1" />
+<circle cx="980.0" cy="408.0" r="4.5" fill="#07845C"/>
+<text x="996.0" y="406.0" font-size="12.5" fill="#141821" font-weight="600">No work order exists without</text>
+<text x="996.0" y="421.0" font-size="12.5" fill="#606B7B" font-weight="400">a named human approval</text>
+<rect x="48.0" y="456.0" width="1344.0" height="42.0" rx="11" fill="#FBFCFD" stroke="#E2E7EE" stroke-width="1.1" stroke-dasharray="4 4"/>
+<text x="720.0" y="482.0" font-size="12.5" fill="#606B7B" font-weight="400" text-anchor="middle">Append-only audit  ·  every detection, every model call, every decision, with its actor and timestamp</text>
+<text x="48.0" y="553.0" font-size="9.5" fill="#8B95A5" font-weight="700" letter-spacing="1.5">RUNS ON</text>
+<rect x="112.7" y="540.0" width="117.9" height="25.0" rx="12.5" fill="#F1F4F8" stroke="none" stroke-width="1.2" />
+<text x="123.7" y="556.5" font-size="11" fill="#606B7B" font-weight="700">Next.js · Vercel</text>
+<rect x="240.7" y="540.0" width="117.9" height="25.0" rx="12.5" fill="#F1F4F8" stroke="none" stroke-width="1.2" />
+<text x="251.7" y="556.5" font-size="11" fill="#606B7B" font-weight="700">FastAPI · Render</text>
+<rect x="368.6" y="540.0" width="123.9" height="25.0" rx="12.5" fill="#F1F4F8" stroke="none" stroke-width="1.2" />
+<text x="379.6" y="556.5" font-size="11" fill="#606B7B" font-weight="700">Supabase Postgres</text>
+<rect x="502.5" y="540.0" width="177.9" height="25.0" rx="12.5" fill="#F1F4F8" stroke="none" stroke-width="1.2" />
+<text x="513.5" y="556.5" font-size="11" fill="#606B7B" font-weight="700">CMMS as a separate service</text>
+<rect x="690.4" y="540.0" width="231.8" height="25.0" rx="12.5" fill="#F1F4F8" stroke="none" stroke-width="1.2" />
+<text x="701.4" y="556.5" font-size="11" fill="#606B7B" font-weight="700">OpenRouter · capped, off by default</text>
+<text x="1392.0" y="557.0" font-size="11" fill="#8B95A5" font-weight="400" text-anchor="end">Detail: docs/ARCHITECTURE.md</text>
+</svg>
+    </div>
+
+    <div class="note gate">
+      <strong>Everything left of the dashed line is a proposal.</strong>
+      A work order is created in exactly one place, after exactly one state transition, by a request
+      carrying a bearer token and a reviewer name — no autonomous path from telemetry to action.
+    </div>
+
+    <div class="row" style="gap:22px">
+      <div class="col grow">
+        <h2 class="sec">Who decides what</h2>
+        <table>
+          <thead><tr><th style="width:46%">Decision</th><th>Owner</th></tr></thead>
+          <tbody>
+            <tr><td class="k">Is this reading abnormal?</td><td class="v">Deterministic code — fixed limits, sustained robust median/MAD</td></tr>
+            <tr><td class="k">What kind of fault is it?</td><td class="v">Physics rules first; the trained model only for the overlapping pair</td></tr>
+            <tr><td class="k">Is the evidence strong enough to answer?</td><td class="v">Calibration on precedent and signature; below 0.45 it abstains</td></tr>
+            <tr><td class="k">How is it explained, what is proposed?</td><td class="v">The language model — mock or live, identical tool protocol</td></tr>
+            <tr><td class="k">How urgent is it?</td><td class="v">A published formula. The agent may move it one notch, never below P1</td></tr>
+            <tr><td class="k">Does any work actually happen?</td><td class="v">A named human, on every case, including high-confidence ones</td></tr>
+            <tr><td class="k">Where does approved work land?</td><td class="v">The CMMS, over HTTP, idempotently</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="col" style="width:436px;flex:none">
+        <h2 class="sec">Why the boundaries sit there</h2>
+        <ul class="list">
+          <li><b>Detection is deterministic</b> because it must be cheap, continuous and readable by a technician. The same reading always gives the same result.</li>
+          <li><b>The trained model is deliberately narrow.</b> A novelty score and an exact sensor-roster check make it abstain outside its job rather than answer confidently in a domain it never saw.</li>
+          <li><b>The language model never decides</b>, so a fluent wrong answer costs an explanation, not a maintenance action. And <b>confidence is grounded, not self-reported</b> — a model's own certainty tracks fluency, not correctness.</li>
+        </ul>
+        <div class="note" style="margin-top:2px">
+          <strong>Priority is arithmetic, not prose.</strong><br>
+          <span class="mono">score = criticality + 2×severity + min(recurrence,3) + 4 if safety</span><br>
+          P1 if safety or ≥13 · P2 ≥10 · P3 ≥7 · else P4
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="foot"><span>Figure 1 is <span class="mono">docs/diagrams/architecture-hero.svg</span></span><span>Blue = deterministic · violet = trained model · amber = language model · green = human</span></div>
+</section>
+
+<!-- ============================= 03 ============================= -->
+<section class="slide" aria-label="Slide 3">
+  <div class="eyebrow"><b>03 / 05</b><i class="sep"></i>Architecture — what runs where</div>
+  <h1 class="title wide">Every box is a real file or a real service</h1>
+
+  <div class="body" style="gap:13px">
+    <div class="rail">
+      <span class="rl">Browser</span>
+      <span class="rd">Next.js App Router on Vercel — <span class="mono">/ · /cases · /cases/[id] · /machines/[id] · /cmms · /audit · /eval</span>. <span class="mono">lib/api.ts</span> is the only network layer: one base URL, a bearer token on every state-changing call.</span>
+      <span class="rt">HTTPS · JSON</span>
+    </div>
+    <p class="hop">↓ &nbsp; bearer token on every write &nbsp; ↓</p>
+
+    <div>
+      <div class="rail" style="border-bottom-left-radius:0;border-bottom-right-radius:0;border-bottom:none">
+        <span class="rl">Backend</span>
+        <span class="rd">FastAPI on Render — one ASGI app, one async event loop. Telemetry keeps ticking while a serial worker performs triage; one physical machine event produces exactly one case.</span>
+        <span class="rt">release-pinned</span>
+      </div>
+      <div class="mods" style="border:1px solid var(--rule);border-top:none;border-radius:0 0 10px 10px;padding:10px;gap:10px">
+        <div class="mod mod-ingest">
+          <h3>Ingest</h3>
+          <ul>
+            <li><span class="f">simulator.py</span><span class="d">eight assets, one reading every 3 s; detection runs on every reading</span></li>
+            <li><span class="f">replay.py</span><span class="d">real SKAB pump and CWRU bearing episodes, replayed row by row</span></li>
+            <li><span class="f">POST /simulate/inject</span><span class="d">faults are manual in production — <span class="mono">SPONTANEOUS_FAULT_PROB=0</span></span></li>
+            <li><span class="f">retention.py</span><span class="d">raw telemetry pruned after 24 h; cases and audit events are records</span></li>
+          </ul>
+        </div>
+        <div class="mod mod-detect">
+          <h3>Detect + classify</h3>
+          <ul>
+            <li><span class="f">detector.py</span><span class="d">fixed limits + robust median/MAD, sustained; one case per event</span></li>
+            <li><span class="f">classifier.py</span><span class="d">signature rules over cross-signal trends — owns the clear faults</span></li>
+            <li><span class="f">ml_classifier.py</span><span class="d">Extra Trees, trained on one job: suction vs discharge restriction</span></li>
+            <li><span class="f">novelty + roster guard</span><span class="d">IsolationForest and an exact feature roster; unknown input abstains</span></li>
+          </ul>
+        </div>
+        <div class="mod mod-agent">
+          <h3>Agent</h3>
+          <ul>
+            <li><span class="f">agent/triage.py</span><span class="d">bounded tool loop; a provider failure falls back to the free policy</span></li>
+            <li><span class="f">agent/tools.py</span><span class="d">machine info · recent telemetry · history search · recurrence count</span></li>
+            <li><span class="f">agent/llm.py</span><span class="d">mock policy or OpenRouter — identical tool protocol</span></li>
+            <li><span class="f">agent/calibration.py</span><span class="d">grounds confidence in precedent and signature; below 0.45 it abstains</span></li>
+          </ul>
+        </div>
+        <div class="mod mod-decide">
+          <h3>Decide + write back</h3>
+          <ul>
+            <li><span class="f">priority.py</span><span class="d">P1–P4 from criticality, severity, recurrence, safety. Agent may ±1</span></li>
+            <li><span class="f">POST /cases/{id}/decision</span><span class="d">the only path to approval; needs a token and a named reviewer</span></li>
+            <li><span class="f">agent/cmms_adapter.py</span><span class="d">httpx + Idempotency-Key + retry, only after an approval</span></li>
+            <li><span class="f">audit.py</span><span class="d">append-only: system, agent, human:&lt;name&gt;, with a timestamp</span></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="note">
+      <span class="mono" style="font-size:12px;color:var(--ink)">app.mount("/cmms") → cmms/service.py</span> —
+      a separate ASGI service with its own work-order store. The triage backend reaches it
+      <strong>over HTTP with an idempotency key and a retry, never by importing it</strong>.
+      Point <span class="mono">CMMS_BASE_URL</span> at SAP or Maximo and nothing above this line changes.
+      P1–P4 becomes CMMS priority 1–4; temperature maps to OHE, pressure and flow to LOO, vibration to VIB,
+      cavitation to CAV; the case id becomes the idempotency key, so a retry returns the same order
+      instead of creating a duplicate.
+    </div>
+
+    <div class="row" style="gap:12px">
+      <div class="col grow"><div class="rail" style="align-items:flex-start;flex-direction:column;gap:6px">
+        <span class="rl">Supabase Postgres · schema pm_triage</span>
+        <span class="rd"><span class="mono">machines · telemetry · anomalies · triage_cases · llm_calls · maintenance_logs · audit_events</span>. SQLite locally and in tests — one domain model either way.</span>
+      </div></div>
+      <div class="col grow"><div class="rail" style="align-items:flex-start;flex-direction:column;gap:6px">
+        <span class="rl">OpenRouter · deepseek/deepseek-v4-flash · live mode only</span>
+        <span class="rd">Off by default: <span class="mono">LLM_MODE=mock</span> even when a key exists. 12 calls/day · $0.25/day · 700 output tokens per call. Every request is costed into <span class="mono">llm_calls</span>; over cap, the case finishes free and deterministic and says so in its trace.</span>
+      </div></div>
+      <div class="col grow"><div class="rail" style="align-items:flex-start;flex-direction:column;gap:6px">
+        <span class="rl">GitHub Actions</span>
+        <span class="rd"><span class="mono">keep-warm.yml</span> — a health ping every 10 minutes so the free Render instance answers a demo. It never runs triage. <span class="mono">eval.yml</span> — the offline evaluation suite.</span>
+      </div></div>
+    </div>
+  </div>
+
+  <div class="foot"><span>Full plate: <span class="mono">docs/diagrams/architecture-detail.svg</span> · click-through: <span class="mono">architecture-interactive.html</span></span><span>Arrows are the only paths between boxes</span></div>
+</section>
+
+<!-- ============================= 04 ============================= -->
+<section class="slide" aria-label="Slide 4">
+  <div class="eyebrow"><b>04 / 05</b><i class="sep"></i>Measured results</div>
+  <h1 class="title wide">Eight real episodes. Twenty-four synthetic faults. Every number in counts.</h1>
+
+  <div class="body" style="gap:10px">
+    <div class="tiles t4">
+      <div class="tile"><span class="lab">1 · Detection rate</span><span class="val" style="font-size:15px;font-weight:600">Did it notice?</span><span class="sub">Abnormal behaviour produced an anomaly at all.</span></div>
+      <div class="tile"><span class="lab">2 · Overall top-1</span><span class="val" style="font-size:15px;font-weight:600">Right, over everything</span><span class="sub">Every trial counts. An abstention counts as not correct.</span></div>
+      <div class="tile"><span class="lab">3 · Coverage</span><span class="val" style="font-size:15px;font-weight:600">How often it spoke</span><span class="sub">Cases where evidence was strong enough to name a class.</span></div>
+      <div class="tile"><span class="lab">4 · Selective accuracy</span><span class="val" style="font-size:15px;font-weight:600">Right when it spoke</span><span class="sub">Only among the cases it accepted. Always quote with coverage and n.</span></div>
+    </div>
+
+    <div class="row" style="gap:26px">
+      <div class="col" style="width:640px;flex:none;gap:10px">
+        <h2 class="sec">Every reported metric</h2>
+        <table>
+          <thead>
+            <tr>
+              <th style="width:40%">Metric</th>
+              <th class="num">Synthetic mock<br>n=24</th>
+              <th class="num">Real mock<br>n=8</th>
+              <th class="num">Real DeepSeek<br>n=8</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td class="k">Detection rate</td><td class="num">100%</td><td class="num">100%</td><td class="num">100%</td></tr>
+            <tr class="band"><td class="k">Hybrid classifier — overall top-1</td><td class="num">75.0%</td><td class="num">87.5% <span style="color:var(--ink-3)">7/8</span></td><td class="num">87.5% <span style="color:var(--ink-3)">7/8</span></td></tr>
+            <tr class="band"><td class="k">Hybrid classifier — coverage</td><td class="num">79.2%</td><td class="num">87.5% <span style="color:var(--ink-3)">7/8</span></td><td class="num">87.5% <span style="color:var(--ink-3)">7/8</span></td></tr>
+            <tr class="band"><td class="k">Hybrid classifier — selective accuracy</td><td class="num">94.7%</td><td class="num">100% <span style="color:var(--ink-3)">7/7</span></td><td class="num">100% <span style="color:var(--ink-3)">7/7</span></td></tr>
+            <tr><td class="k">Full system — raw top-1</td><td class="num">83.3%</td><td class="num">87.5%</td><td class="num">87.5% <span style="color:var(--ink-3)">7/8</span></td></tr>
+            <tr><td class="k">Full system — operational coverage</td><td class="num">79.2%</td><td class="num">87.5%</td><td class="num">75.0% <span style="color:var(--ink-3)">6/8</span></td></tr>
+            <tr><td class="k">Full system — selective accuracy</td><td class="num">89.5%</td><td class="num">100% <span style="color:var(--ink-3)">7/7</span></td><td class="num">100% <span style="color:var(--ink-3)">6/6</span></td></tr>
+            <tr><td class="k">Abstention</td><td class="num">20.8%</td><td class="num">12.5% <span style="color:var(--ink-3)">1/8</span></td><td class="num">25.0% <span style="color:var(--ink-3)">2/8</span></td></tr>
+            <tr><td class="k">Expected calibration error (ECE)</td><td class="num">0.207</td><td class="num">0.239</td><td class="num">0.148</td></tr>
+            <tr><td class="k">Scorer agreement / joint coverage</td><td class="num">100% / 4.2%</td><td class="num">100% / 100%</td><td class="num">100% / 75.0%</td></tr>
+            <tr><td class="k">Anomaly inside the labelled window</td><td class="num">—</td><td class="num">7/8</td><td class="num">7/8</td></tr>
+          </tbody>
+        </table>
+        <div class="note" style="padding:8px 12px;font-size:11.5px">
+          <strong>The one real abstention is the cavitation recording</strong> — routed to a planner
+          rather than forced into a valve class. That is the OOD gate working, not a miss.
+        </div>
+      </div>
+
+      <div class="col grow">
+        <h2 class="sec">Every trial, as a count — n really is this small</h2>
+        <div class="units" id="units"></div>
+        <div class="legend" style="margin-top:2px">
+          <span><i class="key" style="background:var(--green)"></i>Correct, accepted</span>
+          <span><i class="key" style="background:var(--critical)"></i>Wrong, accepted</span>
+          <span><i class="key cell abstain"></i>Abstained — routed to a planner</span>
+        </div>
+
+        <h2 class="sec" style="margin-top:10px">The paid live run, in full</h2>
+        <div class="tiles t5">
+          <div class="tile"><span class="lab">Cost</span><span class="val" style="font-size:17px">$0.0145</span><span class="sub">returned by OpenRouter</span></div>
+          <div class="tile"><span class="lab">Requests</span><span class="val" style="font-size:17px">34</span><span class="sub">provider turns, 8 cases</span></div>
+          <div class="tile"><span class="lab">Tokens</span><span class="val" style="font-size:17px">161,585</span><span class="sub">143,044 in · 18,541 out</span></div>
+          <div class="tile"><span class="lab">Mean latency</span><span class="val" style="font-size:17px">32.2 s</span><span class="sub">max 56.3 s per case</span></div>
+          <div class="tile"><span class="lab">Errors</span><span class="val" style="font-size:17px">0</span><span class="sub">no mock fallbacks</span></div>
+        </div>
+
+        <div class="note warn">
+          <strong>Never say “100% real-data accuracy.”</strong> Say “7/8 overall and 7/7 among accepted
+          classifier answers, on eight laboratory episodes.” ECE 0.148 means an average
+          confidence-to-accuracy mismatch of about 14.8 points — it does not mean 85.2% accuracy.
+          And do not compare the model's 75% coverage with the classifier's 87.5% without saying
+          both were 100% selective on n=8.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="foot"><span>Reports: <span class="mono">backend/eval-report.json</span> · <span class="mono">backend/eval-report-real.json</span> · live GitHub run <span class="mono">29692423022</span></span><span>Five SKAB pump + three CWRU bearing episodes</span></div>
+</section>
+
+<!-- ============================= 05 ============================= -->
+<section class="slide" aria-label="Slide 5">
+  <div class="eyebrow"><b>05 / 05</b><i class="sep"></i>How this is judged</div>
+  <h1 class="title wide">Six categories, and what each one is allowed to claim</h1>
+
+  <div class="body" style="gap:14px">
+    <table>
+      <thead>
+        <tr>
+          <th style="width:25%">Category</th>
+          <th style="width:10%">Weight</th>
+          <th style="width:37%">Evidence in this artifact</th>
+          <th>Do not overclaim</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="k">Solution architecture &amp; workflow design</td>
+          <td><div class="wt"><span class="pct">30%</span><span class="meter"><i style="width:100%"></i></span></div></td>
+          <td class="v">One owner per decision; the full telemetry-to-CMMS state machine; a fallback at every failure point.</td>
+          <td class="v">A focused working slice, not a complete plant platform.</td>
+        </tr>
+        <tr>
+          <td class="k">Software engineering &amp; SDLC</td>
+          <td><div class="wt"><span class="pct">25%</span><span class="meter"><i style="width:83%"></i></span></div></td>
+          <td class="v">Typed FastAPI and Next.js contracts, 105 backend tests, a production build, live deployment, retention.</td>
+          <td class="v">No formal SRE maturity or exhaustive browser E2E testing.</td>
+        </tr>
+        <tr>
+          <td class="k">Systems integration &amp; enterprise architecture</td>
+          <td><div class="wt"><span class="pct">20%</span><span class="meter"><i style="width:67%"></i></span></div></td>
+          <td class="v">REST APIs, Supabase Postgres, an HTTP anti-corruption adapter, schema translation, retries, idempotency.</td>
+          <td class="v">The mock CMMS is mounted in the same deployment and shares the database.</td>
+        </tr>
+        <tr>
+          <td class="k">Domain-embedded business architecture</td>
+          <td><div class="wt"><span class="pct">15%</span><span class="meter"><i style="width:50%"></i></span></div></td>
+          <td class="v">Criticality, engineering limits, signal features, precedent, P1–P4 priority, downtime exposure, a human planner.</td>
+          <td class="v">Thresholds, history and economics are demo inputs, not validated policy.</td>
+        </tr>
+        <tr>
+          <td class="k">Agentic AI / LLM engineering</td>
+          <td><div class="wt"><span class="pct">7%</span><span class="meter"><i style="width:23%"></i></span></div></td>
+          <td class="v">A bounded tool loop over three read-only tools, structured output, mock/live parity, an eval suite, provider fallback.</td>
+          <td class="v">The LLM owns no detection, no authorization, and cannot overrule a classifier verdict.</td>
+        </tr>
+        <tr>
+          <td class="k">Governance, observability &amp; control</td>
+          <td><div class="wt"><span class="pct">3%</span><span class="meter"><i style="width:10%"></i></span></div></td>
+          <td class="v">OOD rejection, abstention, mandatory approval, an append-only audit trail, call and dollar caps.</td>
+          <td class="v">Demo authentication is a signed crew-password session, not SSO or RBAC.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="row" style="gap:26px">
+      <div class="col grow">
+        <h2 class="sec">Limitations — volunteer these before you are challenged</h2>
+        <ul class="list">
+          <li><b>Eight laboratory episodes are development evidence</b>, not customer-site validation — and the frozen restriction test is only three physical recordings.</li>
+          <li><b>The trained layer solves one pair.</b> Everything else is a rule, or an abstention. <b>CWRU episodes are constructed transitions</b>, with redistribution terms still to confirm.</li>
+          <li><b>Process memory is not shared state.</b> The replay cursor and triage queue live in one process; multi-replica needs a durable broker and a crash-recovery scanner.</li>
+          <li><b>Schema setup uses <span class="mono">create_all</span></b>, not Alembic migrations. <b>The frontend polls</b>; it does not consume an event stream.</li>
+        </ul>
+      </div>
+      <div class="col" style="width:452px;flex:none">
+        <h2 class="sec">The sentence to close on</h2>
+        <div class="note gate" style="font-size:12.5px;line-height:1.5">
+          <strong>Rules detect. Rules plus narrow ML classify. The OOD gate can abstain.
+          The LLM explains and retrieves. A named human authorizes. An idempotent adapter
+          integrates the approved decision.</strong>
+          That division is the production design — not a limitation of the prototype.
+        </div>
+        <div class="note">
+          <strong>Next:</strong> customer-owned natural fault-onset recordings, especially discharge
+          and cavitation; an external validation set that tests the thresholds without changing
+          them; then monitor acceptance, selective accuracy and drift in production.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="foot"><span>Rubric weights as published by the assessment</span><span>Full defense: <span class="mono">docs/FDE_DEFENSE_MASTER_GUIDE.md</span></span></div>
+</section>
+
+</div>
+
+<nav class="controls" aria-label="Slide navigation">
+  <button type="button" id="prev">← Prev</button>
+  <div class="rail-dots" id="dots"></div>
+  <button type="button" id="next">Next →</button>
+  <span class="counter" id="counter">01 / 05</span>
+</nav>
+</div>
+
+<script>
+(function(){
+  var slides=[].slice.call(document.querySelectorAll('.slide'));
+  var stage=document.getElementById('stage');
+  var dots=document.getElementById('dots');
+  var counter=document.getElementById('counter');
+  var W=1440,H=810,i=0;
+
+  slides.forEach(function(s,n){
+    var b=document.createElement('button');
+    b.type='button'; b.setAttribute('aria-label','Go to slide '+(n+1));
+    b.addEventListener('click',function(){go(n);});
+    dots.appendChild(b);
+  });
+
+  function fit(){
+    var pad=32, navH=90;
+    var s=Math.min((window.innerWidth-pad)/W,(window.innerHeight-navH)/H);
+    s=Math.max(s,0.25);
+    stage.style.width=(W*s)+'px'; stage.style.height=(H*s)+'px';
+    slides.forEach(function(el){el.style.transform='scale('+s+')';});
+  }
+  function go(n){
+    i=Math.max(0,Math.min(slides.length-1,n));
+    slides.forEach(function(el,k){el.classList.toggle('on',k===i);});
+    [].slice.call(dots.children).forEach(function(b,k){
+      b.setAttribute('aria-current',k===i?'true':'false');
+    });
+    counter.textContent=('0'+(i+1)).slice(-2)+' / '+('0'+slides.length).slice(-2);
+  }
+  document.getElementById('prev').addEventListener('click',function(){go(i-1);});
+  document.getElementById('next').addEventListener('click',function(){go(i+1);});
+  window.addEventListener('keydown',function(e){
+    if(e.key==='ArrowRight'||e.key==='PageDown'||e.key===' '){e.preventDefault();go(i+1);}
+    else if(e.key==='ArrowLeft'||e.key==='PageUp'){e.preventDefault();go(i-1);}
+    else if(e.key==='Home'){go(0);} else if(e.key==='End'){go(slides.length-1);}
+  });
+  window.addEventListener('resize',fit);
+  fit(); go(0);
+
+  /* unit charts — one cell per trial */
+  var runs=[
+    {name:'Synthetic faults · full mock system',correct:17,wrong:2,abstain:5},
+    {name:'Real replay · hybrid rules + trained classifier',correct:7,wrong:0,abstain:1},
+    {name:'Real replay · live DeepSeek agent',correct:6,wrong:0,abstain:2}
+  ];
+  var host=document.getElementById('units');
+  if(host){
+    runs.forEach(function(r){
+      var n=r.correct+r.wrong+r.abstain;
+      var row=document.createElement('div'); row.className='unit-row';
+      var head=document.createElement('div'); head.className='unit-head';
+      head.innerHTML='<span class="unit-name">'+r.name+'</span>'+
+        '<span class="unit-n">'+r.correct+' correct · '+r.wrong+' wrong · '+
+        r.abstain+' abstained &nbsp;/&nbsp; n='+n+'</span>';
+      var cells=document.createElement('div'); cells.className='cells';
+      function add(k,c){for(var j=0;j<k;j++){var d=document.createElement('i');
+        d.className='cell '+c; cells.appendChild(d);} }
+      add(r.correct,'correct'); add(r.wrong,'wrong'); add(r.abstain,'abstain');
+      row.appendChild(head); row.appendChild(cells); host.appendChild(row);
+    });
+  }
+})();
+</script>
+
+</body>
+</html>
