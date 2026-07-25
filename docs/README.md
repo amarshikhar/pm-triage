@@ -2,6 +2,8 @@
 
 Start here:
 
+- [Architecture](ARCHITECTURE.md) — the one-glance diagram, the table of who
+  decides what, the runtime drill-down, and why each boundary is where it is.
 - [FDE defense master guide](FDE_DEFENSE_MASTER_GUIDE.md) — company-rubric
   mapping, seven-minute presentation, exact claims, counts, contingencies, and
   study order. This is the first document to learn.
