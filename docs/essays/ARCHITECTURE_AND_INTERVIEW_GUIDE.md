@@ -1,0 +1,439 @@
+# Architecture and interview guide, in essay form
+
+## The application in one sentence
+
+Machine readings enter the backend; deterministic code detects an abnormal
+pattern and proposes a fault signature; a mock policy or a live language model
+investigates using three read-only tools; calibration can abstain; a human
+approves, rejects, or edits; approval alone creates a CMMS work order; and every
+important transition is recorded.
+
+## The technology words in simple language
+
+An **API** is a defined way for one program to ask another program for data or
+for an action. In this system, the browser asks for case twelve by issuing a GET
+request to `/api/cases/12`, and it sends a POST to `/api/cases/12/decision` when
+a planner decides that case.
+
+**REST** is the common HTTP style used throughout. GET reads something; POST
+creates something or triggers an action; a URL names the resource, such as
+`/api/machines` or `/api/cases/12`; JSON is the body of both requests and
+responses; and status codes communicate outcomes. Two hundred means success, 401
+means not signed in, 404 means not found, 409 means a conflicting or already
+final decision, 422 means invalid input, and 502 means the downstream CMMS is
+unavailable.
+
+**FastAPI** is the Python web framework that exposes those REST endpoints. It
+maps a URL to a Python function, validates incoming bodies with Pydantic,
+injects a database session, and serialises the return value to JSON. It also
+serves the OpenAPI schema automatically.
+
+**Next.js** is the TypeScript and React framework for the browser interface. It
+renders the Fleet, Machine, Cases, CMMS, Audit, and Evaluation pages, calls the
+FastAPI REST endpoints, and updates the interface as fresh data arrives. It does
+not run the detector, and it makes no model decisions.
+
+**Render** hosts the Python and FastAPI backend; the `render.yaml` file tells it
+how to install Python packages, start Uvicorn, and set safe environment
+defaults. **Vercel** hosts the Next.js frontend, and the frontend's
+`NEXT_PUBLIC_API_URL` setting points it at the Render API.
+
+**pytest** runs the automated Python tests. The suite checks detector rules,
+signature classification, calibration, the agent tool loop, authentication, the
+paid-call caps, human decisions, CMMS translation and retry and idempotency, and
+the evaluation logic. The current result is 105 passing backend tests alongside
+a successful Next.js production build.
+
+The **Dockerfile** at `backend/Dockerfile` is a repeatable recipe for packaging
+the Python service: choose a Python base image, install requirements, copy the
+backend, start Uvicorn. Render currently uses its own native Python build
+instructions from `render.yaml`, so the Dockerfile stands as an alternative,
+portable deployment artifact.
+
+**Postgres** is the production relational database, and **Supabase** provides the
+hosted Postgres instance and the connection pooler. The application uses the
+`pm_triage` schema so that its tables do not collide with other applications.
+Supabase is not a separate logic layer here; it is simply the durable database
+service.
+
+**SQLAlchemy** is the Python database layer. Classes such as Machine, Anomaly,
+and TriageCase map onto database tables, and the same code works against local
+SQLite and against production Postgres, which keeps environment differences out
+of the business logic.
+
+**Pydantic** validates the API inputs. A language model mode must be live, mock,
+or auto; a decision must be approve, reject, or edit; a CMMS priority code must
+be between one and four. Invalid requests are rejected before any domain logic
+runs.
+
+**TypeScript** is JavaScript with type checking. The frontend declares the
+expected shape of a case, a machine, an evaluation report, a work order, and the
+language model budget, which catches many browser-to-backend contract mistakes
+during the build.
+
+Finally, **live telemetry and sparklines**. The backend adds readings on a
+timer, the frontend polls the API, and it draws a small SVG line chart — a
+sparkline — from the recent values. A sparkline is visual context, not the
+detector; the detector runs in Python against the stored readings.
+
+## The whole backend flow
+
+The sequence runs like this. The feed — either the simulator or one of the
+real-data replayers — inserts a telemetry reading into the database, then calls
+detection for that machine and reading. The detector reads the recent baseline
+and any open cases from the database, and when a rule fires it inserts an
+anomaly plus an audit event. It then passes the cross-signal statistics to the
+signature layer, which is the combination of rules, the trained classifier, and
+the out-of-distribution check.
+
+That signature layer hands the agent either a concrete class or an abstention.
+The agent, whether mock or live, performs a bounded three-tool investigation and
+inserts a triage case in the pending-review state, along with its own audit
+event. A human then approves, rejects, or edits, which is also audited.
+
+If the case is approved, a translated work-order POST goes to the CMMS carrying
+an idempotency key; the CMMS stores and returns the work order; and the backend
+saves the sync fields and writes a work-order-created audit event. If the case
+is rejected, the record simply notes that no downstream work order exists.
+
+## How telemetry is generated
+
+### The simulated machines
+
+There are eight simulated machines. Each type has baseline means and noise
+levels for temperature, vibration, pressure, and RPM.
+
+On every tick, random Gaussian noise produces a normal reading. If a fault is
+active, deterministic drift is added on top: for bearing wear, vibration rises
+and temperature also rises slowly; for overheat, temperature rises; for pressure
+loss, pressure falls; for cavitation, vibration rises while pressure oscillates.
+The reading is then inserted into the telemetry table, and detection runs
+immediately.
+
+Manual injection calls `POST /api/simulate/inject` with a machine and a fault. It
+places that fault into the simulator's active faults and temporarily bypasses
+duplicate alert suppression, so that the demonstration can produce one fresh
+case.
+
+Deduplication happens at the machine-event level rather than the individual
+signal level. Vibration RMS, kurtosis, crest factor, and RPM may all move during
+a single bearing episode, but they stay evidence attached to one anomaly and one
+case, rather than becoming four separate cases.
+
+Random injection still exists in the code for local experiments, but production
+sets the spontaneous fault probability to zero. Production faults therefore occur
+only after an authorised manual injection, which is what prevents accidental
+paid triage.
+
+### The real replay testbeds
+
+The machine `PMP-03` reads five SKAB CSV recordings: rotor imbalance,
+cavitation, two separate discharge-restriction recordings, and suction
+restriction. Each CSV row contains six signals and a label written by the dataset
+authors. That label is stored only as evaluation ground truth — neither the
+detector nor the agent can reach it.
+
+The machine `BRG-01` reads three CWRU bearing episodes: inner race, ball, and
+outer race. The curator verifies four official MATLAB downloads by SHA-256 hash
+and turns tenth-of-a-second accelerometer frames into RMS, kurtosis, crest
+factor, and RPM. Each episode concatenates a real healthy steady state with a
+real faulty steady state, which makes it a constructed transition suitable for
+evaluating ingestion, detection, and out-of-distribution behaviour, but not a
+natural run-to-failure recording. The provenance details live in
+`backend/data/CWRU_PROVENANCE.md`.
+
+The production loop emits one replay row per simulation interval, currently
+three seconds. The source files carry roughly one row per original second, so
+playback is substantially slower than the original experiment. A single episode
+of between 923 and 1,147 rows takes roughly forty-six to fifty-seven wall-clock
+minutes at a three-second tick, and all five SKAB files together come to 5,333
+rows, which is about four hours and twenty-seven minutes for a full cycle.
+
+So this is emphatically not an eighteen-minute production loop. The original
+recordings are about fifteen to nineteen minutes each, but the application emits
+them at one row every three seconds.
+
+The "Cue real fault" control skips ahead to forty-five healthy rows before the
+labelled fault window. At a three-second tick that is about 135 seconds of
+honest lead-in for the thirty-reading detector baseline. Sustained detection and
+triage add further time on top, which is why the interface says roughly two to
+three minutes before detection and then waits for case drafting. The cue
+response itself is immediate, and the audit row is written at that moment.
+
+Detection and triage run on different clocks, deliberately. Each telemetry or
+replay tick commits an anomaly and puts its id onto an in-process triage queue. A
+single worker then handles the slower classifier, language model, and tool loop
+in order, while the three-second feed keeps advancing. This is what prevents a
+thirty-to-sixty-second live model call from freezing every machine. It also
+means the anomaly timestamp means "rules fired", while the later case timestamp
+means "triage finished and the case was committed".
+
+The health endpoint also exposes Render's seven-character Git release id. This
+is non-secret deployment metadata, and it lets an operator distinguish "the
+endpoint is awake" from "the endpoint is running the commit I just released".
+
+For a demonstration, manual injection on `PMP-03` does not synthesise a fault at
+all. It calls `jump_to_fault`, which moves the cursor to forty-five rows before
+the labelled region: thirty rows to rebuild the detector baseline, and fifteen
+rows to preserve an honest healthy lead-in. Detection time still varies by
+episode — the current SKAB evaluation needed between forty-two and ninety-nine
+ticks, which is roughly 2.1 to 5.0 minutes at the production tick rate. The
+evaluation command-line tool runs ticks without sleeping, so evaluation
+completes quickly.
+
+## Detection in detail
+
+Detection is deterministic and rests on two independent rules.
+
+The first rule is the engineering limit. The machine catalog can define a limit
+and a direction — temperature above 92 degrees Celsius, say, or pressure below
+640 kilopascals. Severity is derived from how far beyond the limit the reading
+sits, and comes out as low, medium, or high.
+
+The second rule is the sustained robust excursion, which covers signals that
+have no reliable fixed limit. Here the detector compares the current value
+against the machine's own recent operating point. The baseline window is thirty
+readings; the centre is the median; the spread is the median absolute deviation,
+scaled to behave like a standard deviation; the trigger is a magnitude of more
+than four robust sigma; and the excursion must sustain across three consecutive
+readings. This matters particularly for SKAB, where healthy flow changes
+substantially between physical runs.
+
+Whenever an anomaly is recorded, the detector stores context for every signal,
+not only the breached one. That context includes the mean; the drift, meaning
+the later-half mean minus the earlier-half mean; the volatility percentage; the
+peak-to-peak range; the first-quarter and last-quarter means with their delta,
+percentage delta, and linear slope; the median, the median absolute deviation,
+and the standard deviation of the derivative; and the number of samples. This
+context object is the input to the signature classifier, and it is also shown to
+the planner.
+
+## The current classifier
+
+The classifier is hybrid. The file `backend/app/classifier.py` holds auditable
+physics signatures for the clear classes, while `backend/app/ml_classifier.py`
+loads a trained Extra Trees artifact only for the overlapping SKAB restriction
+family.
+
+Different sensor names are first mapped onto physical roles. The vibration role
+covers `vibration_mm_s`, `vibration_g`, and `vibration_rms_g`. The flow role
+covers `flow_lpm`. The pressure role covers `pressure_kpa` and `pressure_bar`.
+The load role covers `current_a` and `rpm`. The temperature role covers
+`temperature_c` and `temp_motor_c`. And the fluid temperature role covers
+`temp_fluid_c`. Drift is then normalised against each window's range, and helper
+features represent whether a signal is rising, falling, steady, volatile, or
+materially changed.
+
+The signatures themselves read as physical descriptions. Bearing wear is
+vibration activity, a small temperature rise, and steady pressure. Overheat is a
+material temperature rise with relatively steady vibration. Pressure loss is
+falling pressure with steady vibration. Cavitation is flow instability plus a
+pressure drop or jitter, with vibration support. Rotor imbalance is vibration
+activity while flow and pressure stay steady. And the suction and discharge
+restrictions share a falling flow and load, with pressure direction as the only
+— and weak — separator between them.
+
+The rules rank seven classes, and they abstain when the best score falls below
+0.56 or leads the runner-up by less than 0.07. On a replay context, the narrow
+trained layer also produces auditable routing metadata. If the rules abstain and
+the context is in-distribution for restrictions, Extra Trees chooses between
+suction and discharge.
+
+That model uses seventy-two ordered features: twelve window statistics for each
+of the six SKAB signals. It was trained on 510 windows drawn from seventeen
+physical experiments, with every validation fold holding out a complete
+experiment. Isotonic regression calibrates the discharge probability from
+out-of-fold predictions.
+
+The artifact also contains an IsolationForest, whose threshold comes from the
+tenth percentile of leave-one-experiment-out in-distribution novelty scores. A
+score below that threshold, a low calibrated class confidence, or a mismatched
+signal roster each mean abstain. The full split and metric evidence lives in the
+machine learning experiment essay.
+
+## The mock agent versus the live language model
+
+Both modes use the same tool schemas, the same tool dispatcher, the same
+downstream calibration, the same priority formula, the same case schema, the same
+human gate, and the same CMMS flow.
+
+There are exactly three read-only agent tools. The first,
+`get_machine_info(machine_id)`, returns the id, name, type, location,
+criticality, and signal definitions. The second,
+`get_recent_telemetry(machine_id, n)`, returns recent timestamped readings along
+with signal units. The third,
+`search_maintenance_history(machine_type, keywords, machine_id)`, searches the
+maintenance logs by term overlap, applies a boost for records from the same
+machine, and returns up to five records with their failure mode, symptoms, root
+cause, action, downtime, safety flag, record type, and match score. The
+ground-truth fault label is never included in any tool result.
+
+The deterministic mock is free and predictable. It always calls machine info,
+then telemetry, then maintenance history, in that order. It prefers corrective
+history over routine records, and then builds its answer from the
+highest-ranked match. It still uses real database rows and the actual production
+tool loop; only the language model's decision policy is scripted.
+
+The live model receives the system rules, the anomaly description and severity,
+the machine identity and type and criticality and location, the computed
+cross-signal context, and either the signature prior or an explanation of why the
+signature layer abstained. The model then chooses its tool calls and eventually
+returns JSON containing a root cause, a raw confidence, an explanation,
+recommended actions, cited work orders, and a proposed priority adjustment. The
+loop allows at most eight model turns.
+
+Every paid turn is reserved in the `llm_calls` ledger before it is sent, and the
+returned usage updates the exact token counts and cost. A failure or an
+exhausted cap restarts the free mock loop and records the reason in the trace.
+
+If a provider emits malformed JSON tool arguments, the backend does not guess
+what was meant, and it does not drop the case. It records an
+`invalid_tool_arguments` event, returns a structured tool error to the model, and
+gives the model another turn inside the same eight-step bound. This behaviour is
+covered by a regression test taken from the paid DeepSeek replay.
+
+## How a case is assembled
+
+The backend combines several different owners rather than trusting any one
+component.
+
+The anomaly value, threshold, z-score, and severity come from the deterministic
+detector, as does the signal context, which is that detector's own statistics.
+The class prediction, the ranking, and the out-of-distribution evidence come
+from the deterministic rules together with the narrow trained classifier. The
+precedent, explanation, actions, and citations come from either the mock policy
+or the live language model.
+
+The operational root cause is the concrete classifier class where one is
+available; otherwise it is the language model's draft, subject to the abstention
+gate. The recurrence count is a count of earlier cases on the same machine and
+the same metric. The priority base is a deterministic formula, and the plus or
+minus one adjustment is the agent's proposal, clamped — and a P1 can never be
+downgraded. Confidence and abstention come from deterministic calibration.
+
+The downtime estimate is the maximum downtime among the leading cited
+precedents, falling back to four hours if there are none. The cost exposure is
+the asset's hourly cost multiplied by that estimated downtime. The status is
+always pending review at creation. And the trace holds the anomaly, the
+signature analysis, each tool call, any fallback, and the final answer.
+
+### The priority formula
+
+The score is the machine criticality, on a one-to-five scale, plus twice the
+severity points, where low is one, medium is two, and high is three, plus the
+recurrence count capped at three, plus a safety flag worth four points when set
+and zero when not.
+
+A case is P1 if it is safety-related or scores thirteen or above. It is P2 at
+ten or above, P3 at seven or above, and P4 otherwise.
+
+The agent may propose one step more or less urgent. It cannot downgrade a P1.
+The human sees the complete breakdown and can edit the final decision.
+
+### Calibration and abstention
+
+The raw language model confidence is multiplied by three factors: a precedent
+factor derived from the best history match; a specificity factor that penalises
+non-diagnostic answers about transients or noise; and a signature factor
+reflecting agreement, conflict, or signature abstention.
+
+A concrete classifier verdict owns the operational class. If the language model's
+draft conflicts with it, a guard retains the classifier class, clears the
+unsupported citations, records the rejected draft, and defers to the planner.
+When both the rules and the machine learning and out-of-distribution layer
+abstain, confidence is capped at 0.44 — just under the 0.45 threshold.
+
+## The database tables
+
+There are eight tables. The `machines` table is the asset catalog, holding type,
+location, criticality, source, signals, limits, dataset provenance, and hourly
+cost. The `telemetry` table holds the raw readings as a machine, a timestamp,
+and a JSON object of dynamic values. The `anomalies` table is the detector's
+output: the breached metric, the value, the threshold, the z-score, the
+severity, the context JSON, and an evaluation-only label.
+
+The `maintenance_logs` table holds searchable precedents, each with a work-order
+id, symptoms, failure mode, root cause, action, downtime, safety flag, and
+record type. The `triage_cases` table is the human-review record, holding root
+cause, confidence, priority, actions, evidence, trace, status, reviewer, and the
+CMMS synchronisation fields. The `llm_calls` table is the paid-request ledger and
+the source of truth for the caps, holding timestamp, model, status, tokens,
+cost, and any error.
+
+The `audit_events` table is the accountability trail, holding actor, event type,
+entity, and detail. And the `cmms_work_orders` table holds the mock
+system-of-record output, with its CMMS-specific priority and damage fields and
+the idempotency key.
+
+The mock CMMS is a separate FastAPI application and a real domain boundary,
+mounted at `/cmms`, but in this demonstration it uses the same configured
+SQLAlchemy database and schema. The HTTP request and response and the foreign
+field mapping are real; it is not an independently deployed datastore.
+
+## The human decision and the CMMS mapping
+
+The decision endpoint accepts approve, reject, or edit. Authentication is
+required whenever the access password is configured, and the reviewer identity
+comes from the signed session token rather than from an arbitrary field in the
+request body. A case that has already been decided cannot be decided again.
+
+Rejection creates no work order. Approval, or approval with edits, calls the
+anti-corruption adapter, which translates the triage case into the CMMS's own
+vocabulary.
+
+The case id becomes the external reference, formatted as `triage-case-` followed
+by the id. The machine id becomes the equipment id directly, and the machine
+location becomes the functional location directly. The approved priority maps
+across from the internal scale to the CMMS codes: P1 becomes code one, "very
+high"; P2 becomes two, "high"; P3 becomes three, "medium"; and P4 becomes four,
+"low". The notification type is always M1, a malfunction report.
+
+The damage code is derived from the breached metric together with the root
+cause: cavitation becomes CAV, a temperature fault becomes OHE, a pressure or
+flow fault becomes LOO, a vibration fault becomes VIB, and anything else becomes
+OTH. The root cause also supplies the short text, truncated to its first forty
+characters, while the explanation, citations, downtime and cost, and reviewer are
+formatted into a narrative long text. The reviewer field records both the AI
+draft and the named human approval. And the case id is reused as the HTTP
+idempotency key, again in the `triage-case-` form.
+
+The CMMS returns an order id such as `4500000001` along with the status `OSNO`.
+Transport errors and 5xx responses are retried up to three times with
+exponential backoff, whereas a 4xx is treated as a mapping bug and is not
+retried. Crucially, the human decision is committed before the synchronisation
+attempt, so a CMMS outage can never lose an approval.
+
+## Audit versus case trace
+
+These are two different records with two different jobs. The case trace explains
+a single agent run: the anomaly, the signature prior, the tool arguments, the
+summarised tool results, any model or mock fallback, and the final answer. The
+audit trail records business state changes: detection, case creation, login and
+mode changes, the human decision, work-order success or failure or rejection, and
+retry outcomes.
+
+The trace is diagnostic evidence. The audit is accountability evidence.
+
+## What "GitHub Actions pings Render every ten minutes" means
+
+Render's free service can go to sleep when nobody is using it. The scheduled job
+in `.github/workflows/keep-warm.yml` sends an HTTP GET request to the backend's
+health URL every ten minutes. It is like briefly opening the application's front
+door so that the web process is less likely to be cold when a reviewer arrives.
+
+That request does not insert telemetry, inject faults, create cases, call a
+language model, touch the CMMS, or spend model credit. It only asks the health
+endpoint for its status. It is a demonstration-latency workaround, not
+production monitoring, and not a reliability guarantee.
+
+## What to say in an interview
+
+I separated responsibilities by failure mode. Rules detect cheaply and own the
+clear physics signatures. A grouped Extra Trees model handles only the hard
+suction-versus-discharge pair, with learned novelty detection and schema-level
+out-of-distribution abstention. The language model does the language work —
+precedent retrieval, explanation, recommended action, and work-order drafting —
+but it cannot replace a concrete classifier class. Every action needs a named
+human, and only approved cases reach the CMMS, through an idempotent adapter. On
+the current real suite the hybrid classifier is seven of eight overall and seven
+for seven on accepted cases, with the sample size of eight stated explicitly.
