@@ -657,9 +657,30 @@
     border-radius:0; margin:0; max-width:none;
     min-height:100vh;
     overflow:auto;
+    /* opaque: the page behind must not read through the canvas */
+    background-color: var(--bg);
   }
-  .canvas.is-fullscreen .stage{ height: calc(100vh - 80px); }
+  /* main is position:relative; z-index:1, which traps the fullscreen canvas in
+     main's stacking context — below header and .controls at z-index:2. Lift the
+     whole context while fullscreen so the canvas really does cover the page. */
+  body.has-fullscreen main{ z-index: 10000; }
+  .canvas.is-fullscreen .stage{ height: calc(100vh - 132px); }
   .canvas.is-fullscreen ~ aside{ display:none; }
+
+  /* the .controls fullscreen button is covered while fullscreen, so the canvas
+     head carries the way back out */
+  /* .player button sets a fixed 30px square — this needs to stay label-width */
+  .player .exit-fs{
+    display:none;
+    appearance:none; border:1px solid var(--border); background: var(--panel-2);
+    color: var(--muted); cursor:pointer;
+    width:auto; height:30px; padding:0 12px; margin-left:6px; border-radius:8px;
+    font-family: var(--mono); font-size:11px; letter-spacing:.1em; text-transform:uppercase;
+    white-space:nowrap; flex-shrink:0;
+    transition: all .15s ease;
+  }
+  .player .exit-fs:hover{ color: var(--text); border-color: var(--border-2); }
+  .canvas.is-fullscreen .player .exit-fs{ display:inline-flex; align-items:center; }
 </style>
 </head>
 <body>
@@ -732,6 +753,7 @@
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
         </button>
         <span class="stepidx" id="stepIdx">0 / 0</span>
+        <button class="exit-fs" id="btnExitFs" title="Exit fullscreen (Esc)">Esc to exit</button>
       </div>
     </div>
     <div class="progress-track"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
@@ -1818,10 +1840,13 @@ const canvas = document.querySelector(".canvas");
 const btnFullscreen = document.getElementById("btnFullscreen");
 
 function toggleFullscreen(){
-  canvas.classList.toggle("is-fullscreen");
+  const on = canvas.classList.toggle("is-fullscreen");
+  /* the class on body is what lifts main's stacking context (see .has-fullscreen) */
+  document.body.classList.toggle("has-fullscreen", on);
   setTimeout(()=>{ drawWires(); applyStep(); }, 50);
 }
 btnFullscreen.addEventListener("click", toggleFullscreen);
+document.getElementById("btnExitFs").addEventListener("click", toggleFullscreen);
 
 /* ─── keyboard ─────────────────────────────────────────────────────── */
 window.addEventListener("keydown",(e)=>{
