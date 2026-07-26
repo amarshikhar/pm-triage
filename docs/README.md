@@ -4,9 +4,14 @@ Start here:
 
 - [Presentation deck](PRESENTATION.html) — five slides covering the system, both
   architecture views, every measured evaluation number, and the rubric this
-  artifact is judged against. Self-contained HTML: open it in a browser, use the
-  arrow keys, and print to PDF for five landscape pages. GitHub will not render
-  it inline.
+  artifact is judged against, plus a two-page formula appendix: every
+  calculation the system performs, with its source file and why it is shaped
+  that way. Self-contained HTML: open it in a browser, use the arrow keys, and
+  print to PDF for seven landscape pages. GitHub will not render it inline.
+- [Presentation script](PRESENTATION_SCRIPT.md) — the sentences to say out loud
+  for each of the five slides, the appendix, the click-through architecture and
+  the live demo, plus a running order, practice notes, and one-line answers to the
+  questions that always come.
 - [Architecture](ARCHITECTURE.md) — the one-glance diagram, the table of who
   decides what, the runtime drill-down, and why each boundary is where it is.
 - [FDE defense master guide](FDE_DEFENSE_MASTER_GUIDE.md) — company-rubric

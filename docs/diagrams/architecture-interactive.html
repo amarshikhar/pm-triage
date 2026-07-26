@@ -651,11 +651,13 @@
   body.light .theme-toggle .icon-moon{ display:none; }
   body.light .theme-toggle .icon-sun{ display:block; }
 
-  /* fullscreen canvas */
+  /* fullscreen canvas.
+     --fs-bar-h is set from JS to the height of the fixed control bar below, so
+     the canvas starts under it instead of covering it. 0 when not fullscreen. */
   .canvas.is-fullscreen{
-    position:fixed; inset:0; z-index:9999;
+    position:fixed; inset: var(--fs-bar-h, 0px) 0 0 0; z-index:9999;
     border-radius:0; margin:0; max-width:none;
-    min-height:100vh;
+    min-height:0;
     overflow:auto;
     /* opaque: the page behind must not read through the canvas */
     background-color: var(--bg);
@@ -664,8 +666,28 @@
      main's stacking context — below header and .controls at z-index:2. Lift the
      whole context while fullscreen so the canvas really does cover the page. */
   body.has-fullscreen main{ z-index: 10000; }
-  .canvas.is-fullscreen .stage{ height: calc(100vh - 132px); }
+  .canvas.is-fullscreen .stage{ height: calc(100vh - var(--fs-bar-h, 0px) - 132px); }
   .canvas.is-fullscreen ~ aside{ display:none; }
+
+  /* ── controls that must survive fullscreen ──
+     The mode toggle, the legend and the flow tabs sit above the canvas in normal
+     flow, so a fullscreen canvas used to cover them and the presenter lost the
+     ability to switch scenario with a click. .fsbar is display:contents while
+     not fullscreen — the normal page layout is byte-for-byte what it was — and
+     becomes a fixed bar stacked above the fullscreen canvas otherwise. */
+  .fsbar{ display: contents; }
+  body.has-fullscreen .fsbar{
+    display:block; position:fixed; top:0; left:0; right:0; z-index:10001;
+    background: var(--bg); border-bottom:1px solid var(--border);
+    padding: 12px 0 14px;
+    box-shadow: 0 6px 22px rgba(0,0,0,.28);
+  }
+  body.light.has-fullscreen .fsbar{ box-shadow: 0 6px 22px rgba(15,20,25,.10); }
+  body.has-fullscreen .fsbar .controls{ margin-top:0; }
+  body.has-fullscreen .fsbar .flowtabs{ margin-top:10px; }
+  /* the canvas head already carries "Esc to exit" — a second way out would only
+     make the bar wrap onto an extra line */
+  body.has-fullscreen .fsbar .fullscreen-toggle{ display:none; }
 
   /* the .controls fullscreen button is covered while fullscreen, so the canvas
      head carries the way back out */
@@ -691,6 +713,10 @@
   <h1>Predictive maintenance triage <span class="accent">telemetry → work order</span></h1>
   <p class="sub">How one abnormal sensor reading becomes an approved maintenance work order. Everything before the planner is a proposal; nothing after it happens without a person.</p>
 </header>
+
+<!-- .fsbar keeps the mode toggle, the legend and the flow tabs reachable while the
+     canvas is fullscreen. It is display:contents until then — no layout effect. -->
+<div class="fsbar" id="fsbar">
 
 <div class="controls">
   <!-- 2. Mode toggle. Rename or add a 3rd button if you have 3 modes.
@@ -735,6 +761,8 @@
   <button class="flowtab" data-flow="abstain" aria-pressed="false"><span class="num">3</span> Low confidence</button>
   <button class="flowtab" data-flow="spend" aria-pressed="false"><span class="num">4</span> Live model &amp; caps</button>
 </nav>
+
+</div><!-- /.fsbar -->
 
 <p class="scenario-note">Shortcuts: <kbd>Space</kbd> play/pause · <kbd>&larr;</kbd>/<kbd>&rarr;</kbd> step · <kbd>1</kbd>&ndash;<kbd id="kbFlowMax">4</kbd> flow · <kbd>O</kbd> mode · <kbd>T</kbd> theme · <kbd>F</kbd> fullscreen · <kbd>R</kbd> reset layout · Drag nodes to reposition</p>
 
@@ -924,16 +952,17 @@ const flows = {
         route:"simulator.py / replay.py",
         desc:"Eight simulated assets, plus real SKAB pump and CWRU bearing recordings replayed row by row. <em>Detection runs on every reading.</em>",
         payload:
-`TelemetryReading
+`TelemetryReading            # machine PMP-03, SKAB pump
 {
-    "machine_id": "pump-03",
+    "machine_id": "PMP-03",
     "ts": "2026-07-19T09:14:02Z",
-    "vibration_mm_s": 7.9,
-    "suction_pressure_bar": 0.41,
-    "discharge_pressure_bar": 5.8,
-    "temp_c": 61.2
+    "values": {
+        "flow_lpm": 41.6,     "pressure_bar": 0.32,
+        "vibration_g": 0.128, "current_a": 1.94,
+        "temp_motor_c": 61.2, "temp_fluid_c": 47.8
+    }
 }`,
-        chips:["every 3 s","8 assets"]
+        chips:["every 3 s","8 sim + 2 replay assets"]
       },
       {
         from:"detector", to:"rules", color:"--c-orch",
@@ -943,10 +972,10 @@ const flows = {
         payload:
 `Anomaly
 {
-    "metric": "vibration_mm_s",
-    "value": 7.9,
-    "threshold": 6.0,
-    "zscore": 5.4,          // robust: median / MAD
+    "metric": "flow_lpm",
+    "value": 41.6,
+    "threshold": 58.2,      // baseline median: this asset
+    "zscore": -5.4,         //   has no fixed limit
     "severity": "high",
     "context": { ... }      // what every OTHER signal was doing
 }`,
@@ -956,29 +985,32 @@ const flows = {
         from:"rules", to:"model", color:"--c-orch",
         title:"Rules answer, or deliberately defer",
         route:"classify_signature()",
-        desc:"Physics rules own every clear fault. They do not separate suction from discharge restriction — the one pair a signature cannot split — so that case is handed on rather than guessed at.",
+        desc:"Physics rules own every clear fault: a strong, well-separated signature <em>is</em> the verdict and the trained model is never consulted. Here the top two are the restriction pair, three hundredths apart — a short window cannot say which side. The rules abstain rather than guess, and only an abstention is handed on.",
         payload:
-`{
-    "top": "bearing_wear",
-    "score": 0.71,
-    "runner_up": 0.38,
-    "separation": 0.33      // floor 0.56, margin 0.07
-}
-// on the restriction pair: no verdict, defer`,
-        chips:["floor 0.56","margin 0.07"]
+`classify_signature() -> {
+    "predicted": null,
+    "ranked": [["suction_restriction",   0.54],
+               ["discharge_restriction", 0.51],
+               ["cavitation",            0.33], ...],
+    "abstain": true,   // 0.54 < floor 0.56, and the
+    "layer": "deterministic_signature"  // gap 0.03 < 0.07
+}`,
+        chips:["floor 0.56","margin 0.07","rules first"]
       },
       {
         from:"model", to:"agent", color:"--c-compute",
         title:"The narrow model answers its one question",
         route:"ml_classifier.classify_restriction()",
-        desc:"An Extra Trees classifier trained on one job. An IsolationForest novelty score and an exact feature-roster check make it <em>abstain</em> rather than answer in a domain it was never trained on.",
+        desc:"An Extra Trees classifier trained on one job, reached only on a real-data replay asset and only after the rules abstained. An IsolationForest novelty score and an exact feature-roster check make it <em>abstain</em> rather than answer in a domain it was never trained on.",
         payload:
-`{
+`classify_restriction() -> {
     "predicted": "suction_restriction",
-    "proba": 0.81,
-    "novelty_ok": true,
-    "roster_ok": true       // exact feature roster required
-}`,
+    "confidence": 0.81,     // calibrated, not raw proba
+    "ood": false,           // IsolationForest novelty gate
+    "ood_reason": "within trained distribution",
+    "layer": "trained_restriction_classifier"
+}
+// roster drift -> no pickle load, straight to abstain`,
         chips:["one pair only","abstains on novelty"]
       },
       {
@@ -1043,7 +1075,7 @@ tools: get_machine_info · get_recent_telemetry
         from:"planner", to:"db", color:"--c-user",
         title:"A named planner approves, edits, or rejects",
         route:"POST /cases/{id}/decision",
-        desc:"Requires a bearer token and a reviewer name. This is the only transition out of <code>pending_review</code>, and it is written by a person, not by the agent.",
+        desc:"Requires a bearer token and a reviewer name — and with auth enabled the name is taken from the session token, not the request body, so a decision cannot be signed with someone else's name. This is the only transition out of <code>pending_review</code>, and it is written by a person, not by the agent.",
         payload:
 `POST /cases/41/decision
 Authorization: Bearer <token>
@@ -1839,11 +1871,22 @@ if(loadLayout()) showResetBtn();
 const canvas = document.querySelector(".canvas");
 const btnFullscreen = document.getElementById("btnFullscreen");
 
+const fsbar = document.getElementById("fsbar");
+
+/* The fullscreen control bar wraps differently at every window width, so its
+   height is measured rather than assumed; the canvas reads it as --fs-bar-h. */
+function syncFsBarHeight(){
+  const on = canvas.classList.contains("is-fullscreen");
+  const h = on && fsbar ? Math.ceil(fsbar.getBoundingClientRect().height) : 0;
+  document.documentElement.style.setProperty("--fs-bar-h", h + "px");
+}
+
 function toggleFullscreen(){
   const on = canvas.classList.toggle("is-fullscreen");
   /* the class on body is what lifts main's stacking context (see .has-fullscreen) */
   document.body.classList.toggle("has-fullscreen", on);
-  setTimeout(()=>{ drawWires(); applyStep(); }, 50);
+  syncFsBarHeight();
+  setTimeout(()=>{ syncFsBarHeight(); drawWires(); applyStep(); }, 50);
 }
 btnFullscreen.addEventListener("click", toggleFullscreen);
 document.getElementById("btnExitFs").addEventListener("click", toggleFullscreen);
@@ -1873,7 +1916,8 @@ window.addEventListener("keydown",(e)=>{
 let rrTimer;
 window.addEventListener("resize", ()=>{
   clearTimeout(rrTimer);
-  rrTimer = setTimeout(()=>{ drawWires(); applyStep(); }, 80);
+  syncFsBarHeight();
+  rrTimer = setTimeout(()=>{ syncFsBarHeight(); drawWires(); applyStep(); }, 80);
 });
 
 /* boot */
