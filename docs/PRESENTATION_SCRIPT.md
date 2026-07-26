@@ -306,6 +306,38 @@ Close on this. Slow down, and stop talking afterwards:
 
 ---
 
+## Appendix A and B — the formulas
+
+**Do not present these.** They are two reference pages at the back of the deck,
+for the question you cannot answer from memory and for anyone who reads the deck
+afterwards. Appendix A is detection and classification; appendix B is
+confidence, priority, spend and how the results on slide 4 were computed.
+
+If a formula question comes mid-talk, jump to the page and read it off the
+screen rather than reciting:
+
+> That one's in the appendix — let me show you the actual arithmetic.
+
+The two lines worth saying while it is on screen:
+
+> Every constant on these pages is a named value in the repository. None of them
+> was tuned to make a demo look good — the model thresholds were chosen from
+> leave-one-episode-out predictions, by a model that had never seen the
+> held-out episode.
+>
+> And not one formula in this appendix belongs to the language model. Detection,
+> classification, confidence, priority and spend are all arithmetic. The
+> language model reads the outputs and writes the case.
+
+Three you should be able to say without the slide, because they get asked most:
+
+- **Robust z:** value minus the median, over 1.4826 times the MAD, on a
+  thirty-reading window. Four sigma, sustained three readings.
+- **Priority:** criticality, plus twice severity, plus recurrence capped at
+  three, plus four if safety. P1 at thirteen or on safety.
+- **Calibration:** raw confidence times precedent times specificity times
+  signature agreement, clamped. Below 0.45 it abstains.
+
 ## Practice notes
 
 - **Rehearse slides 1, 4 and 5 out loud twice.** They carry the claims. Slides
