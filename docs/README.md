@@ -2,10 +2,10 @@
 
 Start here:
 
-- [Presentation deck](PRESENTATION.html) — five slides covering the system, both
+- [Presentation deck](PRESENTATION.html) — six slides: a one-glance summary, the system, both
   architecture views, every measured evaluation number, and the rubric this
   artifact is judged against. Self-contained HTML: open it in a browser, use the
-  arrow keys, and print to PDF for five landscape pages. GitHub will not render
+  arrow keys, and print to PDF for six landscape pages. GitHub will not render
   it inline.
 - [Architecture](ARCHITECTURE.md) — the one-glance diagram, the table of who
   decides what, the runtime drill-down, and why each boundary is where it is.

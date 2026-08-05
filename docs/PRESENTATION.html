@@ -3,23 +3,23 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>PM Triage — five-slide presentation</title>
+<title>PM Triage — six-slide presentation</title>
 <meta name="description" content="Predictive-maintenance triage: architecture, measured evaluation results, and the rubric this artifact is judged against.">
 <style>*{margin:0}</style>
 </head>
 <body>
 <!--
-  PM Triage — five-slide presentation deck.
+  PM Triage — six-slide presentation deck.
 
   Self-contained: no build step, no external assets, no network. Edit this file
-  directly. Arrow keys / space advance; File > Print gives five landscape pages.
+  directly. Arrow keys / space advance; File > Print gives six landscape pages.
 
-  Slide 2's figure is diagrams/architecture-hero.svg inlined and cropped to
+  Slide 3's figure is diagrams/architecture-hero.svg inlined and cropped to
   viewBox "0 124 1440 236" (the flow only — the deck supplies its own title).
   If that diagram changes, re-copy its <svg> contents here and keep the crop.
 -->
 
-<title>PM Triage — five-slide presentation</title>
+<title>PM Triage — six-slide presentation</title>
 <style>
 /* ---------- tokens ---------- */
 :root{
@@ -200,6 +200,26 @@ tr.band td{background:var(--panel-2)}
 .mod .f{font-family:var(--mono);font-size:10.5px;color:var(--ink);font-weight:550;word-break:break-word}
 .mod .d{font-size:10.5px;line-height:1.4;color:var(--ink-3)}
 
+/* ---------- opening glance slide ---------- */
+.glance-slide .body{justify-content:center;gap:46px}
+.glance-slide h1.title{font-size:45px;max-width:none}
+.hero-band{display:flex;align-items:center;gap:40px;
+           border-left:4px solid var(--blue);background:var(--blue-wash);
+           border-radius:0 14px 14px 0;padding:32px 38px}
+.hero-fig{font-size:88px;font-weight:700;letter-spacing:-.038em;line-height:1;
+          color:var(--ink);flex:none}
+.hero-copy{font-size:19px;line-height:1.55;color:var(--ink-2);max-width:58ch}
+.hero-copy strong{color:var(--ink);font-weight:600}
+.hero-src{font-family:var(--mono);font-size:10.5px;letter-spacing:.11em;text-transform:uppercase;
+          color:var(--ink-3);display:block;margin-top:12px}
+.glance{display:grid;grid-template-columns:repeat(4,1fr);gap:30px}
+.glance section{display:flex;flex-direction:column;gap:10px}
+.glance h3{margin:0;font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;
+           text-transform:uppercase;color:var(--ink-3);font-weight:600;
+           padding-bottom:7px;border-bottom:1px solid var(--rule)}
+.glance p{margin:0;font-size:15px;line-height:1.6;color:var(--ink-2)}
+.glance p strong{color:var(--ink);font-weight:600}
+
 /* ---------- nav ---------- */
 .controls{display:flex;align-items:center;gap:14px;font-family:var(--mono);font-size:11px;
           color:var(--ink-3)}
@@ -231,9 +251,54 @@ tr.band td{background:var(--panel-2)}
 <div class="viewport">
 <div class="stage" id="stage">
 
-<!-- ============================= 01 ============================= -->
-<section class="slide on" aria-label="Slide 1">
-  <div class="eyebrow"><b>01 / 05</b><i class="sep"></i>What it is</div>
+<!-- ============================= 01 — the glance ============================= -->
+<section class="slide glance-slide on" aria-label="Slide 1">
+  <div class="eyebrow"><b>01 / 06</b><i class="sep"></i>In one glance</div>
+  <h1 class="title wide">Turn an alarm into a decision someone will sign.</h1>
+
+  <div class="body">
+    <div class="hero-band">
+      <span class="hero-fig">$2.3M</span>
+      <div class="hero-copy">
+        is what <strong>one hour of unplanned downtime</strong> costs an automotive plant.
+        Discrete manufacturing sits lower — commonly <strong style="white-space:nowrap">$10k–$50k per plant-hour</strong> —
+        and the average unplanned outage runs about four hours.
+        <span class="hero-src">Siemens / Senseye · The True Cost of Downtime, 2024</span>
+      </div>
+    </div>
+
+    <div class="glance">
+      <section>
+        <h3>The problem</h3>
+        <p>Plants do not lack alarms. They lack an <strong>explainable, prioritized decision</strong>
+        that a named person is willing to sign — and that an auditor can reconstruct afterwards.</p>
+      </section>
+      <section>
+        <h3>The system, in one line</h3>
+        <p><strong>Rules detect. Rules plus narrow ML classify, or abstain. A language model explains
+        and cites precedent. A named human authorizes. An idempotent adapter writes the work order.</strong></p>
+      </section>
+      <section>
+        <h3>How it is used</h3>
+        <p>A planner opens the case, reads the evidence and the cited history, then
+        <strong>approves, edits or rejects</strong>. Only an approval creates a CMMS work order —
+        there is no autonomous path to action.</p>
+      </section>
+      <section>
+        <h3>Where it stands</h3>
+        <p>Deployed and running. On <strong>eight recorded lab episodes: 7/8 right overall, 7/7 when
+        it answers.</strong> 105 backend tests pass. Free by default; a full paid eight-case run
+        cost <strong>1.5 cents</strong>.</p>
+      </section>
+    </div>
+  </div>
+
+  <div class="foot"><span>PM Triage — predictive-maintenance triage</span><span>Evidence current as of 2026-07-19</span></div>
+</section>
+
+<!-- ============================= 02 ============================= -->
+<section class="slide" aria-label="Slide 2">
+  <div class="eyebrow"><b>02 / 06</b><i class="sep"></i>What it is</div>
   <h1 class="title wide">Telemetry goes in. A person signs the work order.</h1>
 
   <div class="body">
@@ -315,9 +380,9 @@ tr.band td{background:var(--panel-2)}
   <div class="foot"><span>PM Triage — predictive-maintenance triage</span><span>Evidence current as of 2026-07-19</span></div>
 </section>
 
-<!-- ============================= 02 ============================= -->
-<section class="slide" aria-label="Slide 2">
-  <div class="eyebrow"><b>02 / 05</b><i class="sep"></i>Architecture — the flow</div>
+<!-- ============================= 03 ============================= -->
+<section class="slide" aria-label="Slide 3">
+  <div class="eyebrow"><b>03 / 06</b><i class="sep"></i>Architecture — the flow</div>
   <h1 class="title wide">One abnormal reading, left to right</h1>
 
   <div class="body" style="gap:13px">
@@ -458,9 +523,9 @@ tr.band td{background:var(--panel-2)}
   <div class="foot"><span>Figure 1 is <span class="mono">docs/diagrams/architecture-hero.svg</span></span><span>Blue = deterministic · violet = trained model · amber = language model · green = human</span></div>
 </section>
 
-<!-- ============================= 03 ============================= -->
-<section class="slide" aria-label="Slide 3">
-  <div class="eyebrow"><b>03 / 05</b><i class="sep"></i>Architecture — what runs where</div>
+<!-- ============================= 04 ============================= -->
+<section class="slide" aria-label="Slide 4">
+  <div class="eyebrow"><b>04 / 06</b><i class="sep"></i>Architecture — what runs where</div>
   <h1 class="title wide">Every box is a real file or a real service</h1>
 
   <div class="body" style="gap:13px">
@@ -546,9 +611,9 @@ tr.band td{background:var(--panel-2)}
   <div class="foot"><span>Full plate: <span class="mono">docs/diagrams/architecture-detail.svg</span> · click-through: <span class="mono">architecture-interactive.html</span></span><span>Arrows are the only paths between boxes</span></div>
 </section>
 
-<!-- ============================= 04 ============================= -->
-<section class="slide" aria-label="Slide 4">
-  <div class="eyebrow"><b>04 / 05</b><i class="sep"></i>Measured results</div>
+<!-- ============================= 05 ============================= -->
+<section class="slide" aria-label="Slide 5">
+  <div class="eyebrow"><b>05 / 06</b><i class="sep"></i>Measured results</div>
   <h1 class="title wide">Eight real episodes. Twenty-four synthetic faults. Every number in counts.</h1>
 
   <div class="body" style="gap:10px">
@@ -623,9 +688,9 @@ tr.band td{background:var(--panel-2)}
   <div class="foot"><span>Reports: <span class="mono">backend/eval-report.json</span> · <span class="mono">backend/eval-report-real.json</span> · live GitHub run <span class="mono">29692423022</span></span><span>Five SKAB pump + three CWRU bearing episodes</span></div>
 </section>
 
-<!-- ============================= 05 ============================= -->
-<section class="slide" aria-label="Slide 5">
-  <div class="eyebrow"><b>05 / 05</b><i class="sep"></i>How this is judged</div>
+<!-- ============================= 06 ============================= -->
+<section class="slide" aria-label="Slide 6">
+  <div class="eyebrow"><b>06 / 06</b><i class="sep"></i>How this is judged</div>
   <h1 class="title wide">Six categories, and what each one is allowed to claim</h1>
 
   <div class="body" style="gap:14px">
