@@ -116,8 +116,8 @@ reviewed, committed, pushed, and the services redeploy.
 
 ## Documentation
 
-- [Six-slide presentation deck](docs/PRESENTATION.html) — clone and open in a
-  browser; arrow keys to advance, print to PDF for six landscape pages
+- [Presentation deck](docs/PRESENTATION.html) — six slides plus two formula
+  appendices; clone and open in a browser, arrow keys to advance, print to PDF
 - [Architecture: the diagrams and who decides what](docs/ARCHITECTURE.md)
 - [FDE assessment defense master guide](docs/FDE_DEFENSE_MASTER_GUIDE.md)
 - [Complete code and data-flow reference](docs/CODE_AND_DATA_FLOW_REFERENCE.md)
